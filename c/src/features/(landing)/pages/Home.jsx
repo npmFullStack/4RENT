@@ -12,25 +12,28 @@ import FeatureCard from "@/features/(landing)/components/FeatureCard";
 import Button from "@/shared/components/Button";
 import heroBg from "@/assets/images/heroBg.png";
 import ctaBg from "@/assets/images/ctaBg.png";
+import feature1 from "@/assets/images/feature1.png";
+import feature2 from "@/assets/images/feature2.png";
+import feature3 from "@/assets/images/feature3.png";
 
 const features = [
     {
         id: 1,
-        image: "/src/assets/images/feature1.png",
+        image: {feature1},
         title: "Find Boarding Houses & Apartments",
         description:
             "Search through thousands of boarding houses and apartments that match your budget and location preferences."
     },
     {
         id: 2,
-        image: "/src/assets/images/feature2.png",
+        image: {feature2},
         title: "List Your Property",
         description:
             "Land owners can easily list their properties and connect with thousands of potential tenants looking for their next home."
     },
     {
         id: 3,
-        image: "/src/assets/images/feature3.png",
+        image: {feature3},
         title: "Find Properties Near You",
         description:
             "View apartments and boarding houses on an interactive map to find the nearest available properties based on your current location."
