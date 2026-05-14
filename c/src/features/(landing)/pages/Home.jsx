@@ -46,8 +46,9 @@ const popularProperties = [
         name: "Sunset Boarding House",
         category: "boarding",
         address: "123 Sunset Blvd, Barangay Sunset, Manila, Philippines",
-        price: 4850, // ₱4,850/month
-        capacity: 2 // 2 people per room (solo/2)
+        price: 4850,
+        capacity: 2,
+        sex: "female"
     },
     {
         id: 2,
@@ -55,8 +56,9 @@ const popularProperties = [
         name: "Downtown Luxury Apartment",
         category: "apartment",
         address: "456 Main St, Barangay Central, Quezon City, Philippines",
-        price: 12500, // ₱12,500/month
-        capacity: null
+        price: 12500,
+        capacity: null,
+        sex: null
     },
     {
         id: 3,
@@ -64,10 +66,25 @@ const popularProperties = [
         name: "Garden View Boarding House",
         category: "boarding",
         address: "789 Oak Ave, Barangay Riverside, Cebu City, Philippines",
-        price: 3750, // ₱3,750/month
-        capacity: 3 // 3 people per room
+        price: 3750,
+        capacity: 3,
+        sex: "male"
     }
 ];
+
+const getCapacityText = capacity => {
+    if (capacity === 1) return "1 person/room";
+    if (capacity === 2) return "2 persons/room";
+    if (capacity === 3) return "3 persons/room";
+    if (capacity >= 4) return `${capacity}+ persons/room`;
+    return "";
+};
+
+const getSexText = sex => {
+    if (sex === "male") return "Male Only";
+    if (sex === "female") return "Female Only";
+    return "";
+};
 
 const Home = () => {
     const navigate = useNavigate();
@@ -174,7 +191,9 @@ const Home = () => {
                                 address={property.address}
                                 price={property.price}
                                 capacity={property.capacity}
+                                sex={property.sex}
                                 getCapacityText={getCapacityText}
+                                getSexText={getSexText}
                             />
                         ))}
                     </div>

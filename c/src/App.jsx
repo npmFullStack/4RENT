@@ -7,6 +7,7 @@ import DashboardLayout from "@/layouts/DashboardLayout";
 import Home from "@/features/(landing)/pages/Home";
 import AllProperties from "@/features/(landing)/pages/AllProperties";
 import PropertyDetails from "@/features/(landing)/pages/PropertyDetails";
+import FindPropertyViaMap from "@/features/(landing)/pages/FindPropertyViaMap";
 import SignIn from "@/features/(auth)/pages/SignIn";
 import SignUp from "@/features/(auth)/pages/SignUp";
 import ForgotPassword from "@/features/(auth)/pages/ForgotPassword";
@@ -20,7 +21,7 @@ function App() {
                 {/* Main/Landing Routes */}
                 <Route path="/" element={<MainLayout />}>
                     <Route index element={<Home />} />
-   </Route>
+                </Route>
 
                 {/* Dashboard Routes */}
                 <Route path="/dashboard" element={<DashboardLayout />}>
@@ -42,6 +43,10 @@ function App() {
 
                     <Route path="/properties" element={<AllProperties />} />
                     <Route path="/property/:id" element={<PropertyDetails />} />
+                    <Route
+                        path="/find-properties-map"
+                        element={<FindPropertyViaMap />}
+                    />
                 </Route>
             </Routes>
         </BrowserRouter>

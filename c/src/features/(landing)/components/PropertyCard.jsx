@@ -1,7 +1,14 @@
 // src/features/(landing)/components/PropertyCard.jsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { MapPin, ArrowRight, Users, PhilippinePeso } from "lucide-react";
+import {
+    MapPin,
+    ArrowRight,
+    Users,
+    PhilippinePeso,
+    Home,
+    Bed
+} from "lucide-react";
 import Button from "@/shared/components/Button";
 
 const PropertyCard = ({
@@ -12,12 +19,26 @@ const PropertyCard = ({
     address,
     price,
     capacity,
-    getCapacityText
+    sex,
+    getCapacityText,
+    getSexText
 }) => {
     const navigate = useNavigate();
 
     const handleViewDetails = () => {
-        navigate(`/property/${id}`);
+        // Pass property data through state when navigating
+        navigate(`/property/${id}`, {
+            state: {
+                id,
+                image,
+                name,
+                category,
+                address,
+                price,
+                capacity,
+                sex
+            }
+        });
     };
 
     const isBoarding = category === "boarding";
@@ -26,7 +47,7 @@ const PropertyCard = ({
 
     return (
         <div className="group bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer flex flex-col">
-            {/* Image Container - fixed height, not full card */}
+            {/* Image Container */}
             <div className="relative h-56 w-full overflow-hidden">
                 <img
                     src={image}
@@ -34,7 +55,7 @@ const PropertyCard = ({
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
 
-                {/* Top Left - Category Badge */}
+                {/* Category Badge */}
                 <div className="absolute top-4 left-4 z-10">
                     <span
                         className={`${categoryColor} text-white text-xs font-semibold px-3 py-1 rounded-full shadow-lg`}
@@ -46,33 +67,48 @@ const PropertyCard = ({
 
             {/* Content Section */}
             <div className="p-4 flex flex-col flex-grow">
-                {/* Property Name */}
-                <h3 className="text-lg font-bold mb-1 text-gray-800 truncate">
+
+
+                {/* Property Name - bold sub heading style */}
+                <h3 className="text-xl font-bold text-gray-800 mb-2 line-clamp-1">
                     {name}
                 </h3>
 
                 {/* Address with icon */}
                 <div className="flex items-center gap-1 text-sm text-gray-600 mb-2">
                     <MapPin className="w-3 h-3 flex-shrink-0" />
-                    <span className="truncate">{address}</span>
+                    <span className="line-clamp-1">{address}</span>
                 </div>
 
                 {/* Capacity info for boarding houses */}
                 {isBoarding && capacity && (
-                    <div className="flex items-center gap-1 text-sm text-gray-600 mb-3">
+                    <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
                         <Users className="w-3 h-3 flex-shrink-0" />
                         <span>{getCapacityText(capacity)}</span>
                     </div>
                 )}
 
-                {/* Price and View Details Button - Row layout */}
-                <div className="flex justify-between items-center mt-auto pt-3">
-                    <div className="text-left flex items-baseline gap-0.5">
-                        <PhilippinePeso className="w-4 h-4 text-gray-800" />
-                        <span className="text-xl font-bold text-gray-800">
-                            {price}
-                        </span>
-                        <span className="text-xs text-gray-500">/month</span>
+                {/* Sex info for boarding houses */}
+                {isBoarding && sex && getSexText && (
+                    <div className="flex items-center gap-1 text-sm text-gray-600 mb-3">
+                        <Bed className="w-3 h-3 flex-shrink-0" />
+                        <span>{getSexText(sex)}</span>
+                    </div>
+                )}
+
+                {/* Price and View Details Button */}
+                <div className="flex justify-between items-center mt-auto pt-3 border-t border-gray-100">
+                    <div className="text-left">
+                        <span className="text-xs text-gray-500">Price</span>
+                        <div className="flex items-baseline gap-0.5">
+                            <PhilippinePeso className="w-4 h-4 text-gray-800" />
+                            <span className="text-xl font-bold text-gray-800">
+                                {price.toLocaleString()}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                                /month
+                            </span>
+                        </div>
                     </div>
 
                     <Button
@@ -80,6 +116,7 @@ const PropertyCard = ({
                         icon={ArrowRight}
                         iconPosition="right"
                         onClick={handleViewDetails}
+                        className="text-sm"
                     >
                         View Details
                     </Button>

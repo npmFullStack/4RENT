@@ -1,11 +1,18 @@
 // src/features/(landing)/pages/AllProperties.jsx
 import React, { useState } from "react";
-import { Search } from "lucide-react";
+import {
+    Search,
+    Filter,
+    MapIcon
+} from "lucide-react";
+import { Link } from "react-router-dom";
 import Button from "@/shared/components/Button";
+import FilterMenu from "@/shared/components/FilterMenu";
 import PropertyCard from "@/features/(landing)/components/PropertyCard";
 import property1 from "@/assets/images/property1.png";
 import property2 from "@/assets/images/property2.png";
 import property3 from "@/assets/images/property3.png";
+import noMoreProperty from "@/assets/images/no-more-property.png";
 
 const allProperties = [
     {
@@ -13,33 +20,42 @@ const allProperties = [
         image: property1,
         name: "Sunset Boarding House",
         category: "boarding",
-        address: "123 Sunset Blvd, Los Angeles, CA",
-        price: 850,
-        capacity: 2
+        address: "123 Sunset Blvd, Barangay Sunset, Manila, Philippines",
+        price: 4850,
+        capacity: 2,
+        sex: "female"
     },
     {
         id: 2,
         image: property2,
         name: "Downtown Luxury Apartment",
         category: "apartment",
-        address: "456 Main St, New York, NY",
-        price: 2500,
-        capacity: null
+        address: "456 Main St, Barangay Central, Quezon City, Philippines",
+        price: 12500,
+        capacity: null,
+        sex: null
     },
     {
         id: 3,
         image: property3,
         name: "Garden View Boarding House",
         category: "boarding",
-        address: "789 Oak Ave, Chicago, IL",
-        price: 750,
-        capacity: 3
+        address: "789 Oak Ave, Barangay Riverside, Cebu City, Philippines",
+        price: 3750,
+        capacity: 3,
+        sex: "male"
     }
 ];
 
 const AllProperties = () => {
     const [searchTerm, setSearchTerm] = useState("");
-    const [filterCategory, setFilterCategory] = useState("all");
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const [filters, setFilters] = useState({
+        category: "all",
+        priceRange: { min: "", max: "" },
+        sex: "all",
+        capacity: "all"
+    });
 
     const getCapacityText = capacity => {
         if (capacity === 1) return "1 person/room";
@@ -49,68 +65,156 @@ const AllProperties = () => {
         return "";
     };
 
+    const getSexText = sex => {
+        if (sex === "male") return "Male Only";
+        if (sex === "female") return "Female Only";
+        return "";
+    };
+
     const filteredProperties = allProperties.filter(property => {
+        // Search filter
         const matchesSearch =
+            searchTerm === "" ||
             property.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             property.address.toLowerCase().includes(searchTerm.toLowerCase());
+
+        // Category filter
         const matchesCategory =
-            filterCategory === "all" || property.category === filterCategory;
-        return matchesSearch && matchesCategory;
+            filters.category === "all" ||
+            property.category === filters.category;
+
+        // Price range filter
+        let matchesPrice = true;
+        if (
+            filters.priceRange.min &&
+            property.price < parseInt(filters.priceRange.min)
+        ) {
+            matchesPrice = false;
+        }
+        if (
+            filters.priceRange.max &&
+            property.price > parseInt(filters.priceRange.max)
+        ) {
+            matchesPrice = false;
+        }
+
+        // Sex filter (only for boarding houses)
+        let matchesSex = true;
+        if (property.category === "boarding" && filters.sex !== "all") {
+            matchesSex = property.sex === filters.sex;
+        }
+
+        // Capacity filter (only for boarding houses)
+        let matchesCapacity = true;
+        if (property.category === "boarding" && filters.capacity !== "all") {
+            if (filters.capacity === "4+") {
+                matchesCapacity = property.capacity >= 4;
+            } else {
+                matchesCapacity =
+                    property.capacity === parseInt(filters.capacity);
+            }
+        }
+
+        return (
+            matchesSearch &&
+            matchesCategory &&
+            matchesPrice &&
+            matchesSex &&
+            matchesCapacity
+        );
     });
+
+    // Get active filters count
+    const getActiveFiltersCount = () => {
+        let count = 0;
+        if (filters.category !== "all") count++;
+        if (filters.priceRange.min || filters.priceRange.max) count++;
+        if (filters.sex !== "all") count++;
+        if (filters.capacity !== "all") count++;
+        return count;
+    };
+
+    // Check if there are more properties (for demo, assuming more than 3 means more available)
+    const hasMoreProperties = allProperties.length > 3;
 
     return (
         <div className="min-h-screen bg-gray-50 py-8">
             <div className="container mx-auto px-4">
                 {/* Header */}
-                <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-8">
-                    All Properties
-                </h1>
+                <div className="mb-6">
+                    <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
+                        All Properties
+                    </h1>
+                    <p className="text-gray-600 mt-2">
+                        Discover thousands of boarding houses and apartments for
+                        rent in the Philippines
+                    </p>
+                </div>
 
-                {/* Search and Filter Bar */}
-                <div className="flex flex-col md:flex-row gap-4 mb-8">
-                    <div className="flex-1 relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                        <input
-                            type="text"
-                            placeholder="Search by name or location..."
-                            value={searchTerm}
-                            onChange={e => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                        />
+                {/* Search Bar with Filter and Map Buttons Inside */}
+                <div className="mb-8">
+                    <div className="relative flex items-center gap-3">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                            <input
+                                type="text"
+                                placeholder="Search by property name or location..."
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                                className="w-full pl-10 pr-32 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white"
+                            />
+                            <div className="absolute right-2 flex gap-2">
+                                <Button
+                                    variant="ghost"
+                                    icon={Filter}
+                                    onClick={() => setIsFilterOpen(true)}
+                                    className="!p-2"
+                                >
+                                    {getActiveFiltersCount() > 0 && (
+                                        <span className="bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center ml-1">
+                                            {getActiveFiltersCount()}
+                                        </span>
+                                    )}
+                                </Button>
+                            </div>
+                        </div>
+
+                        <Link to="/find-properties-map" className="sm:w-auto">
+                            <Button
+                                variant="primary"
+                                icon={MapIcon}
+                                className="whitespace-nowrap"
+                            >
+                                Map View
+                            </Button>
+                        </Link>
                     </div>
-                    <div className="flex gap-2">
-                        <Button
-                            variant={
-                                filterCategory === "all" ? "primary" : "outline"
+                </div>
+
+                {/* Results Count */}
+                <div className="mb-6 flex justify-between items-center">
+                    <p className="text-gray-600">
+                        Found{" "}
+                        <span className="font-semibold text-gray-800">
+                            {filteredProperties.length}
+                        </span>{" "}
+                        properties
+                    </p>
+                    {getActiveFiltersCount() > 0 && (
+                        <button
+                            onClick={() =>
+                                setFilters({
+                                    category: "all",
+                                    priceRange: { min: "", max: "" },
+                                    sex: "all",
+                                    capacity: "all"
+                                })
                             }
-                            onClick={() => setFilterCategory("all")}
-                            className="whitespace-nowrap"
+                            className="text-sm text-primary hover:underline"
                         >
-                            All
-                        </Button>
-                        <Button
-                            variant={
-                                filterCategory === "apartment"
-                                    ? "primary"
-                                    : "outline"
-                            }
-                            onClick={() => setFilterCategory("apartment")}
-                            className="whitespace-nowrap"
-                        >
-                            Apartments
-                        </Button>
-                        <Button
-                            variant={
-                                filterCategory === "boarding"
-                                    ? "primary"
-                                    : "outline"
-                            }
-                            onClick={() => setFilterCategory("boarding")}
-                            className="whitespace-nowrap"
-                        >
-                            Boarding Houses
-                        </Button>
-                    </div>
+                            Clear all filters
+                        </button>
+                    )}
                 </div>
 
                 {/* Properties Grid */}
@@ -126,18 +230,69 @@ const AllProperties = () => {
                                 address={property.address}
                                 price={property.price}
                                 capacity={property.capacity}
+                                sex={property.sex}
                                 getCapacityText={getCapacityText}
+                                getSexText={getSexText}
                             />
                         ))}
                     </div>
                 ) : (
-                    <div className="text-center py-12">
+                    <div className="text-center py-12 bg-white rounded-lg">
+                        <img
+                            src={noMoreProperty}
+                            alt="No more properties found"
+                            className="w-48 h-48 mx-auto mb-4 object-contain opacity-80"
+                        />
                         <p className="text-gray-500 text-lg">
-                            No properties found.
+                            No more properties found matching your criteria.
                         </p>
+                        <p className="text-gray-400 text-sm mt-2">
+                            Try adjusting your filters or search term to find
+                            more properties.
+                        </p>
+                        <button
+                            onClick={() => {
+                                setSearchTerm("");
+                                setFilters({
+                                    category: "all",
+                                    priceRange: { min: "", max: "" },
+                                    sex: "all",
+                                    capacity: "all"
+                                });
+                            }}
+                            className="mt-4 text-primary hover:underline font-medium"
+                        >
+                            Clear all filters
+                        </button>
                     </div>
                 )}
+
+                {/* "No More Properties" message at bottom when there are no more results to load */}
+                {hasMoreProperties &&
+                    filteredProperties.length === allProperties.length && (
+                        <div className="mt-12 text-center py-8 border-t border-gray-200">
+                            <img
+                                src={noMoreProperty}
+                                alt="No more properties"
+                                className="w-32 h-32 mx-auto mb-4 object-contain opacity-60"
+                            />
+                            <p className="text-gray-500">
+                                You've reached the end of the list
+                            </p>
+                            <p className="text-gray-400 text-sm">
+                                No more properties to show at this time
+                            </p>
+                        </div>
+                    )}
             </div>
+
+            {/* Filter Menu Component */}
+            <FilterMenu
+                isOpen={isFilterOpen}
+                onClose={() => setIsFilterOpen(false)}
+                onApplyFilters={newFilters => setFilters(newFilters)}
+                initialFilters={filters}
+            />
         </div>
     );
 };
