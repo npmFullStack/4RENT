@@ -5,11 +5,12 @@ const Button = ({
     children,
     variant = "primary",
     icon: Icon,
+    iconPosition = "left",
     className = "",
     ...props
 }) => {
     const baseStyles =
-        "px-5 py-2.5 rounded-lg font-semibold transition-all duration-200 flex items-center gap-2";
+        "px-5 py-2.5 rounded-lg font-semibold transition-all duration-200 flex items-center gap-2 justify-center";
 
     const variants = {
         primary:
@@ -24,8 +25,9 @@ const Button = ({
             className={`${baseStyles} ${variants[variant]} ${className}`}
             {...props}
         >
-            {Icon && <Icon className="w-4 h-4" />}
+            {Icon && iconPosition === "left" && <Icon className="w-4 h-4" />}
             {children}
+            {Icon && iconPosition === "right" && <Icon className="w-4 h-4" />}
         </button>
     );
 };

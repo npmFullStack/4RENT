@@ -5,9 +5,82 @@
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>4RENT</title>
+    <style>
+      /* Global error toast styles */
+      .global-error-toast {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #ef4444;
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        z-index: 9999;
+        animation: slideIn 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        max-width: 400px;
+      }
+      
+      @keyframes slideIn {
+        from {
+          transform: translateX(100%);
+          opacity: 0;
+        }
+        to {
+          transform: translateX(0);
+          opacity: 1;
+        }
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    
+    <script>
+      // Global error handler - shows errors as toast notifications instead of console
+      window.addEventListener('error', function(event) {
+        event.preventDefault();
+        showErrorToast(event.message || 'An unexpected error occurred');
+        console.error('Global error:', event.error); // Still log to console for debugging
+        return false;
+      });
+      
+      // Unhandled promise rejections
+      window.addEventListener('unhandledrejection', function(event) {
+        event.preventDefault();
+        showErrorToast(event.reason?.message || 'An unexpected promise error occurred');
+        console.error('Unhandled rejection:', event.reason);
+      });
+      
+      function showErrorToast(message) {
+        // Remove existing toast if any
+        const existingToast = document.querySelector('.global-error-toast');
+        if (existingToast) existingToast.remove();
+        
+        // Create new toast
+        const toast = document.createElement('div');
+        toast.className = 'global-error-toast';
+        toast.innerHTML = `
+          <strong>Error</strong><br>
+          <span style="font-size: 12px;">${escapeHtml(message)}</span>
+        `;
+        document.body.appendChild(toast);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateX(100%)';
+          setTimeout(() => toast.remove(), 300);
+        }, 5000);
+      }
+      
+      function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+    </script>
   </body>
 </html>

@@ -2,19 +2,18 @@
 import React from "react";
 import { Outlet, Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
+import Button from "@/shared/components/Button";
 
 const AuthLayout = () => {
     return (
         <div className="min-h-screen bg-white">
-            {/* Simple Header with Back Button */}
-            <header className="border-b border-gray-100">
+            {/* Sticky Header with Back Button */}
+            <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur-sm">
                 <div className="container mx-auto px-4 py-4">
-                    <Link 
-                        to="/" 
-                        className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
-                    >
-                        <ArrowLeft size={20} />
-                        <span>Back to Home</span>
+                    <Link to="/">
+                        <Button variant="ghost" icon={ArrowLeft} iconPosition="left">
+                            Back to Home
+                        </Button>
                     </Link>
                 </div>
             </header>
