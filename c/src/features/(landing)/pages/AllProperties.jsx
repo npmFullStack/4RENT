@@ -1,10 +1,6 @@
 // src/features/(landing)/pages/AllProperties.jsx
 import React, { useState } from "react";
-import {
-    Search,
-    Filter,
-    MapIcon
-} from "lucide-react";
+import { Search, Filter, MapPin, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import Button from "@/shared/components/Button";
 import FilterMenu from "@/shared/components/FilterMenu";
@@ -134,9 +130,6 @@ const AllProperties = () => {
         return count;
     };
 
-    // Check if there are more properties (for demo, assuming more than 3 means more available)
-    const hasMoreProperties = allProperties.length > 3;
-
     return (
         <div className="min-h-screen bg-gray-50 py-8">
             <div className="container mx-auto px-4">
@@ -151,41 +144,49 @@ const AllProperties = () => {
                     </p>
                 </div>
 
-                {/* Search Bar with Filter and Map Buttons Inside */}
-                <div className="mb-8">
-                    <div className="relative flex items-center gap-3">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                            <input
-                                type="text"
-                                placeholder="Search by property name or location..."
-                                value={searchTerm}
-                                onChange={e => setSearchTerm(e.target.value)}
-                                className="w-full pl-10 pr-32 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white"
-                            />
-                            <div className="absolute right-2 flex gap-2">
-                                <Button
-                                    variant="ghost"
-                                    icon={Filter}
-                                    onClick={() => setIsFilterOpen(true)}
-                                    className="!p-2"
-                                >
-                                    {getActiveFiltersCount() > 0 && (
-                                        <span className="bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center ml-1">
-                                            {getActiveFiltersCount()}
-                                        </span>
-                                    )}
-                                </Button>
-                            </div>
-                        </div>
-
-                        <Link to="/find-properties-map" className="sm:w-auto">
+                {/* Search Bar and Map Prompt Row */}
+                <div className="mb-8 flex flex-col sm:flex-row gap-3 items-center">
+                    {/* Search Bar - Full width on mobile, takes remaining space on desktop */}
+                    <div className="relative flex-1 w-full">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                        <input
+                            type="text"
+                            placeholder="Search by property name or location..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-16 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white"
+                        />
+                        <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
                             <Button
-                                variant="primary"
-                                icon={MapIcon}
-                                className="whitespace-nowrap"
+                                variant="ghost"
+                                icon={Filter}
+                                onClick={() => setIsFilterOpen(true)}
+                                className="!p-2 bg-white"
                             >
-                                Map View
+                                Filter
+                                {getActiveFiltersCount() > 0 && (
+                                    <span className="bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center ml-1">
+                                        {getActiveFiltersCount()}
+                                    </span>
+                                )}
+                            </Button>
+                        </div>
+                    </div>
+
+                    {/* Map Prompt - Beside search bar */}
+                    <div className="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-lg whitespace-nowrap">
+                        <MapPin className="w-4 h-4 text-gray-800" />
+                        <span className="text-gray-800 font-medium text-sm">
+                            Find nearest property?
+                        </span>
+                        <Link to="/find-properties-map">
+                            <Button
+                                variant="ghost"
+                                icon={ArrowRight}
+                                iconPosition="right"
+                                className="text-md text-primary underline"
+                            >
+                                View Map
                             </Button>
                         </Link>
                     </div>
@@ -240,50 +241,22 @@ const AllProperties = () => {
                     <div className="text-center py-12 bg-white rounded-lg">
                         <img
                             src={noMoreProperty}
-                            alt="No more properties found"
-                            className="w-48 h-48 mx-auto mb-4 object-contain opacity-80"
+                            alt="No properties found"
+                            className="w-48 h-48 mx-auto mb-4 object-contain"
+                            onError={e => {
+                                e.target.onerror = null;
+                                e.target.src =
+                                    "https://via.placeholder.com/192x192?text=No+Properties";
+                            }}
                         />
-                        <p className="text-gray-500 text-lg">
-                            No more properties found matching your criteria.
+                        <p className="text-gray-500 font-semibold text-lg">
+                            No properties found
                         </p>
                         <p className="text-gray-400 text-sm mt-2">
-                            Try adjusting your filters or search term to find
-                            more properties.
+                            Try adjusting your filters or search term
                         </p>
-                        <button
-                            onClick={() => {
-                                setSearchTerm("");
-                                setFilters({
-                                    category: "all",
-                                    priceRange: { min: "", max: "" },
-                                    sex: "all",
-                                    capacity: "all"
-                                });
-                            }}
-                            className="mt-4 text-primary hover:underline font-medium"
-                        >
-                            Clear all filters
-                        </button>
                     </div>
                 )}
-
-                {/* "No More Properties" message at bottom when there are no more results to load */}
-                {hasMoreProperties &&
-                    filteredProperties.length === allProperties.length && (
-                        <div className="mt-12 text-center py-8 border-t border-gray-200">
-                            <img
-                                src={noMoreProperty}
-                                alt="No more properties"
-                                className="w-32 h-32 mx-auto mb-4 object-contain opacity-60"
-                            />
-                            <p className="text-gray-500">
-                                You've reached the end of the list
-                            </p>
-                            <p className="text-gray-400 text-sm">
-                                No more properties to show at this time
-                            </p>
-                        </div>
-                    )}
             </div>
 
             {/* Filter Menu Component */}
