@@ -1,7 +1,7 @@
 // src/layouts/MainLayout.jsx
 import React, { useState, useEffect } from "react";
 import { Outlet, Link } from "react-router-dom";
-import { User, Search, Menu, X } from "lucide-react";
+import { LayoutGrid, Search, Menu, X } from "lucide-react";
 import Button from "@/shared/components/Button";
 import logo from "@/assets/images/logo.svg";
 
@@ -39,19 +39,19 @@ const MainLayout = () => {
                         </span>
                     </Link>
 
-{/* Desktop CTA Buttons */}
-<div className="hidden md:flex gap-3">
-    <Link to="/signin">
-        <Button variant="ghost" icon={User}>
-            Sign In
-        </Button>
-    </Link>
-    <Link to="/signup">
-        <Button variant="primary" icon={Search}>
-            Find Property
-        </Button>
-    </Link>
-</div>
+                    {/* Desktop CTA Buttons */}
+                    <div className="hidden md:flex gap-3">
+                        <Link to="/signup">
+                            <Button variant="ghost" icon={LayoutGrid}>
+                                List Property
+                            </Button>
+                        </Link>
+                        <Link to="/properties">
+                            <Button variant="primary" icon={Search}>
+                                Find Property
+                            </Button>
+                        </Link>
+                    </div>
 
                     {/* Mobile Menu Button */}
                     <button
@@ -66,23 +66,31 @@ const MainLayout = () => {
                     </button>
                 </div>
 
-{/* Mobile Menu */}
-{isMobileMenuOpen && (
-    <div className="md:hidden bg-white border-t border-gray-100">
-        <div className="container mx-auto px-4 py-4 flex flex-col gap-3">
-            <Link to="/signin" className="w-full">
-                <Button variant="ghost" icon={User} className="w-full justify-center">
-                    Sign In
-                </Button>
-            </Link>
-            <Link to="/signup" className="w-full">
-                <Button variant="primary" icon={Search} className="w-full justify-center">
-                    Find Property
-                </Button>
-            </Link>
-        </div>
-    </div>
-)}
+                {/* Mobile Menu */}
+                {isMobileMenuOpen && (
+                    <div className="md:hidden bg-white border-t border-gray-100">
+                        <div className="container mx-auto px-4 py-4 flex flex-col gap-3">
+                            <Link to="/signup" className="w-full">
+                                <Button
+                                    variant="ghost"
+                                    icon={LayoutGrid}
+                                    className="w-full justify-center"
+                                >
+                                    List Property
+                                </Button>
+                            </Link>
+                            <Link to="/properties" className="w-full">
+                                <Button
+                                    variant="primary"
+                                    icon={Search}
+                                    className="w-full justify-center"
+                                >
+                                    Find Property
+                                </Button>
+                            </Link>
+                        </div>
+                    </div>
+                )}
             </header>
 
             <main className="pt-16">

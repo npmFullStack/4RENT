@@ -1,10 +1,11 @@
 // src/features/(landing)/components/PropertyMap.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Navigation, MapPin, X, Loader2 } from "lucide-react";
 import Button from "@/shared/components/Button";
+import PropertyCard from "@/features/(landing)/components/PropertyCard";
 
 // Fix for default marker icons in Leaflet with Vite
 delete L.Icon.Default.prototype._getIconUrl;
@@ -14,33 +15,60 @@ L.Icon.Default.mergeOptions({
     shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
-// Custom marker icons for different property types
-const boardingIcon = new L.Icon({
-    iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png",
-    shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-});
+// Custom circle marker with pulsing effect
+const createPulsingCircleMarker = (color) => {
+    return L.divIcon({
+        className: 'custom-pulsing-marker',
+        html: `
+            <div class="marker-pulse" style="
+                width: 20px;
+                height: 20px;
+                background-color: ${color};
+                border-radius: 50%;
+                border: 3px solid white;
+                box-shadow: 0 0 0 rgba(${color === '#3b82f6' ? '59, 130, 246' : color === '#ef4444' ? '239, 68, 68' : '34, 197, 94'}, 0.7);
+                animation: ${color === '#3b82f6' ? 'pulse-blue' : color === '#ef4444' ? 'pulse-red' : 'pulse-green'} 1.5s infinite;
+                cursor: pointer;
+            "></div>
+        `,
+        iconSize: [20, 20],
+        iconAnchor: [10, 10],
+        popupAnchor: [0, -10]
+    });
+};
 
-const apartmentIcon = new L.Icon({
-    iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png",
-    shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-});
-
-const userLocationIcon = new L.Icon({
-    iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
-    shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-});
+// Custom pulsing marker for user location
+const createUserPulsingMarker = () => {
+    return L.divIcon({
+        className: 'custom-user-marker',
+        html: `
+            <div style="position: relative; width: 24px; height: 24px;">
+                <div style="
+                    width: 24px;
+                    height: 24px;
+                    background-color: #22c55e;
+                    border-radius: 50%;
+                    border: 3px solid white;
+                    box-shadow: 0 0 0 rgba(34, 197, 94, 0.7);
+                    animation: pulse-green 1.5s infinite;
+                "></div>
+                <div style="
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    width: 8px;
+                    height: 8px;
+                    background-color: white;
+                    border-radius: 50%;
+                "></div>
+            </div>
+        `,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
+        popupAnchor: [0, -12]
+    });
+};
 
 // Component to center map on user location
 const SetViewOnLocation = ({ center, zoom }) => {
@@ -76,6 +104,9 @@ const PropertyMap = ({
     const [propertyLocations, setPropertyLocations] = useState([]);
     const [isLoadingLocations, setIsLoadingLocations] = useState(true);
     const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+    const [selectedProperty, setSelectedProperty] = useState(null);
+    const [popupOpen, setPopupOpen] = useState(false);
+    const [isLegendVisible, setIsLegendVisible] = useState(true);
 
     // Get user's current location
     const getUserLocation = () => {
@@ -95,7 +126,6 @@ const PropertyMap = ({
                     lng: position.coords.longitude
                 });
                 setIsLocating(false);
-                // Show success message temporarily
                 setShowSuccessMessage(true);
                 setTimeout(() => setShowSuccessMessage(false), 3000);
             },
@@ -114,7 +144,6 @@ const PropertyMap = ({
                 }
                 setLocationError(errorMessage);
                 setIsLocating(false);
-                // Auto-clear error after 5 seconds
                 setTimeout(() => setLocationError(null), 5000);
             }
         );
@@ -148,8 +177,20 @@ const PropertyMap = ({
     const mapCenter = userLocation || (propertyLocations[0]?.coordinates || { lat: 14.5995, lng: 120.9842 });
     const mapZoom = userLocation ? 14 : 12;
 
+    // Handle marker click to show PropertyCard
+    const handleMarkerClick = (property) => {
+        setSelectedProperty(property);
+        setPopupOpen(true);
+    };
+
+    // Close popup
+    const handleClosePopup = () => {
+        setPopupOpen(false);
+        setSelectedProperty(null);
+    };
+
     return (
-        <div className="w-full h-full flex flex-col bg-white">
+        <div className="w-full h-full flex flex-col bg-white relative">
             {/* Location Controls Bar */}
             <div className="bg-white border-b shadow-sm px-4 py-3">
                 <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -175,7 +216,6 @@ const PropertyMap = ({
                             variant="outline"
                             icon={MapPin}
                             onClick={() => {
-                                // TODO: Implement address search
                                 alert("Address search feature coming soon! Enter an address to find nearby properties.");
                             }}
                             className="text-sm"
@@ -217,127 +257,131 @@ const PropertyMap = ({
                         </div>
                     </div>
                 ) : (
-                    <MapContainer
-                        center={[mapCenter.lat, mapCenter.lng]}
-                        zoom={mapZoom}
-                        style={{ height: "100%", width: "100%" }}
-                        className="z-0"
-                        zoomControl={true}
-                        attributionControl={true}
-                    >
-                        <TileLayer
-                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-                            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                        />
-                        
-                        {/* User Location Marker */}
-                        {userLocation && (
-                            <>
-                                <Marker
-                                    position={[userLocation.lat, userLocation.lng]}
-                                    icon={userLocationIcon}
-                                >
-                                    <Popup>
-                                        <div className="text-center">
-                                            <p className="font-semibold text-gray-800">Your Location</p>
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                {userLocation.lat.toFixed(4)}°, {userLocation.lng.toFixed(4)}°
-                                            </p>
-                                        </div>
-                                    </Popup>
-                                </Marker>
-                                <SetViewOnLocation center={[userLocation.lat, userLocation.lng]} zoom={14} />
-                            </>
-                        )}
-
-                        {/* Property Markers */}
-                        {propertyLocations.map((property) => (
-                            <Marker
-                                key={property.id}
-                                position={[property.coordinates.lat, property.coordinates.lng]}
-                                icon={property.category === "boarding" ? boardingIcon : apartmentIcon}
-                                eventHandlers={{
-                                    click: () => {
-                                        // You can add analytics or tracking here
-                                        console.log(`Marker clicked: ${property.name}`);
-                                    }
-                                }}
-                            >
-                                <Popup className="custom-popup min-w-[280px]">
-                                    <div className="property-popup">
-                                        <img
-                                            src={property.image}
-                                            alt={property.name}
-                                            className="w-full h-36 object-cover rounded-lg mb-3"
-                                            onError={(e) => {
-                                                e.target.src = "https://via.placeholder.com/300x200?text=No+Image";
-                                            }}
-                                        />
-                                        <h3 className="font-bold text-gray-800 text-lg mb-1">
-                                            {property.name}
-                                        </h3>
-                                        <p className="text-sm text-gray-600 flex items-start gap-1 mb-3">
-                                            <MapPin className="w-3 h-3 mt-0.5 flex-shrink-0" />
-                                            <span className="line-clamp-2">{property.address}</span>
-                                        </p>
-                                        
-                                        {property.category === "boarding" && (
-                                            <div className="flex gap-3 mb-3 text-xs">
-                                                {property.capacity && (
-                                                    <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded">
-                                                        👥 {getCapacityText(property.capacity)}
-                                                    </span>
-                                                )}
-                                                {property.sex && getSexText && (
-                                                    <span className="bg-purple-50 text-purple-700 px-2 py-1 rounded">
-                                                        🛏️ {getSexText(property.sex)}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        )}
-                                        
-                                        <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-100">
-                                            <div>
-                                                <span className="text-xs text-gray-500">Price per month</span>
-                                                <p className="text-xl font-bold text-primary">
-                                                    ₱{property.price.toLocaleString()}
+                    <>
+                        <MapContainer
+                            center={[mapCenter.lat, mapCenter.lng]}
+                            zoom={mapZoom}
+                            style={{ height: "100%", width: "100%" }}
+                            className="z-0"
+                            zoomControl={true}
+                            attributionControl={true}
+                        >
+                            <TileLayer
+                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                            />
+                            
+                            {/* User Location Marker */}
+                            {userLocation && (
+                                <>
+                                    <Marker
+                                        position={[userLocation.lat, userLocation.lng]}
+                                        icon={createUserPulsingMarker()}
+                                    >
+                                        <Popup>
+                                            <div className="text-center">
+                                                <p className="font-semibold text-gray-800">Your Location</p>
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                    {userLocation.lat.toFixed(4)}°, {userLocation.lng.toFixed(4)}°
                                                 </p>
                                             </div>
-                                            <Button
-                                                variant="primary"
-                                                onClick={() => onPropertyClick(property)}
-                                                className="text-sm px-4 py-2"
-                                            >
-                                                View Details
-                                            </Button>
+                                        </Popup>
+                                    </Marker>
+                                    <SetViewOnLocation center={[userLocation.lat, userLocation.lng]} zoom={14} />
+                                </>
+                            )}
+
+                            {/* Property Markers */}
+                            {propertyLocations.map((property) => (
+                                <Marker
+                                    key={property.id}
+                                    position={[property.coordinates.lat, property.coordinates.lng]}
+                                    icon={createPulsingCircleMarker(
+                                        property.category === "boarding" ? "#3b82f6" : "#ef4444"
+                                    )}
+                                    eventHandlers={{
+                                        click: () => handleMarkerClick(property)
+                                    }}
+                                >
+                                    {/* Empty popup - we'll use our custom PropertyCard instead */}
+                                    <Popup className="hidden-popup"></Popup>
+                                </Marker>
+                            ))}
+                        </MapContainer>
+
+                        {/* Legend - Top Right with Close Button */}
+                        {isLegendVisible && (
+                            <div className="absolute top-4 right-4 z-[1000] bg-white rounded-lg shadow-lg border border-gray-200 min-w-[160px] animate-slide-in">
+                                <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100">
+                                    <h4 className="text-sm font-semibold text-gray-700">Map Legend</h4>
+                                    <button
+                                        onClick={() => setIsLegendVisible(false)}
+                                        className="text-gray-400 hover:text-gray-600 transition-colors p-1 hover:bg-gray-100 rounded"
+                                        aria-label="Close legend"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+                                <div className="px-4 py-3">
+                                    <div className="flex flex-col gap-2">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-3 h-3 rounded-full bg-blue-500 animate-pulse"></div>
+                                            <span className="text-gray-700 text-xs">Boarding House</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse"></div>
+                                            <span className="text-gray-700 text-xs">Apartment</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
+                                            <span className="text-gray-700 text-xs">Your Location</span>
                                         </div>
                                     </div>
-                                </Popup>
-                            </Marker>
-                        ))}
-                    </MapContainer>
-                )}
-            </div>
+                                    <div className="mt-3 pt-2 border-t border-gray-100">
+                                        <p className="text-xs text-gray-400">{propertyLocations.length} properties shown</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
-            {/* Legend */}
-            <div className="bg-white border-t shadow-sm px-4 py-3">
-                <div className="flex justify-center items-center gap-6 text-sm flex-wrap">
-                    <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded-full bg-blue-600 shadow-sm"></div>
-                        <span className="text-gray-700">Boarding House</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded-full bg-red-600 shadow-sm"></div>
-                        <span className="text-gray-700">Apartment</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 rounded-full bg-green-600 shadow-sm"></div>
-                        <span className="text-gray-700">Your Location</span>
-                    </div>
-                    <div className="text-xs text-gray-400">
-                        {propertyLocations.length} properties shown
-                    </div>
-                </div>
+                        {/* Show Legend Button (when legend is hidden) */}
+                        {!isLegendVisible && (
+                            <button
+                                onClick={() => setIsLegendVisible(true)}
+                                className="absolute top-4 right-4 z-[1000] bg-white rounded-lg shadow-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 animate-slide-in"
+                            >
+                                <MapPin className="w-4 h-4" />
+                                Show Legend
+                            </button>
+                        )}
+
+                        {/* Custom PropertyCard Popup */}
+                        {popupOpen && selectedProperty && (
+                            <div className="absolute top-4 right-4 z-[1000] w-80 animate-slide-in">
+                                <div className="relative">
+                                    <button
+                                        onClick={handleClosePopup}
+                                        className="absolute -top-2 -right-2 z-10 bg-white rounded-full p-1 shadow-lg hover:bg-gray-100 transition-colors"
+                                    >
+                                        <X className="w-5 h-5 text-gray-600" />
+                                    </button>
+                                    <PropertyCard
+                                        id={selectedProperty.id}
+                                        image={selectedProperty.image}
+                                        name={selectedProperty.name}
+                                        category={selectedProperty.category}
+                                        address={selectedProperty.address}
+                                        price={selectedProperty.price}
+                                        capacity={selectedProperty.capacity}
+                                        sex={selectedProperty.sex}
+                                        getCapacityText={getCapacityText}
+                                        getSexText={getSexText}
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </>
+                )}
             </div>
         </div>
     );

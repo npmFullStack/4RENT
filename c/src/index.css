@@ -33,25 +33,131 @@
 
 /* Map container styles - yellowish/warm theme */
 .leaflet-container {
-    background-color: #fef9e6;
+    background-color: #fff8e7;
     font-family: "Poppins", sans-serif;
 }
 
-/* Make the map look warmer/yellowish with filters */
+/* Make the map look warmer/yellowish with enhanced filters */
 .leaflet-tile-pane {
-    filter: sepia(0.08) brightness(1.02) saturate(1.05);
+    filter: sepia(0.15) brightness(1.05) saturate(1.1) hue-rotate(-2deg);
 }
 
 .leaflet-layer {
     filter: brightness(1.02) contrast(1.02);
 }
 
-/* Optional: Style the zoom controls to match your theme */
+/* Custom Circle Marker with Pulsing Animation */
+.custom-pulsing-marker {
+    background: transparent;
+}
+
+.marker-pulse {
+    transition: all 0.2s ease;
+}
+
+.marker-pulse:hover {
+    transform: scale(1.2);
+}
+
+/* Pulsing animations for markers */
+@keyframes pulse-blue {
+    0% {
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 12px rgba(59, 130, 246, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+    }
+}
+
+@keyframes pulse-red {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 12px rgba(239, 68, 68, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    }
+}
+
+@keyframes pulse-green {
+    0% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 15px rgba(34, 197, 94, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+    }
+}
+
+/* Marker color classes */
+.marker-blue {
+    animation: pulse-blue 1.5s infinite;
+}
+
+.marker-red {
+    animation: pulse-red 1.5s infinite;
+}
+
+.marker-green {
+    animation: pulse-green 1.5s infinite;
+}
+
+/* Hide default popup for custom markers */
+.hidden-popup .leaflet-popup-content-wrapper,
+.hidden-popup .leaflet-popup-tip {
+    display: none;
+}
+
+.hidden-popup {
+    display: none;
+}
+
+/* Slide in animation for PropertyCard popup */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.animate-slide-in {
+    animation: slideIn 0.3s ease-out;
+}
+
+/* Slide out animation */
+@keyframes slideOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+}
+
+.animate-slide-out {
+    animation: slideOut 0.3s ease-out;
+}
+
+/* Zoom Controls Styling */
 .leaflet-control-zoom a {
     background-color: white !important;
     color: #E6B800 !important;
     border-radius: 8px !important;
     transition: all 0.2s ease !important;
+    font-weight: bold !important;
 }
 
 .leaflet-control-zoom a:hover {
@@ -64,10 +170,96 @@
     font-weight: bold !important;
 }
 
-/* Style the attribution to be subtle */
+/* Attribution Styling */
 .leaflet-control-attribution {
     font-size: 9px !important;
     background-color: rgba(255, 255, 255, 0.8) !important;
     border-radius: 4px !important;
     padding: 2px 5px !important;
+}
+
+/* Legend Box Styling */
+.map-legend {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+}
+
+/* Custom scrollbar for property card if needed */
+.property-card-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+
+.property-card-scroll::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.property-card-scroll::-webkit-scrollbar-thumb {
+    background: #E6B800;
+    border-radius: 3px;
+}
+
+.property-card-scroll::-webkit-scrollbar-thumb:hover {
+    background: #d4a800;
+}
+
+/* Fade in animation for success messages */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Map tile loading optimization */
+.leaflet-tile {
+    transition: all 0.2s ease;
+}
+
+/* Improve marker popup z-index */
+.leaflet-popup {
+    z-index: 1000 !important;
+}
+
+/* Custom marker hover effect */
+.custom-pulsing-marker:hover .marker-pulse {
+    transform: scale(1.3);
+    transition: transform 0.2s ease;
+}
+
+/* Responsive legend for mobile */
+@media (max-width: 640px) {
+    .map-legend {
+        font-size: 10px;
+        padding: 6px 10px;
+    }
+    
+    .map-legend .legend-dot {
+        width: 8px;
+        height: 8px;
+    }
 }

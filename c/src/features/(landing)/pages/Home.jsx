@@ -89,14 +89,6 @@ const getSexText = sex => {
 const Home = () => {
     const navigate = useNavigate();
 
-    const getCapacityText = capacity => {
-        if (capacity === 1) return "1 person/room";
-        if (capacity === 2) return "2 persons/room";
-        if (capacity === 3) return "3 persons/room";
-        if (capacity >= 4) return `${capacity}+ persons/room`;
-        return "";
-    };
-
     return (
         <div>
             {/* Hero Section */}
@@ -155,18 +147,17 @@ const Home = () => {
                 </div>
             </section>
 
-            {/* Popular Properties Section */}
+            {/* Random Properties Section */}
             <section className="py-16 md:py-20 bg-white">
                 <div className="container mx-auto px-4">
-                    {/* Header with View All button */}
-                    <div className="flex flex-col sm:flex-row justify-between items-center mb-12 gap-4">
-                        <div className="text-center sm:text-left">
+                    {/* Header with View All button - below on mobile, right on desktop */}
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-12 gap-4">
+                        <div className="text-left">
                             <h2 className="text-3xl md:text-4xl font-bold text-gray-800">
-                                Popular Properties
+                                Random Properties
                             </h2>
                             <p className="text-gray-600 mt-2">
-                                Most viewed and highly-rated properties in the
-                                Philippines
+                                Check out random properties in the Philippines
                             </p>
                         </div>
                         <Button
@@ -174,6 +165,7 @@ const Home = () => {
                             icon={ArrowRight}
                             iconPosition="right"
                             onClick={() => navigate("/properties")}
+                            className="sm:whitespace-nowrap self-end sm:self-auto"
                         >
                             View All
                         </Button>

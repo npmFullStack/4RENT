@@ -145,9 +145,9 @@ const AllProperties = () => {
                 </div>
 
                 {/* Search Bar and Map Prompt Row */}
-                <div className="mb-8 flex flex-col sm:flex-row gap-3 items-center">
-                    {/* Search Bar - Full width on mobile, takes remaining space on desktop */}
-                    <div className="relative flex-1 w-full">
+                <div className="mb-8 flex flex-col sm:flex-row sm:items-center gap-3">
+                    {/* Search Bar - Full width on mobile, flex-1 on desktop */}
+                    <div className="relative flex-1 w-full sm:w-auto">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                         <input
                             type="text"
@@ -173,18 +173,20 @@ const AllProperties = () => {
                         </div>
                     </div>
 
-                    {/* Map Prompt - Beside search bar */}
-                    <div className="flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-lg whitespace-nowrap">
-                        <MapPin className="w-4 h-4 text-gray-800" />
-                        <span className="text-gray-800 font-medium text-sm">
-                            Find nearest property?
-                        </span>
+                    {/* Map Prompt - Beside search bar on desktop, full width on mobile */}
+                    <div className="flex items-center justify-between sm:justify-start gap-2 bg-gray-50 px-4 py-3 rounded-lg w-full sm:w-auto">
+                        <div className="flex items-center gap-2">
+                            <MapPin className="w-4 h-4 text-gray-800 flex-shrink-0" />
+                            <span className="text-gray-800 font-medium text-sm">
+                                Find nearest property?
+                            </span>
+                        </div>
                         <Link to="/find-properties-map">
                             <Button
                                 variant="ghost"
                                 icon={ArrowRight}
                                 iconPosition="right"
-                                className="text-md text-primary underline"
+                                className="text-md text-primary underline px-0"
                             >
                                 View Map
                             </Button>
@@ -193,7 +195,7 @@ const AllProperties = () => {
                 </div>
 
                 {/* Results Count */}
-                <div className="mb-6 flex justify-between items-center">
+                <div className="mb-6 flex justify-between items-center flex-wrap gap-2">
                     <p className="text-gray-600">
                         Found{" "}
                         <span className="font-semibold text-gray-800">

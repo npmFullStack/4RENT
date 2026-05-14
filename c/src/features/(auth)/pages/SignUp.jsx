@@ -55,9 +55,9 @@ const SignUp = () => {
                 <h1 className="text-2xl font-bold text-gray-800 mb-2">
                     Create an Account
                 </h1>
-                <p className="text-gray-600">
-                    Join 4RENT to find your perfect home
-                </p>
+<p className="text-gray-600">
+    Join 4RENT to list your property and reach thousands of potential tenants
+</p>
             </div>
 
             {/* Form - No shadow */}

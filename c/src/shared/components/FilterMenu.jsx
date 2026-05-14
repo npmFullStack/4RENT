@@ -1,6 +1,6 @@
 // src/shared/components/FilterMenu.jsx
 import React, { useState } from "react";
-import { X, ChevronDown, Users } from "lucide-react";
+import { X, Users, SlidersHorizontal, RotateCcw } from "lucide-react";
 import Button from "./Button";
 
 const FilterMenu = ({ isOpen, onClose, onApplyFilters, initialFilters }) => {
@@ -51,20 +51,26 @@ const FilterMenu = ({ isOpen, onClose, onApplyFilters, initialFilters }) => {
 
     if (!isOpen) return null;
 
+    // Helper function to check if a filter option is active
+    const isCategoryActive = value => filters.category === value;
+    const isSexActive = value => filters.sex === value;
+    const isCapacityActive = value => filters.capacity === value;
+
     return (
         <>
-            {/* Backdrop */}
+            {/* Backdrop - Dark overlay with backdrop blur */}
             <div
-                className="fixed inset-0 bg-black/50 z-40 transition-opacity"
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] transition-opacity"
                 onClick={onClose}
             />
 
             {/* Filter Menu */}
-            <div className="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out overflow-y-auto">
+            <div className="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-[70] transform transition-transform duration-300 ease-in-out overflow-y-auto">
                 {/* Header */}
-                <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+                <div className="sticky top-0 bg-white border-b border-gray-200 px-5 py-3 flex justify-between items-center">
                     <div className="flex items-center gap-2">
-                        <h2 className="text-xl font-bold text-gray-800">
+                        <SlidersHorizontal className="w-4 h-4 text-gray-800" />
+                        <h2 className="text-lg font-semibold text-gray-800">
                             Filter Properties
                         </h2>
                     </div>
@@ -72,24 +78,24 @@ const FilterMenu = ({ isOpen, onClose, onApplyFilters, initialFilters }) => {
                         onClick={onClose}
                         className="p-1 hover:bg-gray-100 rounded-full transition-colors"
                     >
-                        <X className="w-6 h-6 text-gray-600" />
+                        <X className="w-5 h-5 text-gray-600" />
                     </button>
                 </div>
 
                 {/* Filter Content */}
-                <div className="p-6 space-y-6">
+                <div className="p-5 space-y-5">
                     {/* Category Filter */}
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-3">
+                        <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
                             Property Type
                         </label>
                         <div className="flex gap-2">
                             <button
                                 onClick={() => handleCategoryChange("all")}
-                                className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all ${
-                                    filters.category === "all"
-                                        ? "bg-gray-600 text-white shadow-md"
-                                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                className={`flex-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                                    isCategoryActive("all")
+                                        ? "shadow-sm bg-gray-600 text-white font-semibold"
+                                        : "bg-gray-100 text-gray-400 hover:bg-gray-300"
                                 }`}
                             >
                                 All
@@ -98,20 +104,20 @@ const FilterMenu = ({ isOpen, onClose, onApplyFilters, initialFilters }) => {
                                 onClick={() =>
                                     handleCategoryChange("apartment")
                                 }
-                                className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all ${
-                                    filters.category === "apartment"
-                                        ? "bg-gray-600 text-white shadow-md"
-                                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                className={`flex-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                                    isCategoryActive("apartment")
+                                        ? "shadow-sm bg-gray-600 text-white font-semibold"
+                                        : "bg-gray-100 text-gray-400 hover:bg-gray-300"
                                 }`}
                             >
                                 Apartment
                             </button>
                             <button
                                 onClick={() => handleCategoryChange("boarding")}
-                                className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all ${
-                                    filters.category === "boarding"
-                                        ? "bg-gray-600 text-white shadow-md"
-                                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                className={`flex-1 px-3 py-1.5 rounded-lg text-sm truncate font-medium transition-all ${
+                                    isCategoryActive("boarding")
+                                        ? "shadow-sm bg-gray-600 text-white font-semibold"
+                                        : "bg-gray-100 text-gray-400 hover:bg-gray-300"
                                 }`}
                             >
                                 Boarding House
@@ -121,7 +127,7 @@ const FilterMenu = ({ isOpen, onClose, onApplyFilters, initialFilters }) => {
 
                     {/* Price Range */}
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-3">
+                        <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
                             Price Range (₱/month)
                         </label>
                         <div className="flex gap-3">
@@ -139,7 +145,7 @@ const FilterMenu = ({ isOpen, onClose, onApplyFilters, initialFilters }) => {
                                             }
                                         })
                                     }
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                    className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                                 />
                             </div>
                             <div className="flex-1">
@@ -156,7 +162,7 @@ const FilterMenu = ({ isOpen, onClose, onApplyFilters, initialFilters }) => {
                                             }
                                         })
                                     }
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                                    className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                                 />
                             </div>
                         </div>
@@ -165,7 +171,7 @@ const FilterMenu = ({ isOpen, onClose, onApplyFilters, initialFilters }) => {
                     {/* Sex Filter (Boarding House only) */}
                     {showSexFilter && (
                         <div className="animate-fadeIn">
-                            <label className="block text-sm font-semibold text-gray-700 mb-3">
+                            <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
                                 Preferred Tenant Gender
                             </label>
                             <div className="flex gap-2">
@@ -173,10 +179,10 @@ const FilterMenu = ({ isOpen, onClose, onApplyFilters, initialFilters }) => {
                                     onClick={() =>
                                         setFilters({ ...filters, sex: "all" })
                                     }
-                                    className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all ${
-                                        filters.sex === "all"
-                                            ? "bg-gray-600 text-white shadow-md"
-                                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                    className={`flex-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                                        isSexActive("all")
+                                            ? "shadow-sm bg-gray-600 text-white font-semibold"
+                                            : "bg-gray-100 text-gray-400 hover:bg-gray-300"
                                     }`}
                                 >
                                     All
@@ -185,13 +191,13 @@ const FilterMenu = ({ isOpen, onClose, onApplyFilters, initialFilters }) => {
                                     onClick={() =>
                                         setFilters({ ...filters, sex: "male" })
                                     }
-                                    className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all ${
-                                        filters.sex === "male"
-                                            ? "bg-blue-600 text-white shadow-md"
-                                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                    className={`flex-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                                        isSexActive("male")
+                                            ? "shadow-sm bg-gray-600 text-white font-semibold"
+                                            : "bg-gray-100 text-gray-400 hover:bg-gray-300"
                                     }`}
                                 >
-                                    Male Only
+                                    Male
                                 </button>
                                 <button
                                     onClick={() =>
@@ -200,13 +206,13 @@ const FilterMenu = ({ isOpen, onClose, onApplyFilters, initialFilters }) => {
                                             sex: "female"
                                         })
                                     }
-                                    className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all ${
-                                        filters.sex === "female"
-                                            ? "bg-pink-600 text-white shadow-md"
-                                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                    className={`flex-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                                        isSexActive("female")
+                                            ? "shadow-sm bg-gray-600 text-white font-semibold"
+                                            : "bg-gray-100 text-gray-400 hover:bg-gray-300"
                                     }`}
                                 >
-                                    Female Only
+                                    Female
                                 </button>
                             </div>
                         </div>
@@ -215,8 +221,8 @@ const FilterMenu = ({ isOpen, onClose, onApplyFilters, initialFilters }) => {
                     {/* Capacity Filter (Boarding House only) */}
                     {showCapacityFilter && (
                         <div className="animate-fadeIn">
-                            <label className="block text-sm font-semibold text-gray-700 mb-3">
-                                <Users className="w-4 h-4 inline mr-1" />
+                            <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
+                                <Users className="w-3 h-3 inline mr-1" />
                                 Room Capacity
                             </label>
                             <div className="grid grid-cols-2 gap-2">
@@ -227,10 +233,10 @@ const FilterMenu = ({ isOpen, onClose, onApplyFilters, initialFilters }) => {
                                             capacity: "all"
                                         })
                                     }
-                                    className={`px-3 py-2 rounded-lg font-medium transition-all text-sm ${
-                                        filters.capacity === "all"
-                                            ? "bg-gray-600 text-white shadow-md"
-                                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                    className={`px-2 py-1.5 rounded-lg font-medium transition-all text-xs ${
+                                        isCapacityActive("all")
+                                            ? "shadow-sm bg-gray-600 text-white font-semibold"
+                                            : "bg-gray-100 text-gray-400 hover:bg-gray-300"
                                     }`}
                                 >
                                     All
@@ -242,13 +248,13 @@ const FilterMenu = ({ isOpen, onClose, onApplyFilters, initialFilters }) => {
                                             capacity: "1"
                                         })
                                     }
-                                    className={`px-3 py-2 rounded-lg font-medium transition-all text-sm ${
-                                        filters.capacity === "1"
-                                            ? "bg-gray-600 text-white shadow-md"
-                                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                    className={`px-2 py-1.5 rounded-lg font-medium transition-all text-xs ${
+                                        isCapacityActive("1")
+                                            ? "shadow-sm bg-gray-600 text-white font-semibold"
+                                            : "bg-gray-100 text-gray-400 hover:bg-gray-300"
                                     }`}
                                 >
-                                    1 person/room
+                                    1 person
                                 </button>
                                 <button
                                     onClick={() =>
@@ -257,13 +263,13 @@ const FilterMenu = ({ isOpen, onClose, onApplyFilters, initialFilters }) => {
                                             capacity: "2"
                                         })
                                     }
-                                    className={`px-3 py-2 rounded-lg font-medium transition-all text-sm ${
-                                        filters.capacity === "2"
-                                            ? "bg-gray-600 text-white shadow-md"
-                                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                    className={`px-2 py-1.5 rounded-lg font-medium transition-all text-xs ${
+                                        isCapacityActive("2")
+                                            ? "shadow-sm bg-gray-600 text-white font-semibold"
+                                            : "bg-gray-100 text-gray-400 hover:bg-gray-300"
                                     }`}
                                 >
-                                    2 persons/room
+                                    2 persons
                                 </button>
                                 <button
                                     onClick={() =>
@@ -272,13 +278,13 @@ const FilterMenu = ({ isOpen, onClose, onApplyFilters, initialFilters }) => {
                                             capacity: "3"
                                         })
                                     }
-                                    className={`px-3 py-2 rounded-lg font-medium transition-all text-sm ${
-                                        filters.capacity === "3"
-                                            ? "bg-gray-600 text-white shadow-md"
-                                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                    className={`px-2 py-1.5 rounded-lg font-medium transition-all text-xs ${
+                                        isCapacityActive("3")
+                                            ? "shadow-sm bg-gray-600 text-white font-semibold"
+                                            : "bg-gray-100 text-gray-400 hover:bg-gray-300"
                                     }`}
                                 >
-                                    3 persons/room
+                                    3 persons
                                 </button>
                                 <button
                                     onClick={() =>
@@ -287,32 +293,34 @@ const FilterMenu = ({ isOpen, onClose, onApplyFilters, initialFilters }) => {
                                             capacity: "4+"
                                         })
                                     }
-                                    className={`px-3 py-2 rounded-lg font-medium transition-all text-sm col-span-2 ${
-                                        filters.capacity === "4+"
-                                            ? "bg-gray-600 text-white shadow-md"
-                                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                    className={`px-2 py-1.5 rounded-lg font-medium transition-all text-xs col-span-2 ${
+                                        isCapacityActive("4+")
+                                            ? "shadow-sm bg-gray-600 text-white font-semibold"
+                                            : "bg-gray-100 text-gray-400 hover:bg-gray-300"
                                     }`}
                                 >
-                                    4+ persons/room
+                                    4+ persons
                                 </button>
                             </div>
                         </div>
                     )}
                 </div>
 
-                {/* Footer Buttons */}
-                <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex gap-3">
+                {/* Footer Buttons with Icons */}
+                <div className="sticky bottom-0 bg-white border-t border-gray-200 px-5 py-4 flex gap-3">
                     <Button
                         variant="outline"
+                        icon={RotateCcw}
                         onClick={handleReset}
-                        className="flex-1"
+                        className="flex-1 text-sm"
                     >
                         Reset All
                     </Button>
                     <Button
                         variant="primary"
+                        icon={SlidersHorizontal}
                         onClick={handleApply}
-                        className="flex-1"
+                        className="flex-1 text-sm"
                     >
                         Apply Filters
                     </Button>

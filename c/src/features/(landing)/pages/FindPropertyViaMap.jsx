@@ -1,11 +1,7 @@
 // src/features/(landing)/pages/FindPropertyViaMap.jsx
 import React from "react";
-import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import PropertyMap from "@/features/(landing)/components/PropertyMap";
-import Button from "@/shared/components/Button";
-
-// Import property data (you can import from a shared file or pass as props)
 import property1 from "@/assets/images/property1.png";
 import property2 from "@/assets/images/property2.png";
 import property3 from "@/assets/images/property3.png";
@@ -61,7 +57,6 @@ const FindPropertyViaMap = () => {
     };
 
     const handlePropertyClick = property => {
-        // Navigate to property details page
         navigate(`/property/${property.id}`, {
             state: {
                 id: property.id,
@@ -76,45 +71,30 @@ const FindPropertyViaMap = () => {
         });
     };
 
-    const handleBack = () => {
-        navigate(-1); // Go back to previous page
-    };
-
     return (
-        <div className="min-h-screen bg-gray-50">
-            {/* Header Bar */}
-            <div className="bg-white shadow-sm border-b">
-                <div className="container mx-auto px-4 py-4">
-                    <div className="flex items-center gap-4">
-                        <Button
-                            variant="ghost"
-                            icon={ArrowLeft}
-                            onClick={handleBack}
-                            className="!p-2"
-                        >
-                            Back
-                        </Button>
-                        <div>
-                            <h1 className="text-2xl font-bold text-gray-800">
-                                Find Properties on Map
-                            </h1>
-                            <p className="text-sm text-gray-600">
-                                Discover boarding houses and apartments near you
-                            </p>
-                        </div>
+        <div className="min-h-screen bg-gray-50 py-8">
+            <div className="container mx-auto px-4">
+                {/* Header - Same style as AllProperties.jsx */}
+                <div className="mb-6">
+                    <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
+                        Find Properties on Map
+                    </h1>
+                    <p className="text-gray-600 mt-2">
+                        Discover boarding houses and apartments near you
+                    </p>
+                </div>
+
+                {/* Map Container with max-width */}
+                <div className="max-w-6xl mx-auto">
+                    <div className="h-[calc(100vh-200px)] rounded-xl overflow-hidden shadow-lg">
+                        <PropertyMap
+                            properties={allProperties}
+                            getCapacityText={getCapacityText}
+                            getSexText={getSexText}
+                            onPropertyClick={handlePropertyClick}
+                        />
                     </div>
                 </div>
-            </div>
-
-            {/* Full-height Map Container */}
-            <div className="h-[calc(100vh-80px)]">
-<PropertyMap
-    properties={allProperties}
-    getCapacityText={getCapacityText}
-    getSexText={getSexText}
-    onPropertyClick={handlePropertyClick}
-
-/>
             </div>
         </div>
     );
