@@ -130,37 +130,42 @@ const FindPropertyViaMap = () => {
         <div className="min-h-screen bg-gray-50 py-8">
             <div className="container mx-auto px-4">
 
-                {/* Header */}
+                {/* Header with title, subheading, and buttons in one row */}
                 <div className="mb-5">
-                    <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
-                        Find Properties on Map
-                    </h1>
-                    <p className="text-gray-600 mt-1.5">
-                        Discover boarding houses and apartments near you
-                    </p>
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                        {/* Text group */}
+                        <div>
+                            <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
+                                Find Properties on Map
+                            </h1>
+                            <p className="text-gray-600 mt-1.5">
+                                Discover boarding houses and apartments near you
+                            </p>
+                        </div>
 
-                    {/* Action Buttons — below subheading, full width on mobile */}
-                    <div className="flex flex-col sm:flex-row gap-3 mt-4">
-                        {/* Set Address Manually — first on mobile */}
-                        <Button
-                            variant="outline"
-                            icon={MapPin}
-                            onClick={() => setIsManualModalOpen(true)}
-                            className="w-full sm:w-auto text-sm order-1 sm:order-2"
-                        >
-                            Set Address Manually
-                        </Button>
+                        {/* Buttons group: Outline first, Primary second (order-1 and order-2 on mobile) */}
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            {/* Set Address Manually - Outline button (first in order) */}
+                            <Button
+                                variant="outline"
+                                icon={MapPin}
+                                onClick={() => setIsManualModalOpen(true)}
+                                className="w-full sm:w-auto text-sm order-1"
+                            >
+                                Set Address Manually
+                            </Button>
 
-                        {/* Use My Location — second on mobile */}
-                        <Button
-                            variant="primary"
-                            icon={isLocating ? Loader2 : Navigation}
-                            onClick={getUserLocation}
-                            disabled={isLocating}
-                            className={`w-full sm:w-auto text-sm order-2 sm:order-1 ${isLocating ? "[&_svg]:animate-spin" : ""}`}
-                        >
-                            {isLocating ? "Getting location..." : "Use My Current Location"}
-                        </Button>
+                            {/* Use My Location - Primary button (second in order) */}
+                            <Button
+                                variant="primary"
+                                icon={isLocating ? Loader2 : Navigation}
+                                onClick={getUserLocation}
+                                disabled={isLocating}
+                                className={`w-full sm:w-auto text-sm order-2 ${isLocating ? "[&_svg]:animate-spin" : ""}`}
+                            >
+                                {isLocating ? "Getting location..." : "Use My Current Location"}
+                            </Button>
+                        </div>
                     </div>
 
                     {/* Status messages */}
