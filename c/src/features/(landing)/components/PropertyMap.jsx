@@ -271,16 +271,7 @@ const PropertyMap = ({
                                     <div className="flex justify-center pt-2 pb-1">
                                         <div className="w-10 h-1 rounded-full bg-gray-200"></div>
                                     </div>
-                                    <div className="flex items-center justify-between px-4 py-2">
-                                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Selected Property</p>
-                                        <button
-                                            onClick={handleClosePopup}
-                                            className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
-                                        >
-                                            <X className="w-4 h-4 text-gray-500" />
-                                        </button>
-                                    </div>
-                                    <div className="overflow-y-auto max-h-[60vh] px-2 pb-4">
+                                    <div className="max-h-[70vh] overflow-y-auto">
                                         <PropertyCard
                                             id={selectedProperty.id}
                                             image={selectedProperty.image}
@@ -292,6 +283,7 @@ const PropertyMap = ({
                                             sex={selectedProperty.sex}
                                             getCapacityText={getCapacityText}
                                             getSexText={getSexText}
+                                            onClose={handleClosePopup}
                                         />
                                     </div>
                                 </div>
@@ -299,29 +291,20 @@ const PropertyMap = ({
 
                             {/* Desktop: floating card top-left */}
                             <div className="absolute top-3 left-3 z-[1000] w-80 hidden sm:block animate-slide-in">
-                                <div className="relative bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-                                    <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-50">
-                                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Selected Property</p>
-                                        <button
-                                            onClick={handleClosePopup}
-                                            className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
-                                        >
-                                            <X className="w-4 h-4 text-gray-500" />
-                                        </button>
-                                    </div>
-                                    <PropertyCard
-                                        id={selectedProperty.id}
-                                        image={selectedProperty.image}
-                                        name={selectedProperty.name}
-                                        category={selectedProperty.category}
-                                        address={selectedProperty.address}
-                                        price={selectedProperty.price}
-                                        capacity={selectedProperty.capacity}
-                                        sex={selectedProperty.sex}
-                                        getCapacityText={getCapacityText}
-                                        getSexText={getSexText}
-                                    />
-                                </div>
+                                <PropertyCard
+                                    id={selectedProperty.id}
+                                    image={selectedProperty.image}
+                                    name={selectedProperty.name}
+                                    category={selectedProperty.category}
+                                    address={selectedProperty.address}
+                                    price={selectedProperty.price}
+                                    capacity={selectedProperty.capacity}
+                                    sex={selectedProperty.sex}
+                                    getCapacityText={getCapacityText}
+                                    getSexText={getSexText}
+                                    onClose={handleClosePopup}
+                                    isInPopup={true}
+                                />
                             </div>
                         </>
                     )}

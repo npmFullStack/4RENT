@@ -7,7 +7,8 @@ import {
     Users,
     PhilippinePeso,
     Home,
-    Bed
+    Bed,
+    X
 } from "lucide-react";
 import Button from "@/shared/components/Button";
 
@@ -21,7 +22,9 @@ const PropertyCard = ({
     capacity,
     sex,
     getCapacityText,
-    getSexText
+    getSexText,
+    onClose,
+    isInPopup = false
 }) => {
     const navigate = useNavigate();
 
@@ -46,9 +49,22 @@ const PropertyCard = ({
     const categoryColor = isBoarding ? "bg-blue-600" : "bg-red-600";
 
     return (
-        <div className="group bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer flex flex-col">
+        <div className="group bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer flex flex-col relative">
+            {/* Close Button - Top Right of Image */}
+            {onClose && (
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onClose();
+                    }}
+                    className="absolute top-3 right-3 z-20 bg-white/90 backdrop-blur-sm hover:bg-white rounded-full p-1.5 shadow-md transition-all duration-200 hover:scale-110"
+                >
+                    <X className="w-4 h-4 text-gray-600" />
+                </button>
+            )}
+
             {/* Image Container */}
-            <div className="relative h-56 w-full overflow-hidden">
+            <div className="relative h-56 w-full overflow-hidden flex-shrink-0">
                 <img
                     src={image}
                     alt={name}
@@ -67,8 +83,6 @@ const PropertyCard = ({
 
             {/* Content Section */}
             <div className="p-4 flex flex-col flex-grow">
-
-
                 {/* Property Name - bold sub heading style */}
                 <h3 className="text-xl font-bold text-gray-800 mb-2 line-clamp-1">
                     {name}
@@ -77,7 +91,7 @@ const PropertyCard = ({
                 {/* Address with icon */}
                 <div className="flex items-center gap-1 text-sm text-gray-600 mb-2">
                     <MapPin className="w-3 h-3 flex-shrink-0" />
-                    <span className="line-clamp-1">{address}</span>
+                    <span className="line-clamp-2">{address}</span>
                 </div>
 
                 {/* Capacity info for boarding houses */}
