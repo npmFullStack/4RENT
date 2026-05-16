@@ -7,15 +7,14 @@ import {
     Bell,
     LayoutDashboard,
     Home,
-    Building2,
     Users,
     Settings,
     LogOut,
     Sidebar,
-    User,
-    Mail,
-    Shield,
-    ChevronRight
+    Calendar,
+    HandCoins,
+    FileText,
+    Wrench
 } from "lucide-react";
 import logo from "@/assets/images/logo.svg";
 import avatar from "@/assets/images/avatar.svg";
@@ -73,10 +72,13 @@ const DashboardLayout = () => {
 
     const sidebarLinks = [
         { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-        { icon: Home, label: "Properties", path: "/dashboard/properties" },
-        { icon: Building2, label: "My Listings", path: "/dashboard/listings" },
-        { icon: Users, label: "Tenants", path: "/dashboard/tenants" },
-        { icon: Settings, label: "Settings", path: "/dashboard/settings" }
+        { icon: Home, label: "Properties", path: "/my-properties" },
+        { icon: Users, label: "Tenants", path: "/tenants" },
+        { icon: Calendar, label: "Rent Calendar", path: "/rent-calendar" },
+        { icon: HandCoins, label: "Payments", path: "/payments" },
+        { icon: Wrench, label: "Repairs", path: "/repairs" },
+        { icon: FileText, label: "Reports", path: "/reports" },
+        { icon: Settings, label: "Settings", path: "/settings" }
     ];
 
     const toggleSidebar = () => {
