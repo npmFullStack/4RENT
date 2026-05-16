@@ -75,17 +75,7 @@ const AuthLayout = () => {
             >
                 <Outlet />
             </main>
-            {/* Footer */}
-            <footer className="bg-gray-800 text-white py-8">
-                <div className="container mx-auto px-4 text-center">
-                    <p>
-                        &copy; {new Date().getFullYear()} 4RENT. All rights
-                        reserved.
-                    </p>
-                    <p className="mt-2 text-gray-400">Developed by NorDev.</p>
-                </div>
-            </footer>
-        </div>
+ </div>
     );
 };
 

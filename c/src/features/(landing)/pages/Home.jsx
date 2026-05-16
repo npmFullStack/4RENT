@@ -26,9 +26,9 @@ const features = [
     {
         id: 2,
         image: feature2,
-        title: "List Your Property",
+        title: "Smart Filter Search",
         description:
-            "Land owners can easily list their properties and connect with thousands of potential tenants looking for their next home."
+            "Easily filter properties by type, price range, preferred tenant gender, and room capacity. Find exactly what you're looking for in seconds."
     },
     {
         id: 3,
@@ -196,13 +196,12 @@ const Home = () => {
             <section className="py-16 md:py-20 bg-gray-50">
                 <div className="container mx-auto px-4">
                     <div className="text-center mb-12">
-                        <h2 className="text-3xl md:text-4xl font-logo text-gray-800 mb-4">
-                            Why Choose 4RENT?
-                        </h2>
-                        <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
-                            The complete platform for boarding houses,
-                            apartments, and property listings
-                        </p>
+<h2 className="text-3xl md:text-4xl font-logo text-gray-800 mb-4">
+    Find Your Next Home
+</h2>
+<p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
+    Search, filter and discover boarding houses and apartments near you. All in one place.
+</p>
                     </div>
 
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">

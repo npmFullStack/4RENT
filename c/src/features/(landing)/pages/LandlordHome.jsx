@@ -113,7 +113,7 @@ const LandlordHome = () => {
                                     variant="primary"
                                     icon={ArrowRight}
                                     iconPosition="right"
-                                    className="text-lg px-8 py-3"
+                                    className="text-lg px-8 py-3 w-full"
                                 >
                                     Get Started
                                 </Button>
@@ -123,7 +123,7 @@ const LandlordHome = () => {
                                     variant="outline"
                                     icon={LogIn}
                                     iconPosition="left"
-                                    className="!text-lg !px-8 !py-3 !bg-white !hover:bg-gray-200/80 !border-gray-400 !text-gray-800"
+                                    className="w-full !text-lg !px-8 !py-3 !bg-white !hover:bg-gray-200/80 !border-gray-400 !text-gray-800"
                                 >
                                     Sign In
                                 </Button>
@@ -213,6 +213,7 @@ const LandlordHome = () => {
                                     variant="primary"
                                     icon={ArrowRight}
                                     iconPosition="right"
+                                    className="w-full md:w-auto"
                                 >
                                     Create Account Free
                                 </Button>
@@ -222,7 +223,7 @@ const LandlordHome = () => {
                             <img
                                 src={manageEverythingImg}
                                 alt="Manage Everything"
-                                className="w-full h-auto rounded-xl shadow-lg"
+                                className="hidden md:flex w-full h-auto rounded-xl shadow-lg"
                             />
                         </div>
                     </div>
@@ -252,7 +253,7 @@ const LandlordHome = () => {
                                 variant="primary"
                                 icon={ArrowRight}
                                 iconPosition="right"
-                                className="px-8 py-3 text-lg"
+                                className="w-full px-8 py-3 text-lg"
                             >
                                 Start Now
                             </Button>
@@ -262,7 +263,7 @@ const LandlordHome = () => {
                                 variant="outline"
                                 icon={LogIn}
                                 iconPosition="left"
-                                className="bg-white/10 hover:bg-white/20 border-white text-white px-8 py-3 text-lg"
+                                className="w-full bg-white/10 hover:bg-white/20 border-white text-white px-8 py-3 text-lg"
                             >
                                 Sign In
                             </Button>
@@ -270,6 +271,16 @@ const LandlordHome = () => {
                     </div>
                 </div>
             </section>
+            {/* Footer */}
+            <footer className="bg-gray-800 text-white py-8">
+                <div className="container mx-auto px-4 text-center">
+                    <p>
+                        &copy; {new Date().getFullYear()} 4RENT. All rights
+                        reserved.
+                    </p>
+                    <p className="mt-2 text-gray-400">Developed by NorDev.</p>
+                </div>
+            </footer>
         </div>
     );
 };
