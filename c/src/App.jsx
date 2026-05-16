@@ -15,6 +15,7 @@ import ForgotPassword from "@/features/(auth)/pages/ForgotPassword";
 import CreateNewPassword from "@/features/(auth)/pages/CreateNewPassword";
 
 import Dashboard from "@/features/(dashboard)/pages/Dashboard";
+import MyProperties from "@/features/(dashboard)/pages/MyProperties";
 
 function App() {
     return (
@@ -23,11 +24,6 @@ function App() {
                 {/* Main/Landing Routes */}
                 <Route path="/" element={<MainLayout />}>
                     <Route index element={<Home />} />
-                </Route>
-
-                {/* Dashboard Routes */}
-                <Route path="/dashboard" element={<DashboardLayout />}>
-                    <Route index element={<Dashboard />} />
                 </Route>
 
                 {/* Auth Routes */}
@@ -51,6 +47,12 @@ function App() {
                     />
 
                     <Route path="/home" element={<LandlordHome />} />
+                </Route>
+
+                {/* Dashboard Routes */}
+                <Route element={<DashboardLayout />}>
+                    <Route path="dashboard" element={<Dashboard />} />
+                    <Route path="my-properties" element={<MyProperties />} />
                 </Route>
             </Routes>
         </BrowserRouter>

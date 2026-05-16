@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tanstack/react-table": "^8.21.3",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.14.0",
     "react": "^18.2.0",
