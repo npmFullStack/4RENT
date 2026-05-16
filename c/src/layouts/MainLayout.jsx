@@ -41,7 +41,7 @@ const MainLayout = () => {
 
                     {/* Desktop CTA Buttons */}
                     <div className="hidden md:flex gap-3">
-                        <Link to="/signup">
+                        <Link to="/home">
                             <Button variant="ghost" icon={LayoutGrid}>
                                 List Property
                             </Button>
@@ -70,7 +70,7 @@ const MainLayout = () => {
                 {isMobileMenuOpen && (
                     <div className="md:hidden bg-white border-t border-gray-100">
                         <div className="container mx-auto px-4 py-4 flex flex-col gap-3">
-                            <Link to="/signup" className="w-full">
+                            <Link to="/home" className="w-full">
                                 <Button
                                     variant="ghost"
                                     icon={LayoutGrid}
@@ -98,7 +98,7 @@ const MainLayout = () => {
             </main>
 
             {/* Footer */}
-            <footer className="bg-gray-800 text-white py-8 mt-16">
+            <footer className="bg-gray-800 text-white py-8">
                 <div className="container mx-auto px-4 text-center">
                     <p>
                         &copy; {new Date().getFullYear()} 4RENT. All rights

@@ -106,7 +106,7 @@ const Home = () => {
 
                 {/* Hero Content */}
                 <div className="relative container mx-auto px-4 text-center z-10">
-                    <h1 className="text-3xl md:text-6xl font-logo text-gray-800 mb-6">
+                    <h1 className="text-4xl md:text-5xl font-logo text-gray-800 mb-6">
                         Find Your Perfect{" "}
                         <span
                             className="text-primary"
@@ -129,16 +129,16 @@ const Home = () => {
                         <Link to="/properties" className="w-full sm:w-auto">
                             <Button
                                 icon={HomeIcon}
-                                className="w-full text-center"
+                                className="w-full !text-lg !px-8 !py-3 text-center"
                             >
                                 Find Property
                             </Button>
                         </Link>
-                        <Link to="/signup" className="w-full sm:w-auto">
+                        <Link to="/home" className="w-full sm:w-auto">
                             <Button
                                 variant="outline"
                                 icon={LayoutGrid}
-                                className="w-full text-center"
+                                className="w-full text-center !text-lg !px-8 !py-3 !bg-white !hover:bg-gray-200/80 !border-gray-400 !text-gray-800"
                             >
                                 List Property
                             </Button>

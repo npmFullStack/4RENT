@@ -263,7 +263,7 @@ const DashboardLayout = () => {
             >
                 {/* Header - Slightly darker than main bg */}
                 <header className="sticky top-0 z-20 bg-neutral-100 shadow-sm">
-                    <div className="flex items-center justify-between px-4 py-3">
+                    <div className="flex items-center justify-between px-4 md:px-5 py-3">
                         {/* Left side: Menu button (mobile) + Logo (mobile) */}
                         <div className="flex items-center gap-3">
                             {isMobile ? (

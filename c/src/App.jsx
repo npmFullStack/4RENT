@@ -8,10 +8,12 @@ import Home from "@/features/(landing)/pages/Home";
 import AllProperties from "@/features/(landing)/pages/AllProperties";
 import PropertyDetails from "@/features/(landing)/pages/PropertyDetails";
 import FindPropertyViaMap from "@/features/(landing)/pages/FindPropertyViaMap";
+import LandlordHome from "@/features/(landing)/pages/LandlordHome";
 import SignIn from "@/features/(auth)/pages/SignIn";
 import SignUp from "@/features/(auth)/pages/SignUp";
 import ForgotPassword from "@/features/(auth)/pages/ForgotPassword";
 import CreateNewPassword from "@/features/(auth)/pages/CreateNewPassword";
+
 import Dashboard from "@/features/(dashboard)/pages/Dashboard";
 
 function App() {
@@ -47,6 +49,8 @@ function App() {
                         path="/find-properties-map"
                         element={<FindPropertyViaMap />}
                     />
+
+                    <Route path="/home" element={<LandlordHome />} />
                 </Route>
             </Routes>
         </BrowserRouter>
