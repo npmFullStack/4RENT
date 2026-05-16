@@ -108,7 +108,6 @@ const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
     const [selectedProvince, setSelectedProvince] = useState(null);
     const [selectedCity, setSelectedCity] = useState(null);
     const [selectedBarangay, setSelectedBarangay] = useState(null);
-    const [street, setStreet] = useState("");
 
     const [loadingProvinces, setLoadingProvinces] = useState(false);
     const [loadingCities, setLoadingCities] = useState(false);
@@ -166,7 +165,6 @@ const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
 
     const handleConfirm = () => {
         const fullAddress = [
-            street,
             selectedBarangay?.label,
             selectedCity?.label,
             selectedProvince?.label,
@@ -177,7 +175,6 @@ const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
             province: selectedProvince,
             city: selectedCity,
             barangay: selectedBarangay,
-            street,
             fullAddress
         });
         handleClose();
@@ -187,7 +184,6 @@ const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
         setSelectedProvince(null);
         setSelectedCity(null);
         setSelectedBarangay(null);
-        setStreet("");
         onClose();
     };
 
@@ -196,9 +192,6 @@ const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
             <div className="relative">
                 {/* Header */}
                 <div className="flex items-center gap-3 px-6 pt-6 pb-4 border-b border-gray-100">
-                    <div className="w-10 h-10 bg-yellow-100 rounded-xl flex items-center justify-center shrink-0">
-                        <MapPin className="w-5 h-5 text-yellow-600" />
-                    </div>
                     <div className="flex-1 min-w-0">
                         <h2 className="text-lg font-bold text-gray-800">Set Address Manually</h2>
                         <p className="text-xs text-gray-400 mt-0.5">Find properties near a specific address</p>
@@ -241,27 +234,12 @@ const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
                         placeholder={selectedCity ? "Select barangay" : "Select a city first"}
                     />
 
-                    {/* Street */}
-                    <div>
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
-                            Street / Building{" "}
-                            <span className="text-gray-300 font-normal normal-case tracking-normal">(optional)</span>
-                        </label>
-                        <input
-                            type="text"
-                            value={street}
-                            onChange={e => setStreet(e.target.value)}
-                            placeholder="e.g. 123 Rizal Street"
-                            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 text-sm text-gray-800 placeholder-gray-300 outline-none transition-all duration-200 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-100"
-                        />
-                    </div>
-
                     {/* Address preview */}
                     {isComplete && (
                         <div className="flex items-start gap-2.5 px-4 py-3 bg-green-50 rounded-xl border border-green-100">
                             <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
                             <p className="text-xs text-green-700 leading-relaxed">
-                                {[street, selectedBarangay?.label, selectedCity?.label, selectedProvince?.label, "Philippines"]
+                                {[selectedBarangay?.label, selectedCity?.label, selectedProvince?.label, "Philippines"]
                                     .filter(Boolean).join(", ")}
                             </p>
                         </div>

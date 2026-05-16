@@ -130,10 +130,9 @@ const FindPropertyViaMap = () => {
         <div className="min-h-screen bg-gray-50 py-8">
             <div className="container mx-auto px-4">
 
-                {/* Header with title, subheading, and buttons in one row */}
+                {/* Header */}
                 <div className="mb-5">
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                        {/* Text group */}
                         <div>
                             <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
                                 Find Properties on Map
@@ -143,9 +142,7 @@ const FindPropertyViaMap = () => {
                             </p>
                         </div>
 
-                        {/* Buttons group: Outline first, Primary second (order-1 and order-2 on mobile) */}
                         <div className="flex flex-col sm:flex-row gap-3">
-                            {/* Set Address Manually - Outline button (first in order) */}
                             <Button
                                 variant="outline"
                                 icon={MapPin}
@@ -155,7 +152,6 @@ const FindPropertyViaMap = () => {
                                 Set Address Manually
                             </Button>
 
-                            {/* Use My Location - Primary button (second in order) */}
                             <Button
                                 variant="primary"
                                 icon={isLocating ? Loader2 : Navigation}
@@ -168,16 +164,19 @@ const FindPropertyViaMap = () => {
                         </div>
                     </div>
 
-                    {/* Status messages */}
+                    {/* Success toast */}
                     {showSuccessMessage && activeLocationLabel && (
                         <div className="mt-3 flex items-center gap-2 text-sm text-green-700 bg-green-50 px-4 py-2.5 rounded-xl border border-green-100 animate-fade-in">
                             <CheckCircle className="w-4 h-4 shrink-0" />
                             <span className="truncate">
-                                {userLocation ? "✓ Location found! Map updated." : `✓ Address set: ${manualAddress?.city?.label}, ${manualAddress?.province?.label}`}
+                                {userLocation
+                                    ? "✓ Location found! Map updated."
+                                    : `✓ Address set: ${manualAddress?.barangay?.label}, ${manualAddress?.city?.label}, ${manualAddress?.province?.label}`}
                             </span>
                         </div>
                     )}
 
+                    {/* Error message */}
                     {locationError && (
                         <div className="mt-3 flex items-center justify-between gap-2 text-sm text-red-600 bg-red-50 px-4 py-2.5 rounded-xl border border-red-100">
                             <span>⚠️ {locationError}</span>
@@ -187,7 +186,7 @@ const FindPropertyViaMap = () => {
                         </div>
                     )}
 
-                    {/* Active location chip (persists after toast fades) */}
+                    {/* Persistent location chip */}
                     {!showSuccessMessage && activeLocationLabel && (
                         <div className="mt-3 flex items-center gap-2 text-xs text-gray-500 bg-white px-3 py-2 rounded-lg border border-gray-200 w-fit max-w-full">
                             <MapPin className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
@@ -212,6 +211,7 @@ const FindPropertyViaMap = () => {
                             onPropertyClick={handlePropertyClick}
                             userLocation={userLocation}
                             manualAddress={manualAddress}
+                            isModalOpen={isManualModalOpen}
                         />
                     </div>
                 </div>

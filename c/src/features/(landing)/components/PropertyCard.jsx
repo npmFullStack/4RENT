@@ -6,9 +6,9 @@ import {
     ArrowRight,
     Users,
     PhilippinePeso,
-    Home,
     Bed,
-    X
+    X,
+    Navigation
 } from "lucide-react";
 import Button from "@/shared/components/Button";
 
@@ -24,12 +24,12 @@ const PropertyCard = ({
     getCapacityText,
     getSexText,
     onClose,
-    isInPopup = false
+    isInPopup = false,
+    distanceKm = null,    // new: distance from user/manual location
 }) => {
     const navigate = useNavigate();
 
     const handleViewDetails = () => {
-        // Pass property data through state when navigating
         navigate(`/property/${id}`, {
             state: {
                 id,
@@ -48,9 +48,16 @@ const PropertyCard = ({
     const categoryLabel = isBoarding ? "Boarding House" : "Apartment";
     const categoryColor = isBoarding ? "bg-blue-600" : "bg-red-600";
 
+    // Format distance for display
+    const distanceLabel = distanceKm != null
+        ? distanceKm < 1
+            ? `${Math.round(distanceKm * 1000)} m away`
+            : `${distanceKm.toFixed(1)} km away`
+        : null;
+
     return (
         <div className="group bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer flex flex-col relative">
-            {/* Close Button - Top Right of Image */}
+            {/* Close Button */}
             {onClose && (
                 <button
                     onClick={(e) => {
@@ -72,29 +79,34 @@ const PropertyCard = ({
                 />
 
                 {/* Category Badge */}
-                <div className="absolute top-4 left-4 z-10">
-                    <span
-                        className={`${categoryColor} text-white text-xs font-semibold px-3 py-1 rounded-full shadow-lg`}
-                    >
+                <div className="absolute top-4 left-4 z-10 flex flex-col gap-1.5">
+                    <span className={`${categoryColor} text-white text-xs font-semibold px-3 py-1 rounded-full shadow-lg`}>
                         {categoryLabel}
                     </span>
+                    {/* Distance badge — only shown when a reference point exists */}
+                    {distanceLabel && (
+                        <span className="flex items-center gap-1 bg-black/60 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-lg w-fit">
+                            <Navigation className="w-3 h-3 shrink-0" />
+                            {distanceLabel}
+                        </span>
+                    )}
                 </div>
             </div>
 
             {/* Content Section */}
             <div className="p-4 flex flex-col flex-grow">
-                {/* Property Name - bold sub heading style */}
+                {/* Property Name */}
                 <h3 className="text-xl font-bold text-gray-800 mb-2 line-clamp-1">
                     {name}
                 </h3>
 
-                {/* Address with icon */}
+                {/* Address */}
                 <div className="flex items-center gap-1 text-sm text-gray-600 mb-2">
                     <MapPin className="w-3 h-3 flex-shrink-0" />
                     <span className="line-clamp-2">{address}</span>
                 </div>
 
-                {/* Capacity info for boarding houses */}
+                {/* Capacity for boarding houses */}
                 {isBoarding && capacity && (
                     <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
                         <Users className="w-3 h-3 flex-shrink-0" />
@@ -102,7 +114,7 @@ const PropertyCard = ({
                     </div>
                 )}
 
-                {/* Sex info for boarding houses */}
+                {/* Sex for boarding houses */}
                 {isBoarding && sex && getSexText && (
                     <div className="flex items-center gap-1 text-sm text-gray-600 mb-3">
                         <Bed className="w-3 h-3 flex-shrink-0" />
@@ -110,7 +122,7 @@ const PropertyCard = ({
                     </div>
                 )}
 
-                {/* Price and View Details Button */}
+                {/* Price and View Details */}
                 <div className="flex justify-between items-center mt-auto pt-3 border-t border-gray-100">
                     <div className="text-left">
                         <span className="text-xs text-gray-500">Price</span>
@@ -119,9 +131,7 @@ const PropertyCard = ({
                             <span className="text-xl font-bold text-gray-800">
                                 {price.toLocaleString()}
                             </span>
-                            <span className="text-xs text-gray-500">
-                                /month
-                            </span>
+                            <span className="text-xs text-gray-500">/month</span>
                         </div>
                     </div>
 
