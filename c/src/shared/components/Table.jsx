@@ -10,18 +10,20 @@ const Table = ({
     showSearch = true,
     searchPlaceholder = "Search...",
     onSearch = null,
-    itemsPerPage = 10,
+    itemsPerPageOptions = [5, 10, 20, -1],
+    itemsPerPage = 5,
     emptyMessage = "No data available",
     className = "",
     headerClassName = "",
     rowClassName = "",
     cellClassName = "",
-    actions = null, // Function that returns action buttons for each row
+    actions = null,
 }) => {
     const [searchTerm, setSearchTerm] = useState("");
     const [sortColumn, setSortColumn] = useState(null);
     const [sortDirection, setSortDirection] = useState("asc");
     const [currentPage, setCurrentPage] = useState(1);
+    const [rowsPerPage, setRowsPerPage] = useState(itemsPerPage);
 
     // Handle sorting
     const handleSort = (columnKey) => {
@@ -58,7 +60,6 @@ const Table = ({
             let aVal = a[sortColumn];
             let bVal = b[sortColumn];
 
-            // Handle nested values (e.g., "category.name")
             if (sortColumn.includes(".")) {
                 const keys = sortColumn.split(".");
                 aVal = keys.reduce((obj, key) => obj?.[key], a);
@@ -77,15 +78,26 @@ const Table = ({
         });
     }, [filteredData, sortColumn, sortDirection]);
 
+    // Get rows per page value (handle -1 for "All")
+    const getRowsPerPageValue = () => {
+        if (rowsPerPage === -1) return sortedData.length;
+        return rowsPerPage;
+    };
+
     // Pagination
-    const totalPages = Math.ceil(sortedData.length / itemsPerPage);
-    const paginatedData = sortedData.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    );
+    const rowsPerPageValue = getRowsPerPageValue();
+    const totalPages = rowsPerPageValue === 0 ? 1 : Math.ceil(sortedData.length / rowsPerPageValue);
+    const paginatedData = rowsPerPageValue === sortedData.length 
+        ? sortedData 
+        : sortedData.slice((currentPage - 1) * rowsPerPageValue, currentPage * rowsPerPageValue);
 
     const handlePageChange = (page) => {
         setCurrentPage(page);
+    };
+
+    const handleRowsPerPageChange = (value) => {
+        setRowsPerPage(value);
+        setCurrentPage(1);
     };
 
     const handleSearch = (value) => {
@@ -108,9 +120,15 @@ const Table = ({
         );
     };
 
+    // Get display text for rows per page
+    const getRowsPerPageText = (value) => {
+        if (value === -1) return "All";
+        return value;
+    };
+
     return (
         <div className={`w-full ${className}`}>
-            {/* Search Bar */}
+            {/* Search Bar and Records Selector */}
             {showSearch && (
                 <div className="mb-4 flex justify-between items-center gap-3 flex-wrap">
                     <div className="relative flex-1 max-w-md">
@@ -131,9 +149,25 @@ const Table = ({
                             </button>
                         )}
                     </div>
-                    <div className="text-xs text-gray-500">
-                        Showing {paginatedData.length} of {sortedData.length}{" "}
-                        entries
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500">Show</span>
+                            <select
+                                value={rowsPerPage}
+                                onChange={(e) => handleRowsPerPageChange(Number(e.target.value))}
+                                className="px-2 py-1 border border-gray-300 rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-primary bg-white"
+                            >
+                                {itemsPerPageOptions.map(option => (
+                                    <option key={option} value={option}>
+                                        {getRowsPerPageText(option)}
+                                    </option>
+                                ))}
+                            </select>
+                            <span className="text-xs text-gray-500">records</span>
+                        </div>
+                        <div className="text-xs text-gray-500">
+                            Showing <strong>{paginatedData.length}</strong> of <strong>{sortedData.length}</strong> entries
+                        </div>
                     </div>
                 </div>
             )}
@@ -146,26 +180,16 @@ const Table = ({
                             {columns.map((column, index) => (
                                 <th
                                     key={column.key || index}
-                                    onClick={() =>
-                                        column.sortable !== false &&
-                                        handleSort(column.key)
-                                    }
+                                    onClick={() => column.sortable !== false && handleSort(column.key)}
                                     className={`px-3 py-2 text-left font-semibold text-gray-700 text-xs ${
-                                        column.sortable !== false
-                                            ? "cursor-pointer hover:bg-gray-100 transition-colors"
-                                            : ""
+                                        column.sortable !== false ? "cursor-pointer hover:bg-gray-100 transition-colors" : ""
                                     } ${column.className || ""}`}
                                     style={{ width: column.width }}
                                 >
                                     <div className="flex items-center gap-1">
-                                        {column.icon && (
-                                            <span className="w-3 h-3">
-                                                {column.icon}
-                                            </span>
-                                        )}
+                                        {column.icon && <span className="w-3 h-3">{column.icon}</span>}
                                         {column.header}
-                                        {column.sortable !== false &&
-                                            getSortIcon(column.key)}
+                                        {column.sortable !== false && getSortIcon(column.key)}
                                     </div>
                                 </th>
                             ))}
@@ -181,9 +205,7 @@ const Table = ({
                             paginatedData.map((row, rowIndex) => (
                                 <tr
                                     key={row[keyField] || rowIndex}
-                                    onClick={() =>
-                                        onRowClick && onRowClick(row)
-                                    }
+                                    onClick={() => onRowClick && onRowClick(row)}
                                     className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${
                                         onRowClick ? "cursor-pointer" : ""
                                     } ${rowClassName}`}
@@ -193,9 +215,7 @@ const Table = ({
                                             key={column.key || colIndex}
                                             className={`px-3 py-2 text-gray-600 text-xs ${cellClassName} ${column.cellClassName || ""}`}
                                         >
-                                            {column.render
-                                                ? column.render(row)
-                                                : row[column.key]}
+                                            {column.render ? column.render(row) : row[column.key]}
                                         </td>
                                     ))}
                                     {actions && (
@@ -207,12 +227,7 @@ const Table = ({
                             ))
                         ) : (
                             <tr>
-                                <td
-                                    colSpan={
-                                        columns.length + (actions ? 1 : 0)
-                                    }
-                                    className="px-3 py-8 text-center text-gray-400 text-xs"
-                                >
+                                <td colSpan={columns.length + (actions ? 1 : 0)} className="px-3 py-8 text-center text-gray-400 text-xs">
                                     {emptyMessage}
                                 </td>
                             </tr>
@@ -236,21 +251,19 @@ const Table = ({
                         >
                             <ChevronLeft className="w-4 h-4" />
                         </button>
-                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                            (page) => (
-                                <button
-                                    key={page}
-                                    onClick={() => handlePageChange(page)}
-                                    className={`w-7 h-7 rounded-md text-xs font-medium transition-colors ${
-                                        currentPage === page
-                                            ? "bg-primary text-white"
-                                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                    }`}
-                                >
-                                    {page}
-                                </button>
-                            )
-                        )}
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                            <button
+                                key={page}
+                                onClick={() => handlePageChange(page)}
+                                className={`w-7 h-7 rounded-md text-xs font-medium transition-colors ${
+                                    currentPage === page
+                                        ? "bg-primary text-white"
+                                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                }`}
+                            >
+                                {page}
+                            </button>
+                        ))}
                         <button
                             onClick={() => handlePageChange(currentPage + 1)}
                             disabled={currentPage === totalPages}
