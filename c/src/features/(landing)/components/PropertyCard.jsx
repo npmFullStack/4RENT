@@ -8,7 +8,8 @@ import {
     PhilippinePeso,
     Bed,
     X,
-    Navigation
+    Navigation,
+    Bath
 } from "lucide-react";
 import Button from "@/shared/components/Button";
 
@@ -21,11 +22,13 @@ const PropertyCard = ({
     price,
     capacity,
     sex,
+    bedrooms,      // new: number of bedrooms (for apartments)
+    bathrooms,     // new: number of bathrooms/CR (for apartments)
     getCapacityText,
     getSexText,
     onClose,
     isInPopup = false,
-    distanceKm = null,    // new: distance from user/manual location
+    distanceKm = null,
 }) => {
     const navigate = useNavigate();
 
@@ -39,12 +42,15 @@ const PropertyCard = ({
                 address,
                 price,
                 capacity,
-                sex
+                sex,
+                bedrooms,
+                bathrooms
             }
         });
     };
 
     const isBoarding = category === "boarding";
+    const isApartment = category === "apartment";
     const categoryLabel = isBoarding ? "Boarding House" : "Apartment";
     const categoryColor = isBoarding ? "bg-blue-600" : "bg-red-600";
 
@@ -106,20 +112,45 @@ const PropertyCard = ({
                     <span className="line-clamp-2">{address}</span>
                 </div>
 
-                {/* Capacity for boarding houses */}
-                {isBoarding && capacity && (
-                    <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
-                        <Users className="w-3 h-3 flex-shrink-0" />
-                        <span>{getCapacityText(capacity)}</span>
-                    </div>
+                {/* Property-specific details */}
+                {isBoarding && (
+                    <>
+                        {/* Capacity for boarding houses */}
+                        {capacity && (
+                            <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
+                                <Users className="w-3 h-3 flex-shrink-0" />
+                                <span>{getCapacityText(capacity)}</span>
+                            </div>
+                        )}
+
+                        {/* Sex for boarding houses */}
+                        {sex && getSexText && (
+                            <div className="flex items-center gap-1 text-sm text-gray-600 mb-3">
+                                <Bed className="w-3 h-3 flex-shrink-0" />
+                                <span>{getSexText(sex)}</span>
+                            </div>
+                        )}
+                    </>
                 )}
 
-                {/* Sex for boarding houses */}
-                {isBoarding && sex && getSexText && (
-                    <div className="flex items-center gap-1 text-sm text-gray-600 mb-3">
-                        <Bed className="w-3 h-3 flex-shrink-0" />
-                        <span>{getSexText(sex)}</span>
-                    </div>
+                {isApartment && (
+                    <>
+                        {/* Bedrooms for apartments */}
+                        {bedrooms !== undefined && bedrooms !== null && (
+                            <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
+                                <Bed className="w-3 h-3 flex-shrink-0" />
+                                <span>{bedrooms} {bedrooms === 1 ? "Bedroom" : "Bedrooms"}</span>
+                            </div>
+                        )}
+
+                        {/* Bathrooms/CR for apartments */}
+                        {bathrooms !== undefined && bathrooms !== null && (
+                            <div className="flex items-center gap-1 text-sm text-gray-600 mb-3">
+                                <Bath className="w-3 h-3 flex-shrink-0" />
+                                <span>{bathrooms} {bathrooms === 1 ? "CR" : "CRs"}</span>
+                            </div>
+                        )}
+                    </>
                 )}
 
                 {/* Price and View Details */}

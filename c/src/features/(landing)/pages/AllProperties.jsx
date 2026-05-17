@@ -28,6 +28,8 @@ const allProperties = [
         category: "apartment",
         address: "456 Main St, Barangay Central, Quezon City, Philippines",
         price: 12500,
+        bedrooms: 2,
+        bathrooms: 1,
         capacity: null,
         sex: null
     },
@@ -50,7 +52,9 @@ const AllProperties = () => {
         category: "all",
         priceRange: { min: "", max: "" },
         sex: "all",
-        capacity: "all"
+        capacity: "all",
+        bedrooms: "all",    // new filter for bedrooms
+        bathrooms: "all"    // new filter for bathrooms
     });
 
     const getCapacityText = capacity => {
@@ -111,12 +115,34 @@ const AllProperties = () => {
             }
         }
 
+        // Bedrooms filter (only for apartments)
+        let matchesBedrooms = true;
+        if (property.category === "apartment" && filters.bedrooms !== "all") {
+            if (filters.bedrooms === "3+") {
+                matchesBedrooms = property.bedrooms >= 3;
+            } else {
+                matchesBedrooms = property.bedrooms === parseInt(filters.bedrooms);
+            }
+        }
+
+        // Bathrooms filter (only for apartments)
+        let matchesBathrooms = true;
+        if (property.category === "apartment" && filters.bathrooms !== "all") {
+            if (filters.bathrooms === "2+") {
+                matchesBathrooms = property.bathrooms >= 2;
+            } else {
+                matchesBathrooms = property.bathrooms === parseInt(filters.bathrooms);
+            }
+        }
+
         return (
             matchesSearch &&
             matchesCategory &&
             matchesPrice &&
             matchesSex &&
-            matchesCapacity
+            matchesCapacity &&
+            matchesBedrooms &&
+            matchesBathrooms
         );
     });
 
@@ -127,6 +153,8 @@ const AllProperties = () => {
         if (filters.priceRange.min || filters.priceRange.max) count++;
         if (filters.sex !== "all") count++;
         if (filters.capacity !== "all") count++;
+        if (filters.bedrooms !== "all") count++;
+        if (filters.bathrooms !== "all") count++;
         return count;
     };
 
@@ -210,7 +238,9 @@ const AllProperties = () => {
                                     category: "all",
                                     priceRange: { min: "", max: "" },
                                     sex: "all",
-                                    capacity: "all"
+                                    capacity: "all",
+                                    bedrooms: "all",
+                                    bathrooms: "all"
                                 })
                             }
                             className="text-sm text-primary hover:underline"
@@ -234,6 +264,8 @@ const AllProperties = () => {
                                 price={property.price}
                                 capacity={property.capacity}
                                 sex={property.sex}
+                                bedrooms={property.bedrooms}
+                                bathrooms={property.bathrooms}
                                 getCapacityText={getCapacityText}
                                 getSexText={getSexText}
                             />
@@ -261,7 +293,7 @@ const AllProperties = () => {
                 )}
             </div>
 
-            {/* Filter Menu Component */}
+            {/* Filter Menu Component - You'll need to update FilterMenu to include bedroom/bathroom filters */}
             <FilterMenu
                 isOpen={isFilterOpen}
                 onClose={() => setIsFilterOpen(false)}

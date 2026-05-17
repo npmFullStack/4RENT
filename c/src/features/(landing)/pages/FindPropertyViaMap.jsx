@@ -27,6 +27,8 @@ const allProperties = [
         category: "apartment",
         address: "456 Main St, Barangay Central, Quezon City, Philippines",
         price: 12500,
+bedrooms: 2,
+        bathrooms: 1,
         capacity: null,
         sex: null
     },

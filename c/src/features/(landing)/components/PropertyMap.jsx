@@ -9,20 +9,23 @@ import PropertyCard from "@/features/(landing)/components/PropertyCard";
 // Fix for default marker icons in Leaflet with Vite
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-    iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
-    iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-    shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+    iconRetinaUrl:
+        "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+    iconUrl:
+        "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+    shadowUrl:
+        "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png"
 });
 
 // Create property marker - color based on category only
-const createPulsingCircleMarker = (color) => {
+const createPulsingCircleMarker = color => {
     const rgbMap = {
-        '#3b82f6': '59, 130, 246',
-        '#ef4444': '239, 68, 68',
+        "#3b82f6": "59, 130, 246",
+        "#ef4444": "239, 68, 68"
     };
-    const rgb = rgbMap[color] || '59, 130, 246';
+    const rgb = rgbMap[color] || "59, 130, 246";
     return L.divIcon({
-        className: 'custom-pulsing-marker',
+        className: "custom-pulsing-marker",
         html: `
             <div style="
                 width: 22px;
@@ -31,12 +34,12 @@ const createPulsingCircleMarker = (color) => {
                 border-radius: 50%;
                 border: 3px solid white;
                 box-shadow: 0 2px 8px rgba(0,0,0,0.25), 0 0 0 0 rgba(${rgb}, 0.7);
-                animation: pulse-marker-${color.replace('#', '')} 1.8s infinite;
+                animation: pulse-marker-${color.replace("#", "")} 1.8s infinite;
                 cursor: pointer;
                 transition: transform 0.2s ease;
             "></div>
             <style>
-                @keyframes pulse-marker-${color.replace('#', '')} {
+                @keyframes pulse-marker-${color.replace("#", "")} {
                     0% { box-shadow: 0 2px 8px rgba(0,0,0,0.25), 0 0 0 0 rgba(${rgb}, 0.6); }
                     70% { box-shadow: 0 2px 8px rgba(0,0,0,0.25), 0 0 0 12px rgba(${rgb}, 0); }
                     100% { box-shadow: 0 2px 8px rgba(0,0,0,0.25), 0 0 0 0 rgba(${rgb}, 0); }
@@ -52,7 +55,7 @@ const createPulsingCircleMarker = (color) => {
 // User / manual location marker - always green
 const createUserMarker = () => {
     return L.divIcon({
-        className: 'custom-user-marker',
+        className: "custom-user-marker",
         html: `
             <div style="position: relative; width: 26px; height: 26px;">
                 <div style="
@@ -97,8 +100,10 @@ const SetViewOnLocation = ({ center, zoom }) => {
 };
 
 // Mock geocoding
-const getCoordinatesForAddress = async (address) => {
-    const hash = address.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+const getCoordinatesForAddress = async address => {
+    const hash = address
+        .split("")
+        .reduce((acc, char) => acc + char.charCodeAt(0), 0);
     return {
         lat: 14.5995 + (hash % 100) / 1000,
         lng: 120.9842 + (hash % 200) / 1000
@@ -116,8 +121,9 @@ const getDistanceKm = (a, b) => {
     const c =
         sinLat * sinLat +
         Math.cos((a.lat * Math.PI) / 180) *
-        Math.cos((b.lat * Math.PI) / 180) *
-        sinLng * sinLng;
+            Math.cos((b.lat * Math.PI) / 180) *
+            sinLng *
+            sinLng;
     return R * 2 * Math.atan2(Math.sqrt(c), Math.sqrt(1 - c));
 };
 
@@ -128,7 +134,7 @@ const PropertyMap = ({
     onPropertyClick,
     userLocation,
     manualAddress,
-    isModalOpen,       // new: passed from parent to hide card/legend when modal open
+    isModalOpen // new: passed from parent to hide card/legend when modal open
 }) => {
     const [propertyLocations, setPropertyLocations] = useState([]);
     const [isLoadingLocations, setIsLoadingLocations] = useState(true);
@@ -149,8 +155,10 @@ const PropertyMap = ({
         const loadPropertyLocations = async () => {
             setIsLoadingLocations(true);
             const locations = await Promise.all(
-                properties.map(async (property) => {
-                    const coords = await getCoordinatesForAddress(property.address);
+                properties.map(async property => {
+                    const coords = await getCoordinatesForAddress(
+                        property.address
+                    );
                     return { ...property, coordinates: coords };
                 })
             );
@@ -170,18 +178,22 @@ const PropertyMap = ({
     // For manual address we mock coordinates from the label (same hash approach)
     const [manualCoords, setManualCoords] = useState(null);
     useEffect(() => {
-        if (!manualAddress) { setManualCoords(null); return; }
-        getCoordinatesForAddress(manualAddress.fullAddress).then(setManualCoords);
+        if (!manualAddress) {
+            setManualCoords(null);
+            return;
+        }
+        getCoordinatesForAddress(manualAddress.fullAddress).then(
+            setManualCoords
+        );
     }, [manualAddress]);
 
     const referencePoint = userLocation || manualCoords || null;
 
-    const mapCenter = referencePoint
-        || (propertyLocations[0]?.coordinates)
-        || { lat: 14.5995, lng: 120.9842 };
+    const mapCenter = referencePoint ||
+        propertyLocations[0]?.coordinates || { lat: 14.5995, lng: 120.9842 };
     const mapZoom = referencePoint ? 14 : 12;
 
-    const handleMarkerClick = (property) => {
+    const handleMarkerClick = property => {
         setSelectedProperty(property);
         setPopupOpen(true);
     };
@@ -204,8 +216,12 @@ const PropertyMap = ({
                             <div className="absolute inset-0 rounded-full border-4 border-t-yellow-400 animate-spin"></div>
                             <MapPin className="absolute inset-0 m-auto w-6 h-6 text-yellow-500" />
                         </div>
-                        <p className="text-gray-700 font-semibold">Loading map...</p>
-                        <p className="text-sm text-gray-400 mt-1">Finding properties near you</p>
+                        <p className="text-gray-700 font-semibold">
+                            Loading map...
+                        </p>
+                        <p className="text-sm text-gray-400 mt-1">
+                            Finding properties near you
+                        </p>
                     </div>
                 </div>
             ) : (
@@ -227,19 +243,31 @@ const PropertyMap = ({
                         {userLocation && (
                             <>
                                 <Marker
-                                    position={[userLocation.lat, userLocation.lng]}
+                                    position={[
+                                        userLocation.lat,
+                                        userLocation.lng
+                                    ]}
                                     icon={createUserMarker()}
                                 >
                                     <Popup className="modern-popup">
                                         <div className="text-center py-1">
-                                            <p className="font-semibold text-gray-800 text-sm">Your Location</p>
+                                            <p className="font-semibold text-gray-800 text-sm">
+                                                Your Location
+                                            </p>
                                             <p className="text-xs text-gray-400 mt-1">
-                                                {userLocation.lat.toFixed(4)}°, {userLocation.lng.toFixed(4)}°
+                                                {userLocation.lat.toFixed(4)}°,{" "}
+                                                {userLocation.lng.toFixed(4)}°
                                             </p>
                                         </div>
                                     </Popup>
                                 </Marker>
-                                <SetViewOnLocation center={[userLocation.lat, userLocation.lng]} zoom={14} />
+                                <SetViewOnLocation
+                                    center={[
+                                        userLocation.lat,
+                                        userLocation.lng
+                                    ]}
+                                    zoom={14}
+                                />
                             </>
                         )}
 
@@ -247,31 +275,49 @@ const PropertyMap = ({
                         {!userLocation && manualCoords && (
                             <>
                                 <Marker
-                                    position={[manualCoords.lat, manualCoords.lng]}
+                                    position={[
+                                        manualCoords.lat,
+                                        manualCoords.lng
+                                    ]}
                                     icon={createUserMarker()}
                                 >
                                     <Popup className="modern-popup">
                                         <div className="text-center py-1">
-                                            <p className="font-semibold text-gray-800 text-sm">Set Location</p>
+                                            <p className="font-semibold text-gray-800 text-sm">
+                                                Set Location
+                                            </p>
                                             <p className="text-xs text-gray-400 mt-1 max-w-[160px] leading-relaxed">
                                                 {manualAddress?.fullAddress}
                                             </p>
                                         </div>
                                     </Popup>
                                 </Marker>
-                                <SetViewOnLocation center={[manualCoords.lat, manualCoords.lng]} zoom={14} />
+                                <SetViewOnLocation
+                                    center={[
+                                        manualCoords.lat,
+                                        manualCoords.lng
+                                    ]}
+                                    zoom={14}
+                                />
                             </>
                         )}
 
                         {/* Property Markers */}
-                        {propertyLocations.map((property) => (
+                        {propertyLocations.map(property => (
                             <Marker
                                 key={property.id}
-                                position={[property.coordinates.lat, property.coordinates.lng]}
+                                position={[
+                                    property.coordinates.lat,
+                                    property.coordinates.lng
+                                ]}
                                 icon={createPulsingCircleMarker(
-                                    property.category === "boarding" ? "#3b82f6" : "#ef4444"
+                                    property.category === "boarding"
+                                        ? "#3b82f6"
+                                        : "#ef4444"
                                 )}
-                                eventHandlers={{ click: () => handleMarkerClick(property) }}
+                                eventHandlers={{
+                                    click: () => handleMarkerClick(property)
+                                }}
                             >
                                 <Popup className="hidden-popup" />
                             </Marker>
@@ -279,16 +325,20 @@ const PropertyMap = ({
                     </MapContainer>
 
                     {/* --- Legend (hidden while modal is open) --- */}
-                    {!hideMapUI && (
-                        isLegendVisible ? (
+                    {!hideMapUI &&
+                        (isLegendVisible ? (
                             <div className="absolute top-3 right-3 z-[400] bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 overflow-hidden min-w-[168px]">
                                 <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-50">
                                     <div className="flex items-center gap-1.5">
                                         <Layers className="w-3.5 h-3.5 text-gray-400" />
-                                        <span className="text-xs font-bold text-gray-600 uppercase tracking-wider">Legend</span>
+                                        <span className="text-xs font-bold text-gray-600 uppercase tracking-wider">
+                                            Legend
+                                        </span>
                                     </div>
                                     <button
-                                        onClick={() => setIsLegendVisible(false)}
+                                        onClick={() =>
+                                            setIsLegendVisible(false)
+                                        }
                                         className="text-gray-300 hover:text-gray-500 p-0.5 hover:bg-gray-100 rounded transition-colors"
                                     >
                                         <X className="w-3.5 h-3.5" />
@@ -297,18 +347,27 @@ const PropertyMap = ({
                                 <div className="px-4 py-3 flex flex-col gap-2.5">
                                     <div className="flex items-center gap-2.5">
                                         <span className="w-3 h-3 rounded-full bg-blue-500 shrink-0 ring-2 ring-blue-100"></span>
-                                        <span className="text-xs text-gray-600 font-medium">Boarding House</span>
+                                        <span className="text-xs text-gray-600 font-medium">
+                                            Boarding House
+                                        </span>
                                     </div>
                                     <div className="flex items-center gap-2.5">
                                         <span className="w-3 h-3 rounded-full bg-red-500 shrink-0 ring-2 ring-red-100"></span>
-                                        <span className="text-xs text-gray-600 font-medium">Apartment</span>
+                                        <span className="text-xs text-gray-600 font-medium">
+                                            Apartment
+                                        </span>
                                     </div>
                                     <div className="flex items-center gap-2.5">
                                         <span className="w-3 h-3 rounded-full bg-green-500 shrink-0 ring-2 ring-green-100"></span>
-                                        <span className="text-xs text-gray-600 font-medium">Your Location</span>
+                                        <span className="text-xs text-gray-600 font-medium">
+                                            Your Location
+                                        </span>
                                     </div>
                                     <div className="pt-1.5 mt-0.5 border-t border-gray-50">
-                                        <p className="text-[10px] text-gray-400">{propertyLocations.length} properties shown</p>
+                                        <p className="text-[10px] text-gray-400">
+                                            {propertyLocations.length}{" "}
+                                            properties shown
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -320,8 +379,7 @@ const PropertyMap = ({
                                 <Layers className="w-3.5 h-3.5" />
                                 Legend
                             </button>
-                        )
-                    )}
+                        ))}
 
                     {/* --- Property Card Popup (hidden while modal is open) --- */}
                     {!hideMapUI && popupOpen && selectedProperty && (
@@ -341,13 +399,18 @@ const PropertyMap = ({
                                             address={selectedProperty.address}
                                             price={selectedProperty.price}
                                             capacity={selectedProperty.capacity}
+                                            bedrooms={selectedProperty.bedrooms}
+                                            bathrooms={selectedProperty.bathrooms}
                                             sex={selectedProperty.sex}
                                             getCapacityText={getCapacityText}
                                             getSexText={getSexText}
                                             onClose={handleClosePopup}
                                             distanceKm={
                                                 referencePoint
-                                                    ? getDistanceKm(referencePoint, selectedProperty.coordinates)
+                                                    ? getDistanceKm(
+                                                          referencePoint,
+                                                          selectedProperty.coordinates
+                                                      )
                                                     : null
                                             }
                                         />
@@ -372,7 +435,10 @@ const PropertyMap = ({
                                     isInPopup={true}
                                     distanceKm={
                                         referencePoint
-                                            ? getDistanceKm(referencePoint, selectedProperty.coordinates)
+                                            ? getDistanceKm(
+                                                  referencePoint,
+                                                  selectedProperty.coordinates
+                                              )
                                             : null
                                     }
                                 />

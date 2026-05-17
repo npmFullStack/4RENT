@@ -1,6 +1,6 @@
 // src/shared/components/FilterMenu.jsx
 import React, { useState } from "react";
-import { X, Users, SlidersHorizontal, RotateCcw } from "lucide-react";
+import { X, Users, SlidersHorizontal, RotateCcw, Bed, Bath } from "lucide-react";
 import Button from "./Button";
 
 const FilterMenu = ({ isOpen, onClose, onApplyFilters, initialFilters }) => {
@@ -9,7 +9,9 @@ const FilterMenu = ({ isOpen, onClose, onApplyFilters, initialFilters }) => {
             category: "all",
             priceRange: { min: "", max: "" },
             sex: "all",
-            capacity: "all"
+            capacity: "all",
+            bedrooms: "all",
+            bathrooms: "all"
         }
     );
 
@@ -19,14 +21,32 @@ const FilterMenu = ({ isOpen, onClose, onApplyFilters, initialFilters }) => {
     const [showCapacityFilter, setShowCapacityFilter] = useState(
         filters.category === "boarding"
     );
+    const [showBedroomsFilter, setShowBedroomsFilter] = useState(
+        filters.category === "apartment"
+    );
+    const [showBathroomsFilter, setShowBathroomsFilter] = useState(
+        filters.category === "apartment"
+    );
 
     const handleCategoryChange = category => {
         setFilters({ ...filters, category });
+        
+        // Boarding house filters
         setShowSexFilter(category === "boarding");
         setShowCapacityFilter(category === "boarding");
-        // Reset sex and capacity when switching from boarding to apartment
+        
+        // Apartment filters
+        setShowBedroomsFilter(category === "apartment");
+        setShowBathroomsFilter(category === "apartment");
+        
+        // Reset boarding-specific filters when switching from boarding to something else
         if (category !== "boarding") {
             setFilters(prev => ({ ...prev, sex: "all", capacity: "all" }));
+        }
+        
+        // Reset apartment-specific filters when switching from apartment to something else
+        if (category !== "apartment") {
+            setFilters(prev => ({ ...prev, bedrooms: "all", bathrooms: "all" }));
         }
     };
 
@@ -40,11 +60,15 @@ const FilterMenu = ({ isOpen, onClose, onApplyFilters, initialFilters }) => {
             category: "all",
             priceRange: { min: "", max: "" },
             sex: "all",
-            capacity: "all"
+            capacity: "all",
+            bedrooms: "all",
+            bathrooms: "all"
         };
         setFilters(resetFilters);
         setShowSexFilter(false);
         setShowCapacityFilter(false);
+        setShowBedroomsFilter(false);
+        setShowBathroomsFilter(false);
         onApplyFilters(resetFilters);
         onClose();
     };
@@ -55,6 +79,8 @@ const FilterMenu = ({ isOpen, onClose, onApplyFilters, initialFilters }) => {
     const isCategoryActive = value => filters.category === value;
     const isSexActive = value => filters.sex === value;
     const isCapacityActive = value => filters.capacity === value;
+    const isBedroomsActive = value => filters.bedrooms === value;
+    const isBathroomsActive = value => filters.bathrooms === value;
 
     return (
         <>
@@ -300,6 +326,135 @@ const FilterMenu = ({ isOpen, onClose, onApplyFilters, initialFilters }) => {
                                     }`}
                                 >
                                     4+ persons
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Bedrooms Filter (Apartment only) */}
+                    {showBedroomsFilter && (
+                        <div className="animate-fadeIn">
+                            <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
+                                <Bed className="w-3 h-3 inline mr-1" />
+                                Number of Bedrooms
+                            </label>
+                            <div className="grid grid-cols-2 gap-2">
+                                <button
+                                    onClick={() =>
+                                        setFilters({
+                                            ...filters,
+                                            bedrooms: "all"
+                                        })
+                                    }
+                                    className={`px-2 py-1.5 rounded-lg font-medium transition-all text-xs ${
+                                        isBedroomsActive("all")
+                                            ? "shadow-sm bg-gray-600 text-white font-semibold"
+                                            : "bg-gray-100 text-gray-400 hover:bg-gray-300"
+                                    }`}
+                                >
+                                    All
+                                </button>
+                                <button
+                                    onClick={() =>
+                                        setFilters({
+                                            ...filters,
+                                            bedrooms: "1"
+                                        })
+                                    }
+                                    className={`px-2 py-1.5 rounded-lg font-medium transition-all text-xs ${
+                                        isBedroomsActive("1")
+                                            ? "shadow-sm bg-gray-600 text-white font-semibold"
+                                            : "bg-gray-100 text-gray-400 hover:bg-gray-300"
+                                    }`}
+                                >
+                                    1 Bedroom
+                                </button>
+                                <button
+                                    onClick={() =>
+                                        setFilters({
+                                            ...filters,
+                                            bedrooms: "2"
+                                        })
+                                    }
+                                    className={`px-2 py-1.5 rounded-lg font-medium transition-all text-xs ${
+                                        isBedroomsActive("2")
+                                            ? "shadow-sm bg-gray-600 text-white font-semibold"
+                                            : "bg-gray-100 text-gray-400 hover:bg-gray-300"
+                                    }`}
+                                >
+                                    2 Bedrooms
+                                </button>
+                                <button
+                                    onClick={() =>
+                                        setFilters({
+                                            ...filters,
+                                            bedrooms: "3+"
+                                        })
+                                    }
+                                    className={`px-2 py-1.5 rounded-lg font-medium transition-all text-xs col-span-2 ${
+                                        isBedroomsActive("3+")
+                                            ? "shadow-sm bg-gray-600 text-white font-semibold"
+                                            : "bg-gray-100 text-gray-400 hover:bg-gray-300"
+                                    }`}
+                                >
+                                    3+ Bedrooms
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Bathrooms/CR Filter (Apartment only) */}
+                    {showBathroomsFilter && (
+                        <div className="animate-fadeIn">
+                            <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
+                                <Bath className="w-3 h-3 inline mr-1" />
+                                Number of CRs
+                            </label>
+                            <div className="grid grid-cols-2 gap-2">
+                                <button
+                                    onClick={() =>
+                                        setFilters({
+                                            ...filters,
+                                            bathrooms: "all"
+                                        })
+                                    }
+                                    className={`px-2 py-1.5 rounded-lg font-medium transition-all text-xs ${
+                                        isBathroomsActive("all")
+                                            ? "shadow-sm bg-gray-600 text-white font-semibold"
+                                            : "bg-gray-100 text-gray-400 hover:bg-gray-300"
+                                    }`}
+                                >
+                                    All
+                                </button>
+                                <button
+                                    onClick={() =>
+                                        setFilters({
+                                            ...filters,
+                                            bathrooms: "1"
+                                        })
+                                    }
+                                    className={`px-2 py-1.5 rounded-lg font-medium transition-all text-xs ${
+                                        isBathroomsActive("1")
+                                            ? "shadow-sm bg-gray-600 text-white font-semibold"
+                                            : "bg-gray-100 text-gray-400 hover:bg-gray-300"
+                                    }`}
+                                >
+                                    1 CR
+                                </button>
+                                <button
+                                    onClick={() =>
+                                        setFilters({
+                                            ...filters,
+                                            bathrooms: "2+"
+                                        })
+                                    }
+                                    className={`px-2 py-1.5 rounded-lg font-medium transition-all text-xs col-span-2 ${
+                                        isBathroomsActive("2+")
+                                            ? "shadow-sm bg-gray-600 text-white font-semibold"
+                                            : "bg-gray-100 text-gray-400 hover:bg-gray-300"
+                                    }`}
+                                >
+                                    2+ CRs
                                 </button>
                             </div>
                         </div>

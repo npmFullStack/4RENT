@@ -1,6 +1,6 @@
 // src/shared/components/Table.jsx
 import React, { useState } from "react";
-import { ChevronDown, ChevronUp, Search, Filter, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Search, ChevronLeft, ChevronRight, X } from "lucide-react";
 
 const Table = ({
     columns = [],
@@ -102,9 +102,9 @@ const Table = ({
     const getSortIcon = (columnKey) => {
         if (sortColumn !== columnKey) return null;
         return sortDirection === "asc" ? (
-            <ChevronUp className="w-4 h-4 inline ml-1" />
+            <ChevronUp className="w-3 h-3 inline ml-1" />
         ) : (
-            <ChevronDown className="w-4 h-4 inline ml-1" />
+            <ChevronDown className="w-3 h-3 inline ml-1" />
         );
     };
 
@@ -114,24 +114,24 @@ const Table = ({
             {showSearch && (
                 <div className="mb-4 flex justify-between items-center gap-3 flex-wrap">
                     <div className="relative flex-1 max-w-md">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-3.5 h-3.5" />
                         <input
                             type="text"
                             placeholder={searchPlaceholder}
                             value={searchTerm}
                             onChange={(e) => handleSearch(e.target.value)}
-                            className="w-full pl-9 pr-8 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                            className="w-full pl-9 pr-8 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-xs"
                         />
                         {searchTerm && (
                             <button
                                 onClick={clearSearch}
                                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                             >
-                                <X className="w-4 h-4" />
+                                <X className="w-3.5 h-3.5" />
                             </button>
                         )}
                     </div>
-                    <div className="text-sm text-gray-500">
+                    <div className="text-xs text-gray-500">
                         Showing {paginatedData.length} of {sortedData.length}{" "}
                         entries
                     </div>
@@ -140,7 +140,7 @@ const Table = ({
 
             {/* Table */}
             <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full text-xs">
                     <thead className="bg-gray-50 border-b border-gray-200">
                         <tr className={headerClassName}>
                             {columns.map((column, index) => (
@@ -150,7 +150,7 @@ const Table = ({
                                         column.sortable !== false &&
                                         handleSort(column.key)
                                     }
-                                    className={`px-4 py-3 text-left font-semibold text-gray-700 ${
+                                    className={`px-3 py-2 text-left font-semibold text-gray-700 text-xs ${
                                         column.sortable !== false
                                             ? "cursor-pointer hover:bg-gray-100 transition-colors"
                                             : ""
@@ -159,7 +159,7 @@ const Table = ({
                                 >
                                     <div className="flex items-center gap-1">
                                         {column.icon && (
-                                            <span className="w-4 h-4">
+                                            <span className="w-3 h-3">
                                                 {column.icon}
                                             </span>
                                         )}
@@ -170,7 +170,7 @@ const Table = ({
                                 </th>
                             ))}
                             {actions && (
-                                <th className="px-4 py-3 text-left font-semibold text-gray-700">
+                                <th className="px-3 py-2 text-left font-semibold text-gray-700 text-xs">
                                     Actions
                                 </th>
                             )}
@@ -191,7 +191,7 @@ const Table = ({
                                     {columns.map((column, colIndex) => (
                                         <td
                                             key={column.key || colIndex}
-                                            className={`px-4 py-3 text-gray-600 ${cellClassName} ${column.cellClassName || ""}`}
+                                            className={`px-3 py-2 text-gray-600 text-xs ${cellClassName} ${column.cellClassName || ""}`}
                                         >
                                             {column.render
                                                 ? column.render(row)
@@ -199,7 +199,7 @@ const Table = ({
                                         </td>
                                     ))}
                                     {actions && (
-                                        <td className="px-4 py-3">
+                                        <td className="px-3 py-2">
                                             {actions(row)}
                                         </td>
                                     )}
@@ -211,7 +211,7 @@ const Table = ({
                                     colSpan={
                                         columns.length + (actions ? 1 : 0)
                                     }
-                                    className="px-4 py-8 text-center text-gray-400"
+                                    className="px-3 py-8 text-center text-gray-400 text-xs"
                                 >
                                     {emptyMessage}
                                 </td>
@@ -221,27 +221,27 @@ const Table = ({
                 </table>
             </div>
 
-            {/* Pagination */}
+            {/* Pagination - Bottom Right */}
             {totalPages > 1 && (
-                <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
-                    <button
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage === 1}
-                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                            currentPage === 1
-                                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                        }`}
-                    >
-                        Previous
-                    </button>
+                <div className="flex justify-end items-center mt-4 pt-4 border-t border-gray-200">
                     <div className="flex gap-1">
+                        <button
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            className={`w-7 h-7 rounded-md text-xs font-medium transition-colors flex items-center justify-center ${
+                                currentPage === 1
+                                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                            }`}
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                        </button>
                         {Array.from({ length: totalPages }, (_, i) => i + 1).map(
                             (page) => (
                                 <button
                                     key={page}
                                     onClick={() => handlePageChange(page)}
-                                    className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
+                                    className={`w-7 h-7 rounded-md text-xs font-medium transition-colors ${
                                         currentPage === page
                                             ? "bg-primary text-white"
                                             : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -251,18 +251,18 @@ const Table = ({
                                 </button>
                             )
                         )}
+                        <button
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            className={`w-7 h-7 rounded-md text-xs font-medium transition-colors flex items-center justify-center ${
+                                currentPage === totalPages
+                                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                            }`}
+                        >
+                            <ChevronRight className="w-4 h-4" />
+                        </button>
                     </div>
-                    <button
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                            currentPage === totalPages
-                                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                        }`}
-                    >
-                        Next
-                    </button>
                 </div>
             )}
         </div>

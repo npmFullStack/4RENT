@@ -57,6 +57,8 @@ const popularProperties = [
         category: "apartment",
         address: "456 Main St, Barangay Central, Quezon City, Philippines",
         price: 12500,
+        bedrooms: 2,
+        bathrooms: 1,
         capacity: null,
         sex: null
     },
@@ -183,6 +185,8 @@ const Home = () => {
                                 address={property.address}
                                 price={property.price}
                                 capacity={property.capacity}
+                                bedrooms={property.bedrooms}
+                                bathrooms={property.bathrooms}
                                 sex={property.sex}
                                 getCapacityText={getCapacityText}
                                 getSexText={getSexText}
@@ -196,12 +200,13 @@ const Home = () => {
             <section className="py-16 md:py-20 bg-gray-50">
                 <div className="container mx-auto px-4">
                     <div className="text-center mb-12">
-<h2 className="text-3xl md:text-4xl font-logo text-gray-800 mb-4">
-    Find Your Next Home
-</h2>
-<p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
-    Search, filter and discover boarding houses and apartments near you. All in one place.
-</p>
+                        <h2 className="text-3xl md:text-4xl font-logo text-gray-800 mb-4">
+                            Find Your Next Home
+                        </h2>
+                        <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
+                            Search, filter and discover boarding houses and
+                            apartments near you. All in one place.
+                        </p>
                     </div>
 
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
@@ -233,12 +238,15 @@ const Home = () => {
                         Join thousands of happy tenants and property owners who
                         found their perfect match with 4RENT
                     </p>
-                    <Link to="/properties" className="inline-block">
+                    <Link
+                        to="/properties"
+                        className="inline-block"
+                    >
                         <Button
                             variant="outline"
                             icon={Search}
                             iconPosition="right"
-                            className="bg-white hover:bg-gray-50 border-white text-gray-800"
+                            className=" bg-white hover:bg-gray-50 border-white text-gray-800"
                         >
                             Start Searching Now
                         </Button>

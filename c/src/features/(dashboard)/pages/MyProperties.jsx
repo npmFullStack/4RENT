@@ -1,15 +1,30 @@
 // src/features/(dashboard)/pages/MyProperties.jsx
 import React, { useState } from "react";
-import { HelpCircle, Plus, Building2, Home, Eye, Edit, Trash2, ChevronDown } from "lucide-react";
+import {
+    HelpCircle,
+    Plus,
+    Building2,
+    Home,
+    Eye,
+    Edit,
+    Trash2,
+    ChevronDown,
+    Bed,
+    House,
+    ArrowRight,
+    Users,
+    CheckCircle,
+    XCircle,
+    AlertCircle
+} from "lucide-react";
 import HelpPageModal from "@/shared/components/HelpPageModal";
 import Table from "@/shared/components/Table";
 import Button from "@/shared/components/Button";
-import FilterMenu from "@/shared/components/FilterMenu";
 import property1 from "@/assets/images/property1.png";
 import property2 from "@/assets/images/property2.png";
 import property3 from "@/assets/images/property3.png";
 
-// Mock data for properties
+// Mock data for properties with tenant info
 const mockProperties = [
     {
         id: 1,
@@ -18,7 +33,8 @@ const mockProperties = [
         category: "boarding",
         address: "123 Sunset Blvd, Barangay Sunset, Manila, Philippines",
         price: 4850,
-        capacity: 2,
+        capacity: 4,
+        currentTenants: 0,
         sex: "female",
         status: "active",
         createdAt: "2024-01-15"
@@ -31,6 +47,7 @@ const mockProperties = [
         address: "456 Main St, Barangay Central, Quezon City, Philippines",
         price: 12500,
         capacity: null,
+        currentTenants: null,
         sex: null,
         status: "active",
         createdAt: "2024-02-20"
@@ -43,8 +60,9 @@ const mockProperties = [
         address: "789 Oak Ave, Barangay Riverside, Cebu City, Philippines",
         price: 3750,
         capacity: 3,
+        currentTenants: 3,
         sex: "male",
-        status: "inactive",
+        status: "full",
         createdAt: "2024-01-10"
     },
     {
@@ -55,24 +73,98 @@ const mockProperties = [
         address: "321 Beach Road, Barangay Seaside, Davao City, Philippines",
         price: 18500,
         capacity: null,
+        currentTenants: null,
+        sex: null,
+        status: "rented",
+        createdAt: "2024-03-01"
+    },
+    {
+        id: 5,
+        image: property2,
+        name: "Cozy Studio Boarding",
+        category: "boarding",
+        address: "555 Peace St, Barangay Harmony, Cebu City, Philippines",
+        price: 4200,
+        capacity: 2,
+        currentTenants: 1,
+        sex: "female",
+        status: "active",
+        createdAt: "2024-03-15"
+    },
+    {
+        id: 6,
+        image: property1,
+        name: "Sunset Boarding House",
+        category: "boarding",
+        address: "123 Sunset Blvd, Barangay Sunset, Manila, Philippines",
+        price: 4850,
+        capacity: 4,
+        currentTenants: 0,
+        sex: "female",
+        status: "active",
+        createdAt: "2024-01-15"
+    },
+    {
+        id: 7,
+        image: property2,
+        name: "Downtown Luxury Apartment",
+        category: "apartment",
+        address: "456 Main St, Barangay Central, Quezon City, Philippines",
+        price: 12500,
+        capacity: null,
+        currentTenants: null,
         sex: null,
         status: "active",
+        createdAt: "2024-02-20"
+    },
+    {
+        id: 8,
+        image: property3,
+        name: "Garden View Boarding House",
+        category: "boarding",
+        address: "789 Oak Ave, Barangay Riverside, Cebu City, Philippines",
+        price: 3750,
+        capacity: 3,
+        currentTenants: 3,
+        sex: "male",
+        status: "full",
+        createdAt: "2024-01-10"
+    },
+    {
+        id: 9,
+        image: property1,
+        name: "Ocean View Apartment",
+        category: "apartment",
+        address: "321 Beach Road, Barangay Seaside, Davao City, Philippines",
+        price: 18500,
+        capacity: null,
+        currentTenants: null,
+        sex: null,
+        status: "rented",
         createdAt: "2024-03-01"
+    },
+    {
+        id: 10,
+        image: property2,
+        name: "Cozy Studio Boarding",
+        category: "boarding",
+        address: "555 Peace St, Barangay Harmony, Cebu City, Philippines",
+        price: 4200,
+        capacity: 2,
+        currentTenants: 1,
+        sex: "female",
+        status: "active",
+        createdAt: "2024-03-15"
     }
 ];
 
 const MyProperties = () => {
     const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
-    const [isFilterOpen, setIsFilterOpen] = useState(false);
-    const [isNewPropertyDropdownOpen, setIsNewPropertyDropdownOpen] = useState(false);
+    const [isNewPropertyDropdownOpen, setIsNewPropertyDropdownOpen] =
+        useState(false);
     const [properties, setProperties] = useState(mockProperties);
-    const [filters, setFilters] = useState({
-        category: "all",
-        status: "all",
-        priceRange: { min: "", max: "" }
-    });
 
-    const getCapacityText = (capacity) => {
+    const getCapacityText = capacity => {
         if (capacity === 1) return "1 person/room";
         if (capacity === 2) return "2 persons/room";
         if (capacity === 3) return "3 persons/room";
@@ -80,66 +172,83 @@ const MyProperties = () => {
         return "N/A";
     };
 
-    const getSexText = (sex) => {
+    const getSexText = sex => {
         if (sex === "male") return "Male Only";
         if (sex === "female") return "Female Only";
         return "Mixed";
     };
 
     // Handle view details
-    const handleViewDetails = (property) => {
+    const handleViewDetails = property => {
         console.log("View details:", property);
         // Navigate to property details or open modal
     };
 
     // Handle edit
-    const handleEdit = (property) => {
+    const handleEdit = property => {
         console.log("Edit property:", property);
     };
 
     // Handle delete
-    const handleDelete = (property) => {
-        if (window.confirm(`Are you sure you want to delete "${property.name}"?`)) {
+    const handleDelete = property => {
+        if (
+            window.confirm(
+                `Are you sure you want to delete "${property.name}"?`
+            )
+        ) {
             setProperties(properties.filter(p => p.id !== property.id));
         }
     };
 
     // Handle new property creation
-    const handleNewProperty = (type) => {
+    const handleNewProperty = type => {
         console.log(`Create new ${type}`);
         setIsNewPropertyDropdownOpen(false);
         // Navigate to create property page or open modal
     };
 
-    // Filter properties
-    const getFilteredProperties = () => {
-        return properties.filter(property => {
-            // Category filter
-            const matchesCategory = filters.category === "all" || property.category === filters.category;
-            
-            // Status filter
-            const matchesStatus = filters.status === "all" || property.status === filters.status;
-            
-            // Price range filter
-            let matchesPrice = true;
-            if (filters.priceRange.min && property.price < parseInt(filters.priceRange.min)) {
-                matchesPrice = false;
-            }
-            if (filters.priceRange.max && property.price > parseInt(filters.priceRange.max)) {
-                matchesPrice = false;
-            }
-            
-            return matchesCategory && matchesStatus && matchesPrice;
-        });
-    };
+    // Get status badge configuration
+    const getStatusBadge = row => {
+        // For apartments - show "Rented" status
+        if (row.category === "apartment") {
+            return {
+                icon: CheckCircle,
+                text: "Rented",
+                color: "blue"
+            };
+        }
 
-    const filteredProperties = getFilteredProperties();
-    const activeFiltersCount = () => {
-        let count = 0;
-        if (filters.category !== "all") count++;
-        if (filters.status !== "all") count++;
-        if (filters.priceRange.min || filters.priceRange.max) count++;
-        return count;
+        // For boarding houses - show occupancy status
+        if (row.category === "boarding") {
+            const isFull = row.currentTenants === row.capacity;
+            const occupancyText = `${row.currentTenants}/${row.capacity}`;
+
+            if (isFull) {
+                return {
+                    icon: XCircle,
+                    text: `Full - ${occupancyText}`,
+                    color: "red"
+                };
+            } else if (row.currentTenants > 0) {
+                return {
+                    icon: Users,
+                    text: `${row.currentTenants} tenant${row.currentTenants !== 1 ? "s" : ""} / ${row.capacity}`,
+                    color: "orange"
+                };
+            } else {
+                return {
+                    icon: CheckCircle,
+                    text: `Vacant - 0/${row.capacity}`,
+                    color: "green"
+                };
+            }
+        }
+
+        return {
+            icon: AlertCircle,
+            text: row.status,
+            color: "gray"
+        };
     };
 
     // Table columns configuration
@@ -148,47 +257,52 @@ const MyProperties = () => {
             key: "image",
             header: "Image",
             sortable: false,
-            width: "80px",
-            render: (row) => (
-                <img 
-                    src={row.image} 
-                    alt={row.name} 
-                    className="w-12 h-12 rounded-lg object-cover"
-                />
+            width: "100px",
+            render: row => (
+                <div className="w-14 h-14 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                    <img
+                        src={row.image}
+                        alt={row.name}
+                        className="w-full h-full object-cover"
+                    />
+                </div>
             )
         },
         {
             key: "name",
             header: "Property Name",
             sortable: true,
-            className: "font-medium text-gray-800"
+            width: "180px",
+            className: "font-medium text-gray-800 text-xs"
         },
         {
             key: "category",
             header: "Category",
             sortable: true,
-            render: (row) => (
-                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${
-                    row.category === "boarding" 
-                        ? "bg-blue-100 text-blue-700" 
-                        : "bg-red-100 text-red-700"
-                }`}>
-                    {row.category === "boarding" ? (
-                        <Building2 className="w-3 h-3" />
-                    ) : (
-                        <Home className="w-3 h-3" />
-                    )}
-                    {row.category === "boarding" ? "Boarding House" : "Apartment"}
-                </span>
-            )
+            width: "130px",
+            render: row => {
+                const isBoarding = row.category === "boarding";
+                const Icon = isBoarding ? Bed : House;
+                const color = isBoarding ? "blue" : "red";
+
+                return (
+                    <span
+                        className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold bg-${color}-50 border border-${color}-200 text-${color}-600`}
+                    >
+                        <Icon className="w-3 h-3" />
+                        {isBoarding ? "Boarding" : "Apartment"}
+                    </span>
+                );
+            }
         },
         {
             key: "address",
             header: "Address",
             sortable: true,
-            render: (row) => (
-                <div className="max-w-xs">
-                    <p className="truncate">{row.address}</p>
+            width: "150px",
+            render: row => (
+                <div className="max-w-[130px]">
+                    <p className="text-xs truncate">{row.address}</p>
                 </div>
             )
         },
@@ -196,8 +310,9 @@ const MyProperties = () => {
             key: "price",
             header: "Rent / Month",
             sortable: true,
-            render: (row) => (
-                <span className="font-semibold text-gray-800">
+            width: "140px",
+            render: row => (
+                <span className="font-semibold text-gray-800 text-sm">
                     ₱{row.price.toLocaleString()}
                 </span>
             )
@@ -206,52 +321,68 @@ const MyProperties = () => {
             key: "status",
             header: "Status",
             sortable: true,
-            render: (row) => (
-                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${
-                    row.status === "active" 
-                        ? "bg-green-100 text-green-700" 
-                        : "bg-gray-100 text-gray-700"
-                }`}>
-                    {row.status === "active" ? "Active" : "Inactive"}
-                </span>
-            )
+            width: "150px",
+            render: row => {
+                const badge = getStatusBadge(row);
+                const Icon = badge.icon;
+
+                let colorClasses = "";
+                switch (badge.color) {
+                    case "blue":
+                        colorClasses =
+                            "bg-blue-50 border-blue-200 text-blue-600";
+                        break;
+                    case "red":
+                        colorClasses = "bg-red-50 border-red-200 text-red-600";
+                        break;
+                    case "green":
+                        colorClasses =
+                            "bg-green-50 border-green-200 text-green-600";
+                        break;
+                    case "orange":
+                        colorClasses =
+                            "bg-orange-50 border-orange-200 text-orange-600";
+                        break;
+                    default:
+                        colorClasses =
+                            "bg-gray-50 border-gray-200 text-gray-600";
+                }
+
+                return (
+                    <span
+                        className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold border ${colorClasses}`}
+                    >
+                        <Icon className="w-3 h-3" />
+                        {badge.text}
+                    </span>
+                );
+            }
         }
     ];
 
     // Table search handler
     const handleTableSearch = (searchTerm, data) => {
         if (!searchTerm.trim()) return data;
-        
-        return data.filter(item => 
-            item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            item.address.toLowerCase().includes(searchTerm.toLowerCase())
+
+        return data.filter(
+            item =>
+                item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                item.address.toLowerCase().includes(searchTerm.toLowerCase())
         );
     };
 
     // Action buttons for each row
-    const renderActions = (row) => (
-        <div className="flex items-center gap-2">
-            <button
+    const renderActions = row => (
+        <div className="flex items-center">
+            <Button
+                variant="ghost"
                 onClick={() => handleViewDetails(row)}
-                className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                className="!p-1 text-gray-600 hover:bg-gray-100 gap-1 text-xs"
                 title="View Details"
             >
-                <Eye className="w-4 h-4" />
-            </button>
-            <button
-                onClick={() => handleEdit(row)}
-                className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                title="Edit"
-            >
-                <Edit className="w-4 h-4" />
-            </button>
-            <button
-                onClick={() => handleDelete(row)}
-                className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                title="Delete"
-            >
-                <Trash2 className="w-4 h-4" />
-            </button>
+                <span>View Details</span>
+                <ArrowRight className="w-3 h-3" />
+            </Button>
         </div>
     );
 
@@ -259,22 +390,26 @@ const MyProperties = () => {
     const helpFeatures = [
         {
             title: "My Properties",
-            description: "View and manage all your properties in one place. You can see property details, status, and take actions.",
+            description:
+                "View and manage all your properties in one place. You can see property details, status, and take actions.",
             icon: "Building2"
         },
         {
             title: "Add New Property",
-            description: "Click the 'New' button to add a boarding house or apartment. Fill in the property details to list it.",
+            description:
+                "Click the 'New' button to add a boarding house or apartment. Fill in the property details to list it.",
             icon: "Plus"
         },
         {
-            title: "Search & Filter",
-            description: "Use the search bar to find properties by name or address. Use filters to narrow down by category, status, or price.",
+            title: "Search",
+            description:
+                "Use the search bar to find properties by name or address.",
             icon: "Search"
         },
         {
             title: "Property Actions",
-            description: "Each property has action buttons: View Details (eye), Edit (pencil), and Delete (trash).",
+            description:
+                "Each property has action buttons: View Details (eye), Edit (pencil), and Delete (trash).",
             icon: "Eye"
         }
     ];
@@ -296,11 +431,12 @@ const MyProperties = () => {
                             My Properties
                         </h1>
                         <p className="text-gray-600 mt-1">
-                            Manage your properties, track listings, and monitor performance.
+                            Manage your properties, track listings, and monitor
+                            performance.
                         </p>
                     </div>
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                     {/* Help Button (Desktop) */}
                     <button
@@ -311,46 +447,45 @@ const MyProperties = () => {
                         <span className="font-medium">Help</span>
                     </button>
 
-                    {/* Filter Button */}
-                    <button
-                        onClick={() => setIsFilterOpen(true)}
-                        className="relative px-3 py-2 text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg transition-colors flex items-center gap-2"
-                    >
-                        Filter
-                        {activeFiltersCount() > 0 && (
-                            <span className="bg-primary text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                                {activeFiltersCount()}
-                            </span>
-                        )}
-                    </button>
-
                     {/* New Property Dropdown */}
                     <div className="relative">
                         <button
-                            onClick={() => setIsNewPropertyDropdownOpen(!isNewPropertyDropdownOpen)}
+                            onClick={() =>
+                                setIsNewPropertyDropdownOpen(
+                                    !isNewPropertyDropdownOpen
+                                )
+                            }
                             className="px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center gap-2"
                         >
                             <Plus className="w-4 h-4" />
                             New Property
-                            <ChevronDown className={`w-4 h-4 transition-transform ${isNewPropertyDropdownOpen ? "rotate-180" : ""}`} />
+                            <ChevronDown
+                                className={`w-4 h-4 transition-transform ${isNewPropertyDropdownOpen ? "rotate-180" : ""}`}
+                            />
                         </button>
-                        
+
                         {isNewPropertyDropdownOpen && (
                             <>
-                                <div 
+                                <div
                                     className="fixed inset-0 z-10"
-                                    onClick={() => setIsNewPropertyDropdownOpen(false)}
+                                    onClick={() =>
+                                        setIsNewPropertyDropdownOpen(false)
+                                    }
                                 />
                                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-20 overflow-hidden">
                                     <button
-                                        onClick={() => handleNewProperty("boarding")}
+                                        onClick={() =>
+                                            handleNewProperty("boarding")
+                                        }
                                         className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
                                     >
-                                        <Building2 className="w-4 h-4" />
-                                        Boarding House
+                                        <Bed className="w-4 h-4" />
+                                        Boarding
                                     </button>
                                     <button
-                                        onClick={() => handleNewProperty("apartment")}
+                                        onClick={() =>
+                                            handleNewProperty("apartment")
+                                        }
                                         className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors border-t border-gray-100"
                                     >
                                         <Home className="w-4 h-4" />
@@ -363,30 +498,11 @@ const MyProperties = () => {
                 </div>
             </div>
 
-            {/* Results Count and Clear Filters */}
-            <div className="mb-4 flex justify-between items-center flex-wrap gap-2">
-                <p className="text-sm text-gray-600">
-                    Showing <span className="font-semibold text-gray-800">{filteredProperties.length}</span> properties
-                </p>
-                {activeFiltersCount() > 0 && (
-                    <button
-                        onClick={() => setFilters({
-                            category: "all",
-                            status: "all",
-                            priceRange: { min: "", max: "" }
-                        })}
-                        className="text-sm text-primary hover:underline"
-                    >
-                        Clear all filters
-                    </button>
-                )}
-            </div>
-
             {/* Table */}
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+            <div className="rounded-xl overflow-hidden">
                 <Table
                     columns={columns}
-                    data={filteredProperties}
+                    data={properties}
                     keyField="id"
                     onRowClick={handleViewDetails}
                     showSearch={true}
@@ -397,14 +513,6 @@ const MyProperties = () => {
                     actions={renderActions}
                 />
             </div>
-
-            {/* Filter Menu */}
-            <FilterMenu
-                isOpen={isFilterOpen}
-                onClose={() => setIsFilterOpen(false)}
-                onApplyFilters={(newFilters) => setFilters(newFilters)}
-                initialFilters={filters}
-            />
 
             {/* Help Modal */}
             <HelpPageModal
