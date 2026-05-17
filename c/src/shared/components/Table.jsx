@@ -1,6 +1,7 @@
 // src/shared/components/Table.jsx
 import React, { useState } from "react";
 import { ChevronDown, ChevronUp, Search, ChevronLeft, ChevronRight, X } from "lucide-react";
+import Select from "./Select"; // Import the new Select component
 
 const Table = ({
     columns = [],
@@ -126,6 +127,12 @@ const Table = ({
         return value;
     };
 
+    // Prepare options for Select component
+    const selectOptions = itemsPerPageOptions.map(option => ({
+        value: option,
+        label: getRowsPerPageText(option)
+    }));
+
     return (
         <div className={`w-full ${className}`}>
             {/* Search Bar and Records Selector */}
@@ -152,17 +159,17 @@ const Table = ({
                     <div className="flex items-center gap-4">
                         <div className="flex items-center gap-2">
                             <span className="text-xs text-gray-500">Show</span>
-                            <select
-                                value={rowsPerPage}
-                                onChange={(e) => handleRowsPerPageChange(Number(e.target.value))}
-                                className="px-2 py-1 border border-gray-300 rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-primary bg-white"
-                            >
-                                {itemsPerPageOptions.map(option => (
-                                    <option key={option} value={option}>
-                                        {getRowsPerPageText(option)}
-                                    </option>
-                                ))}
-                            </select>
+                            {/* Replace native select with custom Select */}
+                            <div className="w-24">
+                                <Select
+                                    options={selectOptions}
+                                    value={rowsPerPage}
+                                    onChange={handleRowsPerPageChange}
+                                    placeholder="Select..."
+                                    isSearchable={false}
+                                    className="text-xs"
+                                />
+                            </div>
                             <span className="text-xs text-gray-500">records</span>
                         </div>
                         <div className="text-xs text-gray-500">
