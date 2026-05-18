@@ -7,7 +7,7 @@ import Button from "@/shared/components/Button";
 import property1 from "@/assets/images/property1.png";
 import property2 from "@/assets/images/property2.png";
 import property3 from "@/assets/images/property3.png";
-import { Navigation, MapPin, Loader2, X, CheckCircle } from "lucide-react";
+import { Navigation, MapPin, Loader2, XCircle, X, CheckCircle } from "lucide-react";
 
 const allProperties = [
     {

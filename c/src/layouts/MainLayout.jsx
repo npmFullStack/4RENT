@@ -32,7 +32,7 @@ const MainLayout = () => {
     const getCTAProps = () => {
         if (isHomePage) {
             return {
-                question: "List your property?",
+                question: "Wanna list your property?",
                 buttonText: "List Property",
                 buttonIcon: ArrowRight,
                 navigateTo: "/home"

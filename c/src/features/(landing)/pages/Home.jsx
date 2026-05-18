@@ -7,7 +7,7 @@ import FeatureCard from "@/features/(landing)/components/FeatureCard";
 import Button from "@/shared/components/Button";
 import Badge from "@/shared/components/Badge";
 import PropertyCard from "@/features/(landing)/components/PropertyCard";
-import heroBg from "@/assets/images/heroBg.png";
+import heroBg from "@/assets/images/public-users/heroBg.png";
 import ctaBg from "@/assets/images/ctaBg.png";
 import feature1 from "@/assets/images/feature1.png";
 import feature2 from "@/assets/images/feature2yeah.png";
