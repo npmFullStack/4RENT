@@ -2,9 +2,18 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { ArrowRight, LayoutGrid, HomeIcon, Users, Search } from "lucide-react";
+import {
+    ArrowRight,
+    LayoutGrid,
+    HomeIcon,
+    Users,
+    Search,
+    Bed,
+    House
+} from "lucide-react";
 import FeatureCard from "@/features/(landing)/components/FeatureCard";
 import Button from "@/shared/components/Button";
+import Badge from "@/shared/components/Badge";
 import PropertyCard from "@/features/(landing)/components/PropertyCard";
 import heroBg from "@/assets/images/heroBg.png";
 import ctaBg from "@/assets/images/ctaBg.png";
@@ -48,7 +57,9 @@ const popularProperties = [
         address: "123 Sunset Blvd, Barangay Sunset, Manila, Philippines",
         price: 4850,
         capacity: 2,
-        sex: "female"
+        sex: "female",
+        status: "available",
+        currentTenants: 0
     },
     {
         id: 2,
@@ -60,7 +71,9 @@ const popularProperties = [
         bedrooms: 2,
         bathrooms: 1,
         capacity: null,
-        sex: null
+        sex: null,
+        status: "rented",
+        currentTenants: null
     },
     {
         id: 3,
@@ -70,7 +83,9 @@ const popularProperties = [
         address: "789 Oak Ave, Barangay Riverside, Cebu City, Philippines",
         price: 3750,
         capacity: 3,
-        sex: "male"
+        sex: "male",
+        status: "full",
+        currentTenants: 3
     }
 ];
 
@@ -87,6 +102,46 @@ const getSexText = sex => {
     if (sex === "female") return "Female Only";
     return "";
 };
+
+// Helper function to get status badge props (same as MyProperties)
+const getStatusBadgeProps = property => {
+    if (property.category === "apartment") {
+        if (property.status === "rented") {
+            return { icon: XCircle, label: "Rented", color: "red" };
+        }
+        return { icon: CheckCircle, label: "Available", color: "green" };
+    }
+
+    if (property.category === "boarding") {
+        const isFull = property.currentTenants === property.capacity;
+        const occupancyText = `${property.currentTenants}/${property.capacity}`;
+
+        if (isFull) {
+            return {
+                icon: XCircle,
+                label: `Full · ${occupancyText}`,
+                color: "red"
+            };
+        } else if (property.currentTenants > 0) {
+            return {
+                icon: Users,
+                label: `${property.currentTenants} / ${property.capacity} tenants`,
+                color: "orange"
+            };
+        } else {
+            return {
+                icon: CheckCircle,
+                label: `Vacant · ${occupancyText}`,
+                color: "green"
+            };
+        }
+    }
+
+    return { icon: AlertCircle, label: property.status, color: "gray" };
+};
+
+// Import icons needed for status
+import { XCircle, CheckCircle, AlertCircle } from "lucide-react";
 
 const Home = () => {
     const navigate = useNavigate();
@@ -130,7 +185,7 @@ const Home = () => {
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <Link to="/properties" className="w-full sm:w-auto">
                             <Button
-                                icon={HomeIcon}
+                                icon={House}
                                 className="w-full !text-lg !px-8 !py-3 text-center"
                             >
                                 Find Property
@@ -175,23 +230,28 @@ const Home = () => {
 
                     {/* Properties Grid */}
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                        {popularProperties.map(property => (
-                            <PropertyCard
-                                key={property.id}
-                                id={property.id}
-                                image={property.image}
-                                name={property.name}
-                                category={property.category}
-                                address={property.address}
-                                price={property.price}
-                                capacity={property.capacity}
-                                bedrooms={property.bedrooms}
-                                bathrooms={property.bathrooms}
-                                sex={property.sex}
-                                getCapacityText={getCapacityText}
-                                getSexText={getSexText}
-                            />
-                        ))}
+                        {popularProperties.map(property => {
+                            return (
+                                <PropertyCard
+                                    key={property.id}
+                                    id={property.id}
+                                    image={property.image}
+                                    name={property.name}
+                                    category={property.category}
+                                    address={property.address}
+                                    price={property.price}
+                                    capacity={property.capacity}
+                                    bedrooms={property.bedrooms}
+                                    bathrooms={property.bathrooms}
+                                    sex={property.sex}
+                                    status={property.status}
+                                    currentTenants={property.currentTenants}
+                                    getCapacityText={getCapacityText}
+                                    getSexText={getSexText}
+                                    getStatusBadgeProps={getStatusBadgeProps}
+                                />
+                            );
+                        })}
                     </div>
                 </div>
             </section>
@@ -238,10 +298,7 @@ const Home = () => {
                         Join thousands of happy tenants and property owners who
                         found their perfect match with 4RENT
                     </p>
-                    <Link
-                        to="/properties"
-                        className="inline-block"
-                    >
+                    <Link to="/properties" className="inline-block">
                         <Button
                             variant="outline"
                             icon={Search}

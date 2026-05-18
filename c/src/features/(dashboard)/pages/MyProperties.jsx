@@ -15,6 +15,7 @@ import {
 import HelpPageModal from "@/shared/components/HelpPageModal";
 import Table from "@/shared/components/Table";
 import Button from "@/shared/components/Button";
+import Badge from "@/shared/components/Badge";
 import property1 from "@/assets/images/property1.png";
 import property2 from "@/assets/images/property2.png";
 import property3 from "@/assets/images/property3.png";
@@ -91,7 +92,8 @@ const mockProperties = [
         image: property3,
         name: "Metro Central Tower",
         category: "apartment",
-        address: "789 Business Ave, Barangay Commercial, Makati City, Philippines",
+        address:
+            "789 Business Ave, Barangay Commercial, Makati City, Philippines",
         price: 22500,
         capacity: null,
         currentTenants: null,
@@ -155,56 +157,30 @@ const mockProperties = [
 
 const MyProperties = () => {
     const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
-    const [isNewPropertyDropdownOpen, setIsNewPropertyDropdownOpen] = useState(false);
+    const [isNewPropertyDropdownOpen, setIsNewPropertyDropdownOpen] =
+        useState(false);
     const [properties, setProperties] = useState(mockProperties);
-
-    const getCapacityText = capacity => {
-        if (capacity === 1) return "1 person/room";
-        if (capacity === 2) return "2 persons/room";
-        if (capacity === 3) return "3 persons/room";
-        if (capacity >= 4) return `${capacity}+ persons/room`;
-        return "N/A";
-    };
-
-    const getSexText = sex => {
-        if (sex === "male") return "Male Only";
-        if (sex === "female") return "Female Only";
-        return "Mixed";
-    };
 
     // Handle view details
     const handleViewDetails = property => {
         console.log("View details:", property);
-        // Navigate to property details or open modal
     };
 
     // Handle new property creation
     const handleNewProperty = type => {
         console.log(`Create new ${type}`);
         setIsNewPropertyDropdownOpen(false);
-        // Navigate to create property page or open modal
     };
 
-    // Get status badge configuration
-    const getStatusBadge = row => {
-        // For apartments - show "Rented" or "Available" status
+    // Get status badge props
+    const getStatusBadgeProps = row => {
         if (row.category === "apartment") {
             if (row.status === "rented") {
-                return {
-                    icon: XCircle,
-                    text: "Rented",
-                    color: "red"
-                };
-            } else {
-                return {
-                    icon: CheckCircle,
-                    text: "Available",
-                    color: "green"
-                };
+                return { icon: XCircle, label: "Rented", color: "red" };
             }
+            return { icon: CheckCircle, label: "Available", color: "green" };
         }
 
-        // For boarding houses - show occupancy status
         if (row.category === "boarding") {
             const isFull = row.currentTenants === row.capacity;
             const occupancyText = `${row.currentTenants}/${row.capacity}`;
@@ -212,29 +188,25 @@ const MyProperties = () => {
             if (isFull) {
                 return {
                     icon: XCircle,
-                    text: `Full - ${occupancyText}`,
+                    label: `Full · ${occupancyText}`,
                     color: "red"
                 };
             } else if (row.currentTenants > 0) {
                 return {
                     icon: Users,
-                    text: `${row.currentTenants} tenant${row.currentTenants !== 1 ? "s" : ""} / ${row.capacity}`,
+                    label: `${row.currentTenants} / ${row.capacity} tenants`,
                     color: "orange"
                 };
             } else {
                 return {
                     icon: CheckCircle,
-                    text: `Vacant - 0/${row.capacity}`,
+                    label: `Vacant · ${occupancyText}`,
                     color: "green"
                 };
             }
         }
 
-        return {
-            icon: AlertCircle,
-            text: row.status,
-            color: "gray"
-        };
+        return { icon: AlertCircle, label: row.status, color: "gray" };
     };
 
     // Table columns configuration
@@ -243,7 +215,7 @@ const MyProperties = () => {
             key: "image",
             header: "Image",
             sortable: false,
-            width: "100px",
+            width: "80px",
             render: row => (
                 <div className="w-14 h-14 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                     <img
@@ -265,19 +237,17 @@ const MyProperties = () => {
             key: "category",
             header: "Category",
             sortable: true,
-            width: "130px",
+            width: "120px",
             render: row => {
                 const isBoarding = row.category === "boarding";
-                const Icon = isBoarding ? Bed : Home;
-                const color = isBoarding ? "blue" : "red";
-
                 return (
-                    <span
-                        className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold bg-${color}-50 border border-${color}-200 text-${color}-600`}
+                    <Badge
+                        variant="outline"
+                        color={isBoarding ? "blue" : "red"}
+                        icon={isBoarding ? Bed : Home}
                     >
-                        <Icon className="w-3 h-3" />
                         {isBoarding ? "Boarding" : "Apartment"}
-                    </span>
+                    </Badge>
                 );
             }
         },
@@ -296,7 +266,7 @@ const MyProperties = () => {
             key: "price",
             header: "Rent / Month",
             sortable: true,
-            width: "140px",
+            width: "110px",
             render: row => (
                 <span className="font-semibold text-gray-800 text-sm">
                     ₱{row.price.toLocaleString()}
@@ -309,34 +279,11 @@ const MyProperties = () => {
             sortable: true,
             width: "150px",
             render: row => {
-                const badge = getStatusBadge(row);
-                const Icon = badge.icon;
-
-                let colorClasses = "";
-                switch (badge.color) {
-                    case "blue":
-                        colorClasses = "bg-blue-50 border-blue-200 text-blue-600";
-                        break;
-                    case "red":
-                        colorClasses = "bg-red-50 border-red-200 text-red-600";
-                        break;
-                    case "green":
-                        colorClasses = "bg-green-50 border-green-200 text-green-600";
-                        break;
-                    case "orange":
-                        colorClasses = "bg-orange-50 border-orange-200 text-orange-600";
-                        break;
-                    default:
-                        colorClasses = "bg-gray-50 border-gray-200 text-gray-600";
-                }
-
+                const { icon, label, color } = getStatusBadgeProps(row);
                 return (
-                    <span
-                        className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold border ${colorClasses}`}
-                    >
-                        <Icon className="w-3 h-3" />
-                        {badge.text}
-                    </span>
+                    <Badge variant="soft" color={color} icon={icon}>
+                        {label}
+                    </Badge>
                 );
             }
         }
@@ -353,7 +300,7 @@ const MyProperties = () => {
         );
     };
 
-    // Action buttons for each row - ONLY View Details with arrow right
+    // Action buttons for each row
     const renderActions = row => (
         <div className="flex items-center">
             <Button
@@ -372,22 +319,26 @@ const MyProperties = () => {
     const helpFeatures = [
         {
             title: "My Properties",
-            description: "View and manage all your properties in one place. You can see property details, status, and take actions.",
+            description:
+                "View and manage all your properties in one place. You can see property details, status, and take actions.",
             icon: "Building2"
         },
         {
             title: "Add New Property",
-            description: "Click the 'New' button to add a boarding house or apartment. Fill in the property details to list it.",
+            description:
+                "Click the 'New' button to add a boarding house or apartment. Fill in the property details to list it.",
             icon: "Plus"
         },
         {
             title: "Search",
-            description: "Use the search bar to find properties by name or address.",
+            description:
+                "Use the search bar to find properties by name or address.",
             icon: "Search"
         },
         {
             title: "Property Actions",
-            description: "Each property has a View Details button to see more information about the property.",
+            description:
+                "Each property has a View Details button to see more information about the property.",
             icon: "Eye"
         }
     ];
@@ -409,7 +360,8 @@ const MyProperties = () => {
                             My Properties
                         </h1>
                         <p className="text-gray-600 mt-1">
-                            Manage your properties, track listings, and monitor performance.
+                            Manage your properties, track listings, and monitor
+                            performance.
                         </p>
                     </div>
                 </div>
@@ -427,7 +379,11 @@ const MyProperties = () => {
                     {/* New Property Dropdown */}
                     <div className="relative">
                         <button
-                            onClick={() => setIsNewPropertyDropdownOpen(!isNewPropertyDropdownOpen)}
+                            onClick={() =>
+                                setIsNewPropertyDropdownOpen(
+                                    !isNewPropertyDropdownOpen
+                                )
+                            }
                             className="px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center gap-2"
                         >
                             <Plus className="w-4 h-4" />
@@ -441,18 +397,24 @@ const MyProperties = () => {
                             <>
                                 <div
                                     className="fixed inset-0 z-10"
-                                    onClick={() => setIsNewPropertyDropdownOpen(false)}
+                                    onClick={() =>
+                                        setIsNewPropertyDropdownOpen(false)
+                                    }
                                 />
                                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-20 overflow-hidden">
                                     <button
-                                        onClick={() => handleNewProperty("boarding")}
+                                        onClick={() =>
+                                            handleNewProperty("boarding")
+                                        }
                                         className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
                                     >
                                         <Bed className="w-4 h-4" />
                                         Boarding
                                     </button>
                                     <button
-                                        onClick={() => handleNewProperty("apartment")}
+                                        onClick={() =>
+                                            handleNewProperty("apartment")
+                                        }
                                         className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors border-t border-gray-100"
                                     >
                                         <Home className="w-4 h-4" />

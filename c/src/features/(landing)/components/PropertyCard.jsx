@@ -9,9 +9,11 @@ import {
     Bed,
     X,
     Navigation,
-    Bath
+    Bath,
+    House
 } from "lucide-react";
 import Button from "@/shared/components/Button";
+import Badge from "@/shared/components/Badge";
 
 const PropertyCard = ({
     id,
@@ -22,13 +24,16 @@ const PropertyCard = ({
     price,
     capacity,
     sex,
-    bedrooms,      // new: number of bedrooms (for apartments)
-    bathrooms,     // new: number of bathrooms/CR (for apartments)
+    bedrooms,
+    bathrooms,
+    status,
+    currentTenants,
     getCapacityText,
     getSexText,
+    getStatusBadgeProps,
     onClose,
     isInPopup = false,
-    distanceKm = null,
+    distanceKm = null
 }) => {
     const navigate = useNavigate();
 
@@ -51,22 +56,28 @@ const PropertyCard = ({
 
     const isBoarding = category === "boarding";
     const isApartment = category === "apartment";
-    const categoryLabel = isBoarding ? "Boarding House" : "Apartment";
-    const categoryColor = isBoarding ? "bg-blue-600" : "bg-red-600";
+    const categoryLabel = isBoarding ? "Boarding" : "Apartment";
+    const categoryColor = isBoarding ? "blue" : "red";
+
+    // Get status badge props if function provided, otherwise use default
+    const statusProps = getStatusBadgeProps
+        ? getStatusBadgeProps({ category, status, currentTenants, capacity })
+        : { icon: null, label: status || "Unknown", color: "gray" };
 
     // Format distance for display
-    const distanceLabel = distanceKm != null
-        ? distanceKm < 1
-            ? `${Math.round(distanceKm * 1000)} m away`
-            : `${distanceKm.toFixed(1)} km away`
-        : null;
+    const distanceLabel =
+        distanceKm != null
+            ? distanceKm < 1
+                ? `${Math.round(distanceKm * 1000)} m away`
+                : `${distanceKm.toFixed(1)} km away`
+            : null;
 
     return (
         <div className="group bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer flex flex-col relative">
             {/* Close Button */}
             {onClose && (
                 <button
-                    onClick={(e) => {
+                    onClick={e => {
                         e.stopPropagation();
                         onClose();
                     }}
@@ -84,11 +95,15 @@ const PropertyCard = ({
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
 
-                {/* Category Badge */}
-                <div className="absolute top-4 left-4 z-10 flex flex-col gap-1.5">
-                    <span className={`${categoryColor} text-white text-xs font-semibold px-3 py-1 rounded-full shadow-lg`}>
+                {/* Category Badge - Outline variant with white background */}
+                <div className="absolute top-4 right-4 z-10 flex flex-col gap-1.5">
+                    <Badge
+                        variant="outline"
+                        color={categoryColor}
+                        icon={isBoarding ? Bed : House}
+                    >
                         {categoryLabel}
-                    </span>
+                    </Badge>
                     {/* Distance badge — only shown when a reference point exists */}
                     {distanceLabel && (
                         <span className="flex items-center gap-1 bg-black/60 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-lg w-fit">
@@ -107,9 +122,9 @@ const PropertyCard = ({
                 </h3>
 
                 {/* Address */}
-                <div className="flex items-center gap-1 text-sm text-gray-600 mb-2">
-                    <MapPin className="w-3 h-3 flex-shrink-0" />
-                    <span className="line-clamp-2">{address}</span>
+                <div className="flex items-start gap-1 text-sm text-gray-600 mb-3">
+                    <MapPin className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                    <span className="line-clamp-2 flex-1">{address}</span>
                 </div>
 
                 {/* Property-specific details */}
@@ -130,6 +145,20 @@ const PropertyCard = ({
                                 <span>{getSexText(sex)}</span>
                             </div>
                         )}
+
+                        {/* Status Badge - Below sex for boarding houses */}
+                        <div className="flex items-center gap-2 mb-3">
+                            <span className="text-sm text-gray-600">
+                                Status:
+                            </span>
+                            <Badge
+                                variant="soft"
+                                color={statusProps.color}
+                                icon={statusProps.icon}
+                            >
+                                {statusProps.label}
+                            </Badge>
+                        </div>
                     </>
                 )}
 
@@ -139,7 +168,10 @@ const PropertyCard = ({
                         {bedrooms !== undefined && bedrooms !== null && (
                             <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
                                 <Bed className="w-3 h-3 flex-shrink-0" />
-                                <span>{bedrooms} {bedrooms === 1 ? "Bedroom" : "Bedrooms"}</span>
+                                <span>
+                                    {bedrooms}{" "}
+                                    {bedrooms === 1 ? "Bedroom" : "Bedrooms"}
+                                </span>
                             </div>
                         )}
 
@@ -147,9 +179,25 @@ const PropertyCard = ({
                         {bathrooms !== undefined && bathrooms !== null && (
                             <div className="flex items-center gap-1 text-sm text-gray-600 mb-3">
                                 <Bath className="w-3 h-3 flex-shrink-0" />
-                                <span>{bathrooms} {bathrooms === 1 ? "CR" : "CRs"}</span>
+                                <span>
+                                    {bathrooms} {bathrooms === 1 ? "CR" : "CRs"}
+                                </span>
                             </div>
                         )}
+
+                        {/* Status Badge - Below CR/bathrooms for apartments */}
+                        <div className="flex items-center gap-2 mb-3">
+                            <span className="text-sm text-gray-600">
+                                Status:
+                            </span>
+                            <Badge
+                                variant="soft"
+                                color={statusProps.color}
+                                icon={statusProps.icon}
+                            >
+                                {statusProps.label}
+                            </Badge>
+                        </div>
                     </>
                 )}
 
@@ -162,7 +210,9 @@ const PropertyCard = ({
                             <span className="text-xl font-bold text-gray-800">
                                 {price.toLocaleString()}
                             </span>
-                            <span className="text-xs text-gray-500">/month</span>
+                            <span className="text-xs text-gray-500">
+                                /month
+                            </span>
                         </div>
                     </div>
 
