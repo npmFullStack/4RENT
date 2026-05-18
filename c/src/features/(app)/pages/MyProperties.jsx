@@ -16,6 +16,7 @@ import HelpPageModal from "@/shared/components/HelpPageModal";
 import Table from "@/shared/components/Table";
 import Button from "@/shared/components/Button";
 import Badge from "@/shared/components/Badge";
+import Select from "@/shared/components/Select";
 import property1 from "@/assets/images/property1.png";
 import property2 from "@/assets/images/property2.png";
 import property3 from "@/assets/images/property3.png";
@@ -157,9 +158,22 @@ const mockProperties = [
 
 const MyProperties = () => {
     const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
-    const [isNewPropertyDropdownOpen, setIsNewPropertyDropdownOpen] =
-        useState(false);
+    const [selectedPropertyType, setSelectedPropertyType] = useState(null);
     const [properties, setProperties] = useState(mockProperties);
+
+    // Property type options for Select
+    const propertyTypeOptions = [
+        {
+            value: "boarding",
+            label: "Boarding",
+            icon: <Bed className="w-3 h-3" />
+        },
+        {
+            value: "apartment",
+            label: "Apartment",
+            icon: <Home className="w-3 h-3" />
+        }
+    ];
 
     // Handle view details
     const handleViewDetails = property => {
@@ -169,7 +183,7 @@ const MyProperties = () => {
     // Handle new property creation
     const handleNewProperty = type => {
         console.log(`Create new ${type}`);
-        setIsNewPropertyDropdownOpen(false);
+        setSelectedPropertyType(null);
     };
 
     // Get status badge props
@@ -326,7 +340,7 @@ const MyProperties = () => {
         {
             title: "Add New Property",
             description:
-                "Click the 'New' button to add a boarding house or apartment. Fill in the property details to list it.",
+                "Click the 'New Property' button to add a boarding house or apartment. Fill in the property details to list it.",
             icon: "Plus"
         },
         {
@@ -375,55 +389,19 @@ const MyProperties = () => {
                         <HelpCircle size={20} />
                         <span className="font-medium">Help</span>
                     </button>
-
-                    {/* New Property Dropdown */}
-                    <div className="relative">
-                        <button
-                            onClick={() =>
-                                setIsNewPropertyDropdownOpen(
-                                    !isNewPropertyDropdownOpen
-                                )
-                            }
-                            className="px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors flex items-center gap-2"
-                        >
-                            <Plus className="w-4 h-4" />
-                            New Property
-                            <ChevronDown
-                                className={`w-4 h-4 transition-transform ${isNewPropertyDropdownOpen ? "rotate-180" : ""}`}
-                            />
-                        </button>
-
-                        {isNewPropertyDropdownOpen && (
-                            <>
-                                <div
-                                    className="fixed inset-0 z-10"
-                                    onClick={() =>
-                                        setIsNewPropertyDropdownOpen(false)
-                                    }
-                                />
-                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-20 overflow-hidden">
-                                    <button
-                                        onClick={() =>
-                                            handleNewProperty("boarding")
-                                        }
-                                        className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
-                                    >
-                                        <Bed className="w-4 h-4" />
-                                        Boarding
-                                    </button>
-                                    <button
-                                        onClick={() =>
-                                            handleNewProperty("apartment")
-                                        }
-                                        className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors border-t border-gray-100"
-                                    >
-                                        <Home className="w-4 h-4" />
-                                        Apartment
-                                    </button>
-                                </div>
-                            </>
-                        )}
-                    </div>
+                    {/* New Property Select Component */}
+                    <div className="w-50">
+                        <Select
+                            options={propertyTypeOptions}
+                            value={selectedPropertyType}
+                            onChange={handleNewProperty}
+                            placeholder="New Property"
+                            variant="primary"
+                            isSearchable={false}
+                            isClearable={false}
+                            icon={<Plus className="w-4 h-4" />}
+                        />
+                    </div>{" "}
                 </div>
             </div>
 

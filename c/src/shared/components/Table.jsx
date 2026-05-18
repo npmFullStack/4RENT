@@ -167,6 +167,7 @@ const Table = ({
                                     onChange={handleRowsPerPageChange}
                                     placeholder="Select..."
                                     isSearchable={false}
+variant="outline"
                                     className="text-xs"
                                 />
                             </div>
