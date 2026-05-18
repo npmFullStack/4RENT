@@ -2,7 +2,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { ArrowRight, MapPin, Users, Search, Bed } from "lucide-react";
+import { ArrowRight, MapPin, Users, Search, Bed, XCircle, CheckCircle, AlertCircle } from "lucide-react";
 import FeatureCard from "@/features/(landing)/components/FeatureCard";
 import Button from "@/shared/components/Button";
 import Badge from "@/shared/components/Badge";
@@ -40,6 +40,7 @@ const features = [
     }
 ];
 
+// Updated popular properties with bedroom details structure
 const popularProperties = [
     {
         id: 1,
@@ -48,10 +49,19 @@ const popularProperties = [
         category: "boarding",
         address: "123 Sunset Blvd, Barangay Sunset, Manila, Philippines",
         price: 4850,
-        capacity: 2,
-        sex: "female",
+        capacity: 2, // total capacity
+        bedroomDetails: [ // NEW: bedroom details array
+            {
+                id: 1,
+                name: "Bedroom #1",
+                capacity: 2,
+                gender: "female"
+            }
+        ],
+        sex: "female", // kept for legacy
         status: "available",
-        currentTenants: 0
+        currentTenants: 0,
+        bathrooms: 2 // optional
     },
     {
         id: 2,
@@ -75,9 +85,24 @@ const popularProperties = [
         address: "789 Oak Ave, Barangay Riverside, Cebu City, Philippines",
         price: 3750,
         capacity: 3,
+        bedroomDetails: [ // NEW: multiple bedrooms example
+            {
+                id: 1,
+                name: "Bedroom #1",
+                capacity: 2,
+                gender: "male"
+            },
+            {
+                id: 2,
+                name: "Bedroom #2",
+                capacity: 1,
+                gender: "male"
+            }
+        ],
         sex: "male",
         status: "full",
-        currentTenants: 3
+        currentTenants: 3,
+        bathrooms: 2
     }
 ];
 
@@ -95,7 +120,7 @@ const getSexText = sex => {
     return "";
 };
 
-// Helper function to get status badge props (same as MyProperties)
+// Helper function to get status badge props (updated to handle bedroom details)
 const getStatusBadgeProps = property => {
     if (property.category === "apartment") {
         if (property.status === "rented") {
@@ -105,8 +130,14 @@ const getStatusBadgeProps = property => {
     }
 
     if (property.category === "boarding") {
-        const isFull = property.currentTenants === property.capacity;
-        const occupancyText = `${property.currentTenants}/${property.capacity}`;
+        // If property has bedroom details, calculate total capacity from bedrooms
+        const totalCapacity = property.bedroomDetails 
+            ? property.bedroomDetails.reduce((sum, room) => sum + (room.capacity || 0), 0)
+            : property.capacity;
+        
+        const currentTenants = property.currentTenants || 0;
+        const isFull = currentTenants === totalCapacity;
+        const occupancyText = `${currentTenants}/${totalCapacity}`;
 
         if (isFull) {
             return {
@@ -114,10 +145,10 @@ const getStatusBadgeProps = property => {
                 label: `Full · ${occupancyText}`,
                 color: "red"
             };
-        } else if (property.currentTenants > 0) {
+        } else if (currentTenants > 0) {
             return {
                 icon: Users,
-                label: `${property.currentTenants} / ${property.capacity} tenants`,
+                label: `${currentTenants} / ${totalCapacity} tenants`,
                 color: "orange"
             };
         } else {
@@ -131,9 +162,6 @@ const getStatusBadgeProps = property => {
 
     return { icon: AlertCircle, label: property.status, color: "gray" };
 };
-
-// Import icons needed for status
-import { XCircle, CheckCircle, AlertCircle } from "lucide-react";
 
 const Home = () => {
     const navigate = useNavigate();
@@ -238,6 +266,7 @@ const Home = () => {
                                     sex={property.sex}
                                     status={property.status}
                                     currentTenants={property.currentTenants}
+                                    bedroomDetails={property.bedroomDetails} // Pass bedroom details
                                     getCapacityText={getCapacityText}
                                     getSexText={getSexText}
                                     getStatusBadgeProps={getStatusBadgeProps}

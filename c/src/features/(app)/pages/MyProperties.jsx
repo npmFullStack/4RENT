@@ -1,5 +1,6 @@
 // src/features/(app)/pages/MyProperties.jsx
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
     HelpCircle,
     Plus,
@@ -93,8 +94,7 @@ const mockProperties = [
         image: property3,
         name: "Metro Central Tower",
         category: "apartment",
-        address:
-            "789 Business Ave, Barangay Commercial, Makati City, Philippines",
+        address: "789 Business Ave, Barangay Commercial, Makati City, Philippines",
         price: 22500,
         capacity: null,
         currentTenants: null,
@@ -157,6 +157,7 @@ const mockProperties = [
 ];
 
 const MyProperties = () => {
+    const navigate = useNavigate();
     const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
     const [selectedPropertyType, setSelectedPropertyType] = useState(null);
     const [properties, setProperties] = useState(mockProperties);
@@ -180,9 +181,13 @@ const MyProperties = () => {
         console.log("View details:", property);
     };
 
-    // Handle new property creation
+    // Handle new property creation with navigation
     const handleNewProperty = type => {
-        console.log(`Create new ${type}`);
+        if (type === "boarding") {
+            navigate("/new-boarding");
+        } else if (type === "apartment") {
+            navigate("/new-apartment");
+        }
         setSelectedPropertyType(null);
     };
 
@@ -230,13 +235,22 @@ const MyProperties = () => {
             header: "Image",
             sortable: false,
             width: "80px",
+            cellClassName: "!p-0",
             render: row => (
-                <div className="w-14 h-14 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                    <img
-                        src={row.image}
-                        alt={row.name}
-                        className="w-full h-full object-cover"
+                <div className="relative flex items-center justify-center py-2">
+                    {/* Vertical colored line - Blue for Boarding, Red for Apartment */}
+                    <div 
+                        className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-lg ${
+                            row.category === "boarding" ? "bg-blue-500" : "bg-red-500"
+                        }`}
                     />
+                    <div className="w-14 h-14 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                        <img
+                            src={row.image}
+                            alt={row.name}
+                            className="w-full h-full object-cover"
+                        />
+                    </div>
                 </div>
             )
         },
@@ -401,25 +415,25 @@ const MyProperties = () => {
                             isClearable={false}
                             icon={<Plus className="w-4 h-4" />}
                         />
-                    </div>{" "}
+                    </div>
                 </div>
             </div>
 
             {/* Table */}
             <div className="rounded-xl overflow-hidden">
-<Table
-    columns={columns}
-    data={properties}
-    keyField="id"
-    onRowClick={handleViewDetails}
-    showSearch={true}
-    searchPlaceholder="Search by property name or address..."
-    onSearch={handleTableSearch}
-    itemsPerPageOptions={[5, 10, 20, -1]}
-    itemsPerPage={5}
-    emptyMessage="No properties found. Click 'New Property' to add your first property."
-    actions={renderActions}
-/>
+                <Table
+                    columns={columns}
+                    data={properties}
+                    keyField="id"
+                    onRowClick={handleViewDetails}
+                    showSearch={true}
+                    searchPlaceholder="Search by property name or address..."
+                    onSearch={handleTableSearch}
+                    itemsPerPageOptions={[5, 10, 20, -1]}
+                    itemsPerPage={5}
+                    emptyMessage="No properties found. Click 'New Property' to add your first property."
+                    actions={renderActions}
+                />
             </div>
 
             {/* Help Modal */}

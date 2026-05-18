@@ -414,8 +414,6 @@ const Table = ({
                     </div>
                 </div>
             )}
-
-
         </div>
     );
 };

@@ -3,7 +3,7 @@ import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import MainLayout from "@/layouts/MainLayout";
 import AuthLayout from "@/layouts/AuthLayout";
-import DashboardLayout from "@/layouts/DashboardLayout";
+import AppLayout from "@/layouts/AppLayout";
 import Home from "@/features/(landing)/pages/Home";
 import AllProperties from "@/features/(landing)/pages/AllProperties";
 import PropertyDetails from "@/features/(landing)/pages/PropertyDetails";
@@ -16,6 +16,8 @@ import CreateNewPassword from "@/features/(auth)/pages/CreateNewPassword";
 
 import Dashboard from "@/features/(app)/pages/Dashboard";
 import MyProperties from "@/features/(app)/pages/MyProperties";
+import NewBoarding from "@/features/(app)/pages/NewBoarding";
+import NewApartment from "@/features/(app)/pages/NewApartment";
 
 function App() {
     return (
@@ -25,7 +27,6 @@ function App() {
                 <Route path="/" element={<MainLayout />}>
                     <Route index element={<Home />} />
                     <Route path="/home" element={<LandlordHome />} />
-        
                 </Route>
 
                 {/* Auth Routes */}
@@ -47,13 +48,14 @@ function App() {
                         path="/find-properties-map"
                         element={<FindPropertyViaMap />}
                     />
-
-        </Route>
+                </Route>
 
                 {/* Dashboard Routes */}
-                <Route element={<DashboardLayout />}>
+                <Route element={<AppLayout />}>
                     <Route path="dashboard" element={<Dashboard />} />
                     <Route path="my-properties" element={<MyProperties />} />
+                    <Route path="new-boarding" element={<NewBoarding />} />
+                    <Route path="new-apartment" element={<NewApartment />} />
                 </Route>
             </Routes>
         </BrowserRouter>

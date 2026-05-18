@@ -1,4 +1,4 @@
-// src/layouts/DashboardLayout.jsx
+// src/layoutsAppLayout.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -22,7 +22,7 @@ import WarningModal from "@/shared/components/WarningModal";
 import NotificationMenu from "@/shared/components/NotificationMenu";
 import ProfileMenu from "@/shared/components/ProfileMenu";
 
-const DashboardLayout = () => {
+const AppLayout = () => {
     const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
     const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -387,4 +387,4 @@ const DashboardLayout = () => {
     );
 };
 
-export default DashboardLayout;
+export default AppLayout;
