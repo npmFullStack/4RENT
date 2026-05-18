@@ -15,8 +15,9 @@ import {
     CheckCircle,
     AlertCircle
 } from "lucide-react";
-import FemaleIcon from "@/assets/icons/female.svg";
-import MaleIcon from "@/assets/icons/male.svg";
+// Fix: Import SVGs as strings/URLs, not as components
+import FemaleIconUrl from "@/assets/icons/female.svg";
+import MaleIconUrl from "@/assets/icons/male.svg";
 
 import Button from "@/shared/components/Button";
 import Badge from "@/shared/components/Badge";
@@ -28,13 +29,13 @@ const PropertyCard = ({
     category,
     address,
     price,
-    capacity, // total capacity for boarding
+    capacity, // total capacity for boarding (legacy)
     bedrooms, // number of bedrooms for apartment
-    bathrooms,
+    bathrooms, // number of CR/bathrooms for both boarding and apartment
     sex, // overall sex for boarding (legacy)
     status,
     currentTenants,
-    bedroomDetails, // NEW: array of bedroom objects [{ id, name, capacity, gender }]
+    bedroomDetails, // NEW: array of bedroom objects [{ id, name, capacity, gender, currentTenants? }]
     getCapacityText,
     getSexText,
     getStatusBadgeProps,
@@ -92,12 +93,24 @@ const PropertyCard = ({
     const iconSize = isMobilePopup ? "w-3 h-3" : "w-4 h-4";
     const textSize = isMobilePopup ? "text-xs" : "text-sm";
 
-    // Helper to get gender icon
+    // Helper to get gender icon - using img tags instead of components
     const getGenderIcon = gender => {
         if (gender === "male")
-            return <MaleIcon className={`${iconSize} text-blue-600`} />;
+            return (
+                <img
+                    src={MaleIconUrl}
+                    alt="male"
+                    className={`${iconSize} text-blue-600`}
+                />
+            );
         if (gender === "female")
-            return <FemaleIcon className={`${iconSize} text-pink-600`} />;
+            return (
+                <img
+                    src={FemaleIconUrl}
+                    alt="female"
+                    className={`${iconSize} text-pink-600`}
+                />
+            );
         return <Users className={`${iconSize} text-gray-600`} />;
     };
 
@@ -107,6 +120,41 @@ const PropertyCard = ({
         if (gender === "female") return "Female Only";
         return "Mixed";
     };
+
+    // Helper to get bedroom status text and color
+    const getBedroomStatus = bedroom => {
+        const current = bedroom.currentTenants || 0;
+        const total = bedroom.capacity || 0;
+
+        if (current === 0) {
+            return { label: "Vacant", color: "green" };
+        } else if (current === total) {
+            return { label: "Full", color: "red" };
+        } else {
+            return { label: `${current}/${total} filled`, color: "orange" };
+        }
+    };
+
+    // Calculate total capacity and current tenants from bedroomDetails if available
+    const getTotalStats = () => {
+        if (bedroomDetails && bedroomDetails.length > 0) {
+            const totalCapacity = bedroomDetails.reduce(
+                (sum, r) => sum + (r.capacity || 0),
+                0
+            );
+            const totalCurrent = bedroomDetails.reduce(
+                (sum, r) => sum + (r.currentTenants || 0),
+                0
+            );
+            return { totalCapacity, totalCurrent };
+        }
+        return {
+            totalCapacity: capacity || 0,
+            totalCurrent: currentTenants || 0
+        };
+    };
+
+    const { totalCapacity, totalCurrent } = getTotalStats();
 
     return (
         <div
@@ -144,6 +192,7 @@ const PropertyCard = ({
                     >
                         {categoryLabel}
                     </Badge>
+
                     {distanceLabel && (
                         <Badge
                             variant="solid"
@@ -188,123 +237,64 @@ const PropertyCard = ({
                                         <span
                                             className={`${textSize} text-gray-500`}
                                         >
-                                            Bedrooms:
+                                            Total Capacity:
                                         </span>
                                         <div className="flex items-center gap-1">
-                                            <Bed
+                                            <Users
                                                 className={`${iconSize} text-gray-600`}
                                             />
                                             <span
                                                 className={`${textSize} text-gray-800 font-medium`}
                                             >
-                                                {bedroomDetails.length}{" "}
-                                                {bedroomDetails.length === 1
-                                                    ? "Room"
-                                                    : "Rooms"}
+                                                {totalCurrent}/{totalCapacity}{" "}
+                                                persons
                                             </span>
                                         </div>
                                     </div>
 
-                                    {/* Show first bedroom details (or summary) */}
-                                    {bedroomDetails.length === 1 ? (
-                                        <>
-                                            <div className="flex items-center justify-between">
-                                                <span
-                                                    className={`${textSize} text-gray-500`}
+                                    {/* Show each bedroom's status */}
+                                    <div className="space-y-2 mt-1">
+                                        {bedroomDetails.map((bedroom, idx) => {
+                                            const status =
+                                                getBedroomStatus(bedroom);
+                                            return (
+                                                <div
+                                                    key={bedroom.id || idx}
+                                                    className="flex items-center justify-between"
                                                 >
-                                                    Capacity:
-                                                </span>
-                                                <div className="flex items-center gap-1">
-                                                    <Users
-                                                        className={`${iconSize} text-gray-600`}
-                                                    />
-                                                    <span
-                                                        className={`${textSize} text-gray-800 font-medium`}
-                                                    >
-                                                        {
-                                                            bedroomDetails[0]
-                                                                .capacity
-                                                        }{" "}
-                                                        {bedroomDetails[0]
-                                                            .capacity === 1
-                                                            ? "person"
-                                                            : "persons"}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <span
-                                                    className={`${textSize} text-gray-500`}
-                                                >
-                                                    Gender:
-                                                </span>
-                                                <div className="flex items-center gap-1">
-                                                    {getGenderIcon(
-                                                        bedroomDetails[0].gender
-                                                    )}
-                                                    <span
-                                                        className={`${textSize} text-gray-800 font-medium`}
-                                                    >
-                                                        {getGenderText(
-                                                            bedroomDetails[0]
-                                                                .gender
+                                                    <div className="flex items-center gap-1.5">
+                                                        {getGenderIcon(
+                                                            bedroom.gender
                                                         )}
-                                                    </span>
+                                                        <span
+                                                            className={`${textSize} text-gray-600`}
+                                                        >
+                                                            {bedroom.name ||
+                                                                `Room ${idx + 1}`}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span
+                                                            className={`${textSize} text-gray-500`}
+                                                        >
+                                                            {bedroom.currentTenants ||
+                                                                0}
+                                                            /
+                                                            {bedroom.capacity ||
+                                                                0}
+                                                        </span>
+                                                        <Badge
+                                                            variant="ghost"
+                                                            color={status.color}
+                                                            className="text-xs px-1.5 py-0"
+                                                        >
+                                                            {status.label}
+                                                        </Badge>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <div className="flex items-center justify-between">
-                                                <span
-                                                    className={`${textSize} text-gray-500`}
-                                                >
-                                                    Total Capacity:
-                                                </span>
-                                                <div className="flex items-center gap-1">
-                                                    <Users
-                                                        className={`${iconSize} text-gray-600`}
-                                                    />
-                                                    <span
-                                                        className={`${textSize} text-gray-800 font-medium`}
-                                                    >
-                                                        {capacity ||
-                                                            bedroomDetails.reduce(
-                                                                (sum, r) =>
-                                                                    sum +
-                                                                    (r.capacity ||
-                                                                        0),
-                                                                0
-                                                            )}{" "}
-                                                        persons
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <span
-                                                    className={`${textSize} text-gray-500`}
-                                                >
-                                                    Room Types:
-                                                </span>
-                                                <div className="flex items-center gap-1">
-                                                    {getGenderIcon(
-                                                        bedroomDetails[0].gender
-                                                    )}
-                                                    <span
-                                                        className={`${textSize} text-gray-800 font-medium`}
-                                                    >
-                                                        {getGenderText(
-                                                            bedroomDetails[0]
-                                                                .gender
-                                                        )}
-                                                        {bedroomDetails.length >
-                                                            1 &&
-                                                            ` +${bedroomDetails.length - 1} more`}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </>
-                                    )}
+                                            );
+                                        })}
+                                    </div>
                                 </>
                             ) : (
                                 // Legacy display for old data structure
@@ -323,7 +313,11 @@ const PropertyCard = ({
                                                 <span
                                                     className={`${textSize} text-gray-800 font-medium`}
                                                 >
-                                                    {getCapacityText(capacity)}
+                                                    {getCapacityText
+                                                        ? getCapacityText(
+                                                              capacity
+                                                          )
+                                                        : `${capacity} persons`}
                                                 </span>
                                             </div>
                                         </div>
@@ -337,9 +331,7 @@ const PropertyCard = ({
                                                 Gender:
                                             </span>
                                             <div className="flex items-center gap-1">
-                                                <Bed
-                                                    className={`${iconSize} text-gray-600`}
-                                                />
+                                                {getGenderIcon(sex)}
                                                 <span
                                                     className={`${textSize} text-gray-800 font-medium`}
                                                 >
@@ -351,7 +343,31 @@ const PropertyCard = ({
                                 </>
                             )}
 
-                            <div className="flex items-center justify-between">
+                            {/* Show CR count for boarding */}
+                            {bathrooms !== undefined &&
+                                bathrooms !== null &&
+                                bathrooms > 0 && (
+                                    <div className="flex items-center justify-between pt-1 border-t border-gray-100 mt-1">
+                                        <span
+                                            className={`${textSize} text-gray-500`}
+                                        >
+                                            CR/Bathrooms:
+                                        </span>
+                                        <div className="flex items-center gap-1">
+                                            <Bath
+                                                className={`${iconSize} text-gray-600`}
+                                            />
+                                            <span
+                                                className={`${textSize} text-gray-800 font-medium`}
+                                            >
+                                                {bathrooms}{" "}
+                                                {bathrooms === 1 ? "CR" : "CRs"}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+
+                            <div className="flex items-center justify-between pt-1">
                                 <span className={`${textSize} text-gray-500`}>
                                     Status:
                                 </span>
@@ -446,7 +462,7 @@ const PropertyCard = ({
                             <span
                                 className={`${priceSize} font-bold text-gray-800`}
                             >
-                                {price.toLocaleString()}
+                                {price?.toLocaleString()}
                             </span>
                         </div>
                     </div>

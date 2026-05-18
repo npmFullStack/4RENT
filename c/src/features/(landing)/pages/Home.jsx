@@ -2,7 +2,16 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { ArrowRight, MapPin, Users, Search, Bed, XCircle, CheckCircle, AlertCircle } from "lucide-react";
+import {
+    ArrowRight,
+    MapPin,
+    Users,
+    Search,
+    Bed,
+    XCircle,
+    CheckCircle,
+    AlertCircle
+} from "lucide-react";
 import FeatureCard from "@/features/(landing)/components/FeatureCard";
 import Button from "@/shared/components/Button";
 import Badge from "@/shared/components/Badge";
@@ -50,7 +59,8 @@ const popularProperties = [
         address: "123 Sunset Blvd, Barangay Sunset, Manila, Philippines",
         price: 4850,
         capacity: 2, // total capacity
-        bedroomDetails: [ // NEW: bedroom details array
+        bedroomDetails: [
+            // NEW: bedroom details array
             {
                 id: 1,
                 name: "Bedroom #1",
@@ -85,7 +95,8 @@ const popularProperties = [
         address: "789 Oak Ave, Barangay Riverside, Cebu City, Philippines",
         price: 3750,
         capacity: 3,
-        bedroomDetails: [ // NEW: multiple bedrooms example
+        bedroomDetails: [
+            // NEW: multiple bedrooms example
             {
                 id: 1,
                 name: "Bedroom #1",
@@ -103,6 +114,33 @@ const popularProperties = [
         status: "full",
         currentTenants: 3,
         bathrooms: 2
+    },
+    // Example property with mixed bedrooms (male partial, female full)
+    {
+        id: 4,
+        image: property1,
+        name: "Mixed Boarding House",
+        category: "boarding",
+        address: "123 Mixed St, Barangay Central, Manila, Philippines",
+        price: 4850,
+        bathrooms: 3, // Added number of CRs
+        bedroomDetails: [
+            {
+                id: 1,
+                name: "Bedroom #1",
+                capacity: 4,
+                gender: "male",
+                currentTenants: 1 // 1/4 filled
+            },
+            {
+                id: 2,
+                name: "Bedroom #2",
+                capacity: 4,
+                gender: "female",
+                currentTenants: 4 // Full
+            }
+        ],
+        status: "partial"
     }
 ];
 
@@ -120,7 +158,6 @@ const getSexText = sex => {
     return "";
 };
 
-// Helper function to get status badge props (updated to handle bedroom details)
 const getStatusBadgeProps = property => {
     if (property.category === "apartment") {
         if (property.status === "rented") {
@@ -130,11 +167,60 @@ const getStatusBadgeProps = property => {
     }
 
     if (property.category === "boarding") {
-        // If property has bedroom details, calculate total capacity from bedrooms
-        const totalCapacity = property.bedroomDetails 
-            ? property.bedroomDetails.reduce((sum, room) => sum + (room.capacity || 0), 0)
-            : property.capacity;
-        
+        // If property has bedroom details, calculate from bedrooms
+        if (property.bedroomDetails && property.bedroomDetails.length > 0) {
+            const totalCapacity = property.bedroomDetails.reduce(
+                (sum, room) => sum + (room.capacity || 0),
+                0
+            );
+            const totalCurrent = property.bedroomDetails.reduce(
+                (sum, room) => sum + (room.currentTenants || 0),
+                0
+            );
+            const isFull = totalCurrent === totalCapacity;
+            const occupancyText = `${totalCurrent}/${totalCapacity}`;
+
+            // Check individual bedroom statuses for a more detailed view
+            const bedroomsStatus = property.bedroomDetails.map(room => {
+                const current = room.currentTenants || 0;
+                const capacity = room.capacity || 0;
+                if (current === 0) return "vacant";
+                if (current === capacity) return "full";
+                return "partial";
+            });
+
+            const hasVacant = bedroomsStatus.includes("vacant");
+            const hasPartial = bedroomsStatus.includes("partial");
+
+            if (isFull) {
+                return {
+                    icon: XCircle,
+                    label: `Full · ${occupancyText}`,
+                    color: "red"
+                };
+            } else if (hasVacant && hasPartial) {
+                return {
+                    icon: Users,
+                    label: `${occupancyText} · Some vacancies`,
+                    color: "orange"
+                };
+            } else if (hasVacant) {
+                return {
+                    icon: CheckCircle,
+                    label: `Vacancies · ${occupancyText}`,
+                    color: "green"
+                };
+            } else {
+                return {
+                    icon: Users,
+                    label: `${occupancyText} tenants`,
+                    color: "orange"
+                };
+            }
+        }
+
+        // Legacy calculation for old data structure
+        const totalCapacity = property.capacity || 0;
         const currentTenants = property.currentTenants || 0;
         const isFull = currentTenants === totalCapacity;
         const occupancyText = `${currentTenants}/${totalCapacity}`;
@@ -211,7 +297,10 @@ const Home = () => {
                                 Find Property
                             </Button>
                         </Link>
-                        <Link to="/find-properties-map" className="w-full sm:w-auto">
+                        <Link
+                            to="/find-properties-map"
+                            className="w-full sm:w-auto"
+                        >
                             <Button
                                 variant="outline"
                                 icon={MapPin}
