@@ -26,6 +26,7 @@ import Select from "@/shared/components/Select";
 
 import FemaleIcon from "@/assets/icons/female.svg";
 import MaleIcon from "@/assets/icons/male.svg";
+import MixedIcon from "@/assets/icons/mixed.svg";
 
 const NewBoarding = () => {
     const navigate = useNavigate();
@@ -41,12 +42,13 @@ const NewBoarding = () => {
         numberOfCR: "",
         selectedImage: "",
         images: [],
+        boardingHouseSex: "", // male, female, or mixed
         bedrooms: [
             {
                 id: 1,
                 name: "Bedroom #1",
                 capacity: "",
-                gender: "" // male or female
+                gender: "" // male or female (only used when boardingHouseSex is mixed)
             }
         ],
         rules: [
@@ -59,7 +61,26 @@ const NewBoarding = () => {
 
     const [errors, setErrors] = useState({});
 
-    // Gender options for bedroom
+    // Gender options for boarding house
+    const getBoardingHouseSexOptions = () => [
+        {
+            value: "male",
+            label: "Male Only",
+            icon: <img src={MaleIcon} alt="male" className="w-5 h-5" />
+        },
+        {
+            value: "female",
+            label: "Female Only",
+            icon: <img src={FemaleIcon} alt="female" className="w-5 h-5" />
+        },
+        {
+            value: "mixed",
+            label: "Mixed",
+            icon: <img src={MixedIcon} alt="mixed" className="w-5 h-5" />
+        }
+    ];
+
+    // Gender options for bedroom (only used when mixed)
     const getBedroomGenderOptions = () => [
         {
             value: "male",
@@ -86,9 +107,14 @@ const NewBoarding = () => {
                 "Provide the complete address including street, barangay, city, and province for accurate location."
         },
         {
+            title: "Boarding House Type",
+            description:
+                "Select whether your boarding house is for Male Only, Female Only, or Mixed. This determines bedroom gender configuration options."
+        },
+        {
             title: "Bedrooms Configuration",
             description:
-                "Add each bedroom separately. For each bedroom, specify the capacity (how many people can stay) and gender exclusivity (Male Only or Female Only)."
+                "Add each bedroom separately. For each bedroom, specify the capacity. For mixed boarding houses, you can also specify gender exclusivity per bedroom."
         },
         {
             title: "House Rules",
@@ -116,6 +142,22 @@ const NewBoarding = () => {
         }
     };
 
+    // Handle boarding house sex change
+    const handleBoardingHouseSexChange = (value) => {
+        setFormData(prev => ({ 
+            ...prev, 
+            boardingHouseSex: value,
+            // Reset bedroom genders if switching from mixed to single-gender
+            bedrooms: prev.bedrooms.map(bedroom => ({
+                ...bedroom,
+                gender: value !== "mixed" ? value : ""
+            }))
+        }));
+        if (errors.boardingHouseSex) {
+            setErrors(prev => ({ ...prev, boardingHouseSex: "" }));
+        }
+    };
+
     // Bedroom handlers
     const addBedroom = () => {
         const newId = formData.bedrooms.length + 1;
@@ -127,7 +169,7 @@ const NewBoarding = () => {
                     id: newId,
                     name: `Bedroom #${newId}`,
                     capacity: "",
-                    gender: ""
+                    gender: formData.boardingHouseSex !== "mixed" ? formData.boardingHouseSex : ""
                 }
             ]
         }));
@@ -271,6 +313,11 @@ const NewBoarding = () => {
             newErrors.numberOfCR = "Must have at least 1 CR/bathroom";
         }
 
+        // Validate boarding house sex
+        if (!formData.boardingHouseSex) {
+            newErrors.boardingHouseSex = "Boarding house type is required";
+        }
+
         // Validate bedrooms
         const bedroomErrors = [];
         formData.bedrooms.forEach((bedroom, index) => {
@@ -279,7 +326,8 @@ const NewBoarding = () => {
                     `Bedroom #${bedroom.id}: Capacity is required and must be at least 1`
                 );
             }
-            if (!bedroom.gender) {
+            // Only validate gender if boarding house is mixed
+            if (formData.boardingHouseSex === "mixed" && !bedroom.gender) {
                 bedroomErrors.push(
                     `Bedroom #${bedroom.id}: Gender selection is required`
                 );
@@ -300,6 +348,10 @@ const NewBoarding = () => {
 
         if (formData.images.length === 0) {
             newErrors.images = "At least one image is required";
+        }
+
+        if (!formData.pricePerMonth || formData.pricePerMonth < 1000) {
+            newErrors.pricePerMonth = "Valid rent price is required (minimum ₱1,000)";
         }
 
         setErrors(newErrors);
@@ -348,6 +400,12 @@ const NewBoarding = () => {
             icon: "Building2"
         },
         {
+            title: "Boarding House Type",
+            description:
+                "Select Male Only, Female Only, or Mixed. For mixed boarding houses, you can specify gender per bedroom.",
+            icon: "Users"
+        },
+        {
             title: "Uploading Photos",
             description:
                 "You can upload up to 4 photos of your boarding house. The first photo will be the cover image. Click on any photo to change the cover.",
@@ -356,7 +414,7 @@ const NewBoarding = () => {
         {
             title: "Bedroom Configuration",
             description:
-                "Add multiple bedrooms. Each bedroom can have its own capacity and gender exclusivity (Male Only or Female Only).",
+                "Add multiple bedrooms. Each bedroom has its own capacity. For mixed boarding houses, you can also set gender exclusivity per bedroom.",
             icon: "Bed"
         },
         {
@@ -635,6 +693,47 @@ const NewBoarding = () => {
                             )}
                         </div>
 
+                        {/* Boarding House Sex Selection */}
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Boarding House Type{" "}
+                                <span className="text-red-500">*</span>
+                            </label>
+                            <div className="grid grid-cols-3 gap-3">
+                                {getBoardingHouseSexOptions().map(option => (
+                                    <button
+                                        key={option.value}
+                                        type="button"
+                                        onClick={() => handleBoardingHouseSexChange(option.value)}
+                                        className={`flex flex-col items-center gap-2 p-3 border-2 rounded-lg transition-all ${
+                                            formData.boardingHouseSex === option.value
+                                                ? "border-primary bg-primary/5 ring-2 ring-primary/20"
+                                                : "border-gray-200 bg-white hover:border-gray-300"
+                                        }`}
+                                    >
+                                        <div className="w-8 h-8 flex items-center justify-center">
+                                            {option.icon}
+                                        </div>
+                                        <span className={`text-sm font-medium ${
+                                            formData.boardingHouseSex === option.value
+                                                ? "text-primary"
+                                                : "text-gray-700"
+                                        }`}>
+                                            {option.label}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                            {errors.boardingHouseSex && (
+                                <p className="text-xs text-red-500 mt-1">
+                                    {errors.boardingHouseSex}
+                                </p>
+                            )}
+                            <p className="text-xs text-gray-400 mt-2">
+                                Select whether your boarding house is for Male Only, Female Only, or Mixed.
+                            </p>
+                        </div>
+
                         {/* Bedrooms Section */}
                         <div className="mb-6">
                             <div className="flex items-center justify-between mb-3">
@@ -677,7 +776,7 @@ const NewBoarding = () => {
                                             )}
                                         </div>
 
-                                        <div className="grid grid-cols-2 gap-4">
+                                        <div className={`grid ${formData.boardingHouseSex === "mixed" ? "grid-cols-2" : "grid-cols-1"} gap-4`}>
                                             {/* Room Capacity */}
                                             <div>
                                                 <label className="block text-xs font-medium text-gray-600 mb-1">
@@ -702,68 +801,91 @@ const NewBoarding = () => {
                                                 />
                                             </div>
 
-                                            {/* Gender Select */}
-                                            <div>
-                                                <label className="block text-xs font-medium text-gray-600 mb-1">
-                                                    Exclusive For
-                                                    <span className="text-red-500 ml-0.5">
-                                                        *
-                                                    </span>
-                                                </label>
-                                                <div className="flex gap-3">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            updateBedroom(
-                                                                bedroom.id,
-                                                                "gender",
+                                            {/* Gender Select - only shown for mixed boarding houses */}
+                                            {formData.boardingHouseSex === "mixed" && (
+                                                <div>
+                                                    <label className="block text-xs font-medium text-gray-600 mb-1">
+                                                        Exclusive For
+                                                        <span className="text-red-500 ml-0.5">
+                                                            *
+                                                        </span>
+                                                    </label>
+                                                    <div className="flex gap-3">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                updateBedroom(
+                                                                    bedroom.id,
+                                                                    "gender",
+                                                                    "male"
+                                                                )
+                                                            }
+                                                            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 border rounded-lg transition-colors ${
+                                                                bedroom.gender ===
                                                                 "male"
-                                                            )
-                                                        }
-                                                        className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 border rounded-lg transition-colors ${
-                                                            bedroom.gender ===
-                                                            "male"
-                                                                ? "border-blue-500 bg-blue-50 text-blue-700"
-                                                                : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
-                                                        }`}
-                                                    >
-                                                        <img
-                                                            src={MaleIcon}
-                                                            alt="male"
-                                                            className="w-4 h-4"
-                                                        />
-                                                        <span className="text-sm font-medium">
-                                                            Male
-                                                        </span>
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            updateBedroom(
-                                                                bedroom.id,
-                                                                "gender",
+                                                                    ? "border-blue-500 bg-blue-50 text-blue-700"
+                                                                    : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
+                                                            }`}
+                                                        >
+                                                            <img
+                                                                src={MaleIcon}
+                                                                alt="male"
+                                                                className="w-4 h-4"
+                                                            />
+                                                            <span className="text-sm font-medium">
+                                                                Male
+                                                            </span>
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                updateBedroom(
+                                                                    bedroom.id,
+                                                                    "gender",
+                                                                    "female"
+                                                                )
+                                                            }
+                                                            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 border rounded-lg transition-colors ${
+                                                                bedroom.gender ===
                                                                 "female"
-                                                            )
-                                                        }
-                                                        className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 border rounded-lg transition-colors ${
-                                                            bedroom.gender ===
-                                                            "female"
-                                                                ? "border-pink-500 bg-pink-50 text-pink-700"
-                                                                : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
-                                                        }`}
-                                                    >
-                                                        <img
-                                                            src={FemaleIcon}
-                                                            alt="female"
-                                                            className="w-4 h-4"
-                                                        />
-                                                        <span className="text-sm font-medium">
-                                                            Female
-                                                        </span>
-                                                    </button>
+                                                                    ? "border-pink-500 bg-pink-50 text-pink-700"
+                                                                    : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
+                                                            }`}
+                                                        >
+                                                            <img
+                                                                src={FemaleIcon}
+                                                                alt="female"
+                                                                className="w-4 h-4"
+                                                            />
+                                                            <span className="text-sm font-medium">
+                                                                Female
+                                                            </span>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Show gender badge for non-mixed boarding houses */}
+                                        {formData.boardingHouseSex !== "mixed" && formData.boardingHouseSex && (
+                                            <div className="mt-3 pt-2 border-t border-gray-200">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xs text-gray-500">This room is for:</span>
+                                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                                                        formData.boardingHouseSex === "male" 
+                                                            ? "bg-blue-100 text-blue-700"
+                                                            : "bg-pink-100 text-pink-700"
+                                                    }`}>
+                                                        {formData.boardingHouseSex === "male" ? (
+                                                            <img src={MaleIcon} alt="male" className="w-3 h-3" />
+                                                        ) : (
+                                                            <img src={FemaleIcon} alt="female" className="w-3 h-3" />
+                                                        )}
+                                                        {formData.boardingHouseSex === "male" ? "Male Only" : "Female Only"}
+                                                    </span>
                                                 </div>
                                             </div>
-                                        </div>
+                                        )}
                                     </div>
                                 ))}
                             </div>
@@ -878,7 +1000,7 @@ const NewBoarding = () => {
                                 </p>
                             )}
                             <p className="text-xs text-gray-400 mt-1">
-                                Set a competitive monthly rental price
+                                Set a competitive monthly rental price (minimum ₱1,000)
                             </p>
                         </div>
 

@@ -1,5 +1,5 @@
 // src/features/(landing)/components/PropertyCard.jsx
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     MapPin,
@@ -11,20 +11,35 @@ import {
     Navigation,
     Bath,
     House,
-    XCircle,
+    ChevronLeft,
+    ChevronRight,
     CheckCircle,
+    XCircle,
     AlertCircle
 } from "lucide-react";
 // Fix: Import SVGs as strings/URLs, not as components
 import FemaleIconUrl from "@/assets/icons/female.svg";
 import MaleIconUrl from "@/assets/icons/male.svg";
+import MixedIconUrl from "@/assets/icons/mixed.svg";
 
 import Button from "@/shared/components/Button";
 import Badge from "@/shared/components/Badge";
 
+// Custom icon components that render img tags
+const MaleIcon = ({ className }) => (
+    <img src={MaleIconUrl} alt="male" className={className} />
+);
+const FemaleIcon = ({ className }) => (
+    <img src={FemaleIconUrl} alt="female" className={className} />
+);
+const MixedIcon = ({ className }) => (
+    <img src={MixedIconUrl} alt="mixed" className={className} />
+);
+
 const PropertyCard = ({
     id,
-    image,
+    images = [], // Array of image URLs for carousel
+    image, // Fallback single image for backward compatibility
     name,
     category,
     address,
@@ -42,15 +57,35 @@ const PropertyCard = ({
     onClose,
     isInPopup = false,
     isMobilePopup = false,
-    distanceKm = null
+    distanceKm = null,
+    boardingHouseType = null // 'male', 'female', or 'mixed'
 }) => {
     const navigate = useNavigate();
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+    // Prepare images array for carousel
+    const imageList = images.length > 0 ? images : image ? [image] : [];
+    const hasMultipleImages = imageList.length > 1;
+
+    const handlePrevImage = e => {
+        e.stopPropagation();
+        setCurrentImageIndex(prev =>
+            prev === 0 ? imageList.length - 1 : prev - 1
+        );
+    };
+
+    const handleNextImage = e => {
+        e.stopPropagation();
+        setCurrentImageIndex(prev =>
+            prev === imageList.length - 1 ? 0 : prev + 1
+        );
+    };
 
     const handleViewDetails = () => {
         navigate(`/property/${id}`, {
             state: {
                 id,
-                image,
+                image: imageList[currentImageIndex] || image,
                 name,
                 category,
                 address,
@@ -68,6 +103,7 @@ const PropertyCard = ({
     const isApartment = category === "apartment";
     const categoryLabel = isBoarding ? "Boarding" : "Apartment";
     const categoryColor = isBoarding ? "blue" : "red";
+    const categoryIcon = isBoarding ? Bed : House;
 
     const statusProps = getStatusBadgeProps
         ? getStatusBadgeProps({
@@ -93,8 +129,15 @@ const PropertyCard = ({
     const iconSize = isMobilePopup ? "w-3 h-3" : "w-4 h-4";
     const textSize = isMobilePopup ? "text-xs" : "text-sm";
 
-    // Helper to get gender icon - using img tags instead of components
-    const getGenderIcon = gender => {
+    // Helper to get gender icon component (for Badge component)
+    const getGenderIconComponent = gender => {
+        if (gender === "male") return MaleIcon;
+        if (gender === "female") return FemaleIcon;
+        return MixedIcon;
+    };
+
+    // Helper to get gender icon element (for direct rendering)
+    const getGenderIconElement = gender => {
         if (gender === "male")
             return (
                 <img
@@ -111,7 +154,13 @@ const PropertyCard = ({
                     className={`${iconSize} text-pink-600`}
                 />
             );
-        return <Users className={`${iconSize} text-gray-600`} />;
+        return (
+            <img
+                src={MixedIconUrl}
+                alt="mixed"
+                className={`${iconSize} text-gray-600`}
+            />
+        );
     };
 
     // Helper to get gender text
@@ -121,17 +170,34 @@ const PropertyCard = ({
         return "Mixed";
     };
 
+    // Get boarding house type badge props
+    const getBoardingTypeBadge = () => {
+        const houseType = boardingHouseType || sex;
+        if (houseType === "male") {
+            return { label: "Male Only", color: "blue", icon: MaleIcon };
+        } else if (houseType === "female") {
+            return { label: "Female Only", color: "pink", icon: FemaleIcon };
+        } else if (houseType === "mixed") {
+            return { label: "Mixed", color: "gray", icon: MixedIcon };
+        }
+        return null;
+    };
+
     // Helper to get bedroom status text and color
     const getBedroomStatus = bedroom => {
         const current = bedroom.currentTenants || 0;
         const total = bedroom.capacity || 0;
 
         if (current === 0) {
-            return { label: "Vacant", color: "green" };
+            return { label: "Vacant", color: "green", icon: CheckCircle };
         } else if (current === total) {
-            return { label: "Full", color: "red" };
+            return { label: "Full", color: "red", icon: XCircle };
         } else {
-            return { label: `${current}/${total} filled`, color: "orange" };
+            return {
+                label: `${current}/${total} filled`,
+                color: "orange",
+                icon: AlertCircle
+            };
         }
     };
 
@@ -155,6 +221,7 @@ const PropertyCard = ({
     };
 
     const { totalCapacity, totalCurrent } = getTotalStats();
+    const boardingTypeBadge = getBoardingTypeBadge();
 
     return (
         <div
@@ -173,29 +240,49 @@ const PropertyCard = ({
                 </button>
             )}
 
-            {/* Image Container */}
+            {/* Image Container with Carousel */}
             <div
                 className={`relative w-full overflow-hidden flex-shrink-0 ${isMobilePopup ? "h-40" : "h-56"}`}
             >
                 <img
-                    src={image}
+                    src={imageList[currentImageIndex] || image}
                     alt={name}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
-
+                {/* Image Navigation Arrows */}
+                {hasMultipleImages && (
+                    <>
+                        <button
+                            onClick={handlePrevImage}
+                            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-black/50 hover:bg-black/70 rounded-full p-1.5 transition-all duration-200"
+                        >
+                            <ChevronLeft className="w-5 h-5 text-white" />
+                        </button>
+                        <button
+                            onClick={handleNextImage}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-black/50 hover:bg-black/70 rounded-full p-1.5 transition-all duration-200"
+                        >
+                            <ChevronRight className="w-5 h-5 text-white" />
+                        </button>
+                        {/* Image Counter */}
+                        <div className="absolute bottom-2 right-2 z-20 bg-black/60 rounded-full px-2 py-0.5 text-xs text-white">
+                            {currentImageIndex + 1} / {imageList.length}
+                        </div>
+                    </>
+                )}
                 {/* Badges - Now on LEFT side */}
                 <div className="absolute top-4 left-4 z-10 flex flex-col gap-1.5 items-start">
                     <Badge
-                        variant="solid"
+                        variant="solid" // Changed from "solid" to "outline"
                         color={categoryColor}
-                        icon={isBoarding ? Bed : House}
+                        icon={categoryIcon}
                     >
                         {categoryLabel}
                     </Badge>
 
                     {distanceLabel && (
                         <Badge
-                            variant="solid"
+                            variant="outline" // Changed from "solid" to "outline"
                             color="gray"
                             icon={Navigation}
                             className="w-auto whitespace-nowrap"
@@ -203,7 +290,18 @@ const PropertyCard = ({
                             {distanceLabel}
                         </Badge>
                     )}
-                </div>
+
+                    {/* Boarding House Type Badge (only for boarding houses) */}
+                    {isBoarding && boardingTypeBadge && (
+                        <Badge
+                            variant="soft"
+                            color={boardingTypeBadge.color}
+                            icon={boardingTypeBadge.icon}
+                        >
+                            {boardingTypeBadge.label}
+                        </Badge>
+                    )}
+                </div>{" "}
             </div>
 
             {/* Content Section */}
@@ -263,7 +361,7 @@ const PropertyCard = ({
                                                     className="flex items-center justify-between"
                                                 >
                                                     <div className="flex items-center gap-1.5">
-                                                        {getGenderIcon(
+                                                        {getGenderIconElement(
                                                             bedroom.gender
                                                         )}
                                                         <span
@@ -286,6 +384,7 @@ const PropertyCard = ({
                                                         <Badge
                                                             variant="ghost"
                                                             color={status.color}
+                                                            icon={status.icon}
                                                             className="text-xs px-1.5 py-0"
                                                         >
                                                             {status.label}
@@ -322,28 +421,10 @@ const PropertyCard = ({
                                             </div>
                                         </div>
                                     )}
-
-                                    {sex && getSexText && (
-                                        <div className="flex items-center justify-between">
-                                            <span
-                                                className={`${textSize} text-gray-500`}
-                                            >
-                                                Gender:
-                                            </span>
-                                            <div className="flex items-center gap-1">
-                                                {getGenderIcon(sex)}
-                                                <span
-                                                    className={`${textSize} text-gray-800 font-medium`}
-                                                >
-                                                    {getSexText(sex)}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    )}
                                 </>
                             )}
 
-                            {/* Show CR count for boarding */}
+                            {/* Show CR count forboarding */}
                             {bathrooms !== undefined &&
                                 bathrooms !== null &&
                                 bathrooms > 0 && (
@@ -366,20 +447,6 @@ const PropertyCard = ({
                                         </div>
                                     </div>
                                 )}
-
-                            <div className="flex items-center justify-between pt-1">
-                                <span className={`${textSize} text-gray-500`}>
-                                    Status:
-                                </span>
-                                <Badge
-                                    variant="ghost"
-                                    color={statusProps.color}
-                                    icon={statusProps.icon}
-                                    className="text-xs"
-                                >
-                                    {statusProps.label}
-                                </Badge>
-                            </div>
                         </>
                     )}
 
@@ -429,12 +496,13 @@ const PropertyCard = ({
                                 </div>
                             )}
 
-                            <div className="flex items-center justify-between">
+                            {/* Apartment Status */}
+                            <div className="flex items-center justify-between pt-1">
                                 <span className={`${textSize} text-gray-500`}>
                                     Status:
                                 </span>
                                 <Badge
-                                    variant="soft"
+                                    variant="ghost"
                                     color={statusProps.color}
                                     icon={statusProps.icon}
                                     className="text-xs"
@@ -446,36 +514,35 @@ const PropertyCard = ({
                     )}
                 </div>
 
-                {/* Separator */}
-                <div className="border-t border-gray-100 my-2"></div>
-
-                {/* Price and View Details */}
-                <div className="flex justify-between items-center mt-1">
-                    <div className="text-left">
-                        <span className="text-xs text-gray-500">
-                            Monthly Rent
-                        </span>
-                        <div className="flex items-baseline gap-0.5">
-                            <PhilippinePeso
-                                className={`${iconSize} text-gray-800`}
-                            />
-                            <span
-                                className={`${priceSize} font-bold text-gray-800`}
-                            >
-                                {price?.toLocaleString()}
+                {/* Footer Section - Price and View Details at bottom */}
+                <div className="border-t border-gray-100 mt-auto pt-3">
+                    <div className="flex justify-between items-center">
+                        <div className="text-left">
+                            <span className="text-xs text-gray-500">
+                                Monthly Rent
                             </span>
+                            <div className="flex items-baseline gap-0.5">
+                                <PhilippinePeso
+                                    className={`${iconSize} text-gray-800`}
+                                />
+                                <span
+                                    className={`${priceSize} font-bold text-gray-800`}
+                                >
+                                    {price?.toLocaleString()}
+                                </span>
+                            </div>
                         </div>
-                    </div>
 
-                    <Button
-                        variant="ghost"
-                        icon={ArrowRight}
-                        iconPosition="right"
-                        onClick={handleViewDetails}
-                        className={`${textSize}`}
-                    >
-                        View Details
-                    </Button>
+                        <Button
+                            variant="ghost"
+                            icon={ArrowRight}
+                            iconPosition="right"
+                            onClick={handleViewDetails}
+                            className={`${textSize}`}
+                        >
+                            View Details
+                        </Button>
+                    </div>
                 </div>
             </div>
         </div>

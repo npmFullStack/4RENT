@@ -60,7 +60,6 @@ const popularProperties = [
         price: 4850,
         capacity: 2, // total capacity
         bedroomDetails: [
-            // NEW: bedroom details array
             {
                 id: 1,
                 name: "Bedroom #1",
@@ -69,9 +68,10 @@ const popularProperties = [
             }
         ],
         sex: "female", // kept for legacy
+        boardingHouseType: "female", // ADDED: explicit boarding house type
         status: "available",
         currentTenants: 0,
-        bathrooms: 2 // optional
+        bathrooms: 2
     },
     {
         id: 2,
@@ -96,7 +96,6 @@ const popularProperties = [
         price: 3750,
         capacity: 3,
         bedroomDetails: [
-            // NEW: multiple bedrooms example
             {
                 id: 1,
                 name: "Bedroom #1",
@@ -111,6 +110,7 @@ const popularProperties = [
             }
         ],
         sex: "male",
+        boardingHouseType: "male", // ADDED: explicit boarding house type
         status: "full",
         currentTenants: 3,
         bathrooms: 2
@@ -123,7 +123,7 @@ const popularProperties = [
         category: "boarding",
         address: "123 Mixed St, Barangay Central, Manila, Philippines",
         price: 4850,
-        bathrooms: 3, // Added number of CRs
+        bathrooms: 3,
         bedroomDetails: [
             {
                 id: 1,
@@ -140,6 +140,8 @@ const popularProperties = [
                 currentTenants: 4 // Full
             }
         ],
+        sex: "mixed", // ADDED: set sex to "mixed"
+        boardingHouseType: "mixed", // ADDED: explicit boarding house type
         status: "partial"
     }
 ];
@@ -155,6 +157,7 @@ const getCapacityText = capacity => {
 const getSexText = sex => {
     if (sex === "male") return "Male Only";
     if (sex === "female") return "Female Only";
+    if (sex === "mixed") return "Mixed";
     return "";
 };
 
@@ -355,7 +358,8 @@ const Home = () => {
                                     sex={property.sex}
                                     status={property.status}
                                     currentTenants={property.currentTenants}
-                                    bedroomDetails={property.bedroomDetails} // Pass bedroom details
+                                    bedroomDetails={property.bedroomDetails}
+                                    boardingHouseType={property.boardingHouseType} // ADDED: pass boarding house type
                                     getCapacityText={getCapacityText}
                                     getSexText={getSexText}
                                     getStatusBadgeProps={getStatusBadgeProps}
