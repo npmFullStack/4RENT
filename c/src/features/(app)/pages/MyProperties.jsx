@@ -407,19 +407,19 @@ const MyProperties = () => {
 
             {/* Table */}
             <div className="rounded-xl overflow-hidden">
-                <Table
-                    columns={columns}
-                    data={properties}
-                    keyField="id"
-                    onRowClick={handleViewDetails}
-                    showSearch={true}
-                    searchPlaceholder="Search by property name or address..."
-                    onSearch={handleTableSearch}
-                    itemsPerPageOptions={[5, 10, 20, -1]}
-                    itemsPerPage={5}
-                    emptyMessage="No properties found. Click 'New Property' to add your first property."
-                    actions={renderActions}
-                />
+<Table
+    columns={columns}
+    data={properties}
+    keyField="id"
+    onRowClick={handleViewDetails}
+    showSearch={true}
+    searchPlaceholder="Search by property name or address..."
+    onSearch={handleTableSearch}
+    itemsPerPageOptions={[5, 10, 20, -1]}
+    itemsPerPage={5}
+    emptyMessage="No properties found. Click 'New Property' to add your first property."
+    actions={renderActions}
+/>
             </div>
 
             {/* Help Modal */}
