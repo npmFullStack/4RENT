@@ -131,10 +131,11 @@ const PropertyMap = ({
     properties,
     getCapacityText,
     getSexText,
+    getStatusBadgeProps, // Add this prop
     onPropertyClick,
     userLocation,
     manualAddress,
-    isModalOpen // new: passed from parent to hide card/legend when modal open
+    isModalOpen
 }) => {
     const [propertyLocations, setPropertyLocations] = useState([]);
     const [isLoadingLocations, setIsLoadingLocations] = useState(true);
@@ -172,10 +173,8 @@ const PropertyMap = ({
         }
     }, [properties]);
 
-    // The active reference point for distance calculation and map centering
     const activeLocation = userLocation || null;
 
-    // For manual address we mock coordinates from the label (same hash approach)
     const [manualCoords, setManualCoords] = useState(null);
     useEffect(() => {
         if (!manualAddress) {
@@ -203,7 +202,6 @@ const PropertyMap = ({
         setSelectedProperty(null);
     };
 
-    // Should map UI elements be hidden? (modal is overlaying)
     const hideMapUI = isModalOpen;
 
     return (
@@ -239,7 +237,6 @@ const PropertyMap = ({
                             url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
                         />
 
-                        {/* User GPS location marker */}
                         {userLocation && (
                             <>
                                 <Marker
@@ -271,7 +268,6 @@ const PropertyMap = ({
                             </>
                         )}
 
-                        {/* Manual address green marker */}
                         {!userLocation && manualCoords && (
                             <>
                                 <Marker
@@ -302,7 +298,6 @@ const PropertyMap = ({
                             </>
                         )}
 
-                        {/* Property Markers */}
                         {propertyLocations.map(property => (
                             <Marker
                                 key={property.id}
@@ -324,7 +319,6 @@ const PropertyMap = ({
                         ))}
                     </MapContainer>
 
-                    {/* --- Legend (hidden while modal is open) --- */}
                     {!hideMapUI &&
                         (isLegendVisible ? (
                             <div className="absolute top-3 right-3 z-[400] bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 overflow-hidden min-w-[168px]">
@@ -381,44 +375,50 @@ const PropertyMap = ({
                             </button>
                         ))}
 
-                    {/* --- Property Card Popup (hidden while modal is open) --- */}
+                    {/* Mobile Popup - Smaller size */}
                     {!hideMapUI && popupOpen && selectedProperty && (
                         <>
-                            {/* Mobile: bottom sheet style */}
+                            {/* Mobile: Compact bottom sheet */}
                             <div className="absolute bottom-0 left-0 right-0 z-[400] sm:hidden">
                                 <div className="bg-white rounded-t-2xl shadow-2xl border-t border-gray-100 overflow-hidden">
                                     <div className="flex justify-center pt-2 pb-1">
                                         <div className="w-10 h-1 rounded-full bg-gray-200"></div>
                                     </div>
-                                    <div className="max-h-[70vh] overflow-y-auto">
-                                        <PropertyCard
-                                            id={selectedProperty.id}
-                                            image={selectedProperty.image}
-                                            name={selectedProperty.name}
-                                            category={selectedProperty.category}
-                                            address={selectedProperty.address}
-                                            price={selectedProperty.price}
-                                            capacity={selectedProperty.capacity}
-                                            bedrooms={selectedProperty.bedrooms}
-                                            bathrooms={selectedProperty.bathrooms}
-                                            sex={selectedProperty.sex}
-                                            getCapacityText={getCapacityText}
-                                            getSexText={getSexText}
-                                            onClose={handleClosePopup}
-                                            distanceKm={
-                                                referencePoint
-                                                    ? getDistanceKm(
-                                                          referencePoint,
-                                                          selectedProperty.coordinates
-                                                      )
-                                                    : null
-                                            }
-                                        />
+                                    <div className="max-h-[50vh] overflow-y-auto">
+                                        <div className="p-3">
+                                            <PropertyCard
+                                                id={selectedProperty.id}
+                                                image={selectedProperty.image}
+                                                name={selectedProperty.name}
+                                                category={selectedProperty.category}
+                                                address={selectedProperty.address}
+                                                price={selectedProperty.price}
+                                                capacity={selectedProperty.capacity}
+                                                bedrooms={selectedProperty.bedrooms}
+                                                bathrooms={selectedProperty.bathrooms}
+                                                sex={selectedProperty.sex}
+                                                status={selectedProperty.status}
+                                                currentTenants={selectedProperty.currentTenants}
+                                                getCapacityText={getCapacityText}
+                                                getSexText={getSexText}
+                                                getStatusBadgeProps={getStatusBadgeProps}
+                                                onClose={handleClosePopup}
+                                                isMobilePopup={true}
+                                                distanceKm={
+                                                    referencePoint
+                                                        ? getDistanceKm(
+                                                              referencePoint,
+                                                              selectedProperty.coordinates
+                                                          )
+                                                        : null
+                                                }
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Desktop: floating card top-left */}
+                            {/* Desktop: Floating card */}
                             <div className="absolute top-3 left-3 z-[400] w-80 hidden sm:block animate-slide-in">
                                 <PropertyCard
                                     id={selectedProperty.id}
@@ -428,9 +428,14 @@ const PropertyMap = ({
                                     address={selectedProperty.address}
                                     price={selectedProperty.price}
                                     capacity={selectedProperty.capacity}
+                                    bedrooms={selectedProperty.bedrooms}
+                                    bathrooms={selectedProperty.bathrooms}
                                     sex={selectedProperty.sex}
+                                    status={selectedProperty.status}
+                                    currentTenants={selectedProperty.currentTenants}
                                     getCapacityText={getCapacityText}
                                     getSexText={getSexText}
+                                    getStatusBadgeProps={getStatusBadgeProps}
                                     onClose={handleClosePopup}
                                     isInPopup={true}
                                     distanceKm={

@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import FeatureCard from "@/features/(landing)/components/FeatureCard";
 import Button from "@/shared/components/Button";
-import heroBgLandlord from "@/assets/images/heroBg.png";
+import heroBg from "@/assets/images/heroBg.png";
 import ctaBg from "@/assets/images/ctaBg.png";
 import feature1 from "@/assets/images/feature1.png";
 import feature2 from "@/assets/images/feature2.png";
@@ -71,12 +71,12 @@ const LandlordHome = () => {
 
     return (
         <div>
-            {/* Hero Section - Full width with overlay and whitish gradient */}
-            <section className="relative min-h-screen -mt-20 flex items-center">
+            {/* Hero Section */}
+            <section className="relative min-h-screen -mt-16 flex items-center">
                 {/* Background Image with white overlay - full coverage plus gradient at top */}
                 <div
                     className="absolute inset-0 bg-cover bg-center"
-                    style={{ backgroundImage: `url(${heroBgLandlord})` }}
+                    style={{ backgroundImage: `url(${heroBg})` }}
                 >
                     {/* White overlay - decreased opacity to 50% */}
                     <div className="absolute inset-0 bg-white/50"></div>
@@ -271,16 +271,6 @@ const LandlordHome = () => {
                     </div>
                 </div>
             </section>
-            {/* Footer */}
-            <footer className="bg-gray-800 text-white py-8">
-                <div className="container mx-auto px-4 text-center">
-                    <p>
-                        &copy; {new Date().getFullYear()} 4RENT. All rights
-                        reserved.
-                    </p>
-                    <p className="mt-2 text-gray-400">Developed by NorDev.</p>
-                </div>
-            </footer>
         </div>
     );
 };

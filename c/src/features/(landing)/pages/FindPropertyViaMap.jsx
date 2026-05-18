@@ -18,7 +18,9 @@ const allProperties = [
         address: "123 Sunset Blvd, Barangay Sunset, Manila, Philippines",
         price: 4850,
         capacity: 2,
-        sex: "female"
+        sex: "female",
+        status: "available",
+        currentTenants: 0
     },
     {
         id: 2,
@@ -27,10 +29,12 @@ const allProperties = [
         category: "apartment",
         address: "456 Main St, Barangay Central, Quezon City, Philippines",
         price: 12500,
-bedrooms: 2,
+        bedrooms: 2,
         bathrooms: 1,
         capacity: null,
-        sex: null
+        sex: null,
+        status: "available", // Add status
+        currentTenants: null // Add currentTenants
     },
     {
         id: 3,
@@ -40,9 +44,47 @@ bedrooms: 2,
         address: "789 Oak Ave, Barangay Riverside, Cebu City, Philippines",
         price: 3750,
         capacity: 3,
-        sex: "male"
+        sex: "male",
+        status: "full",
+        currentTenants: 3
     }
 ];
+
+const getStatusBadgeProps = property => {
+    if (property.category === "apartment") {
+        if (property.status === "rented") {
+            return { icon: XCircle, label: "Rented", color: "red" };
+        }
+        return { icon: CheckCircle, label: "Available", color: "green" };
+    }
+
+    if (property.category === "boarding") {
+        const isFull = property.currentTenants === property.capacity;
+        const occupancyText = `${property.currentTenants}/${property.capacity}`;
+
+        if (isFull) {
+            return {
+                icon: XCircle,
+                label: `Full · ${occupancyText}`,
+                color: "red"
+            };
+        } else if (property.currentTenants > 0) {
+            return {
+                icon: Users,
+                label: `${property.currentTenants} / ${property.capacity} tenants`,
+                color: "orange"
+            };
+        } else {
+            return {
+                icon: CheckCircle,
+                label: `Vacant · ${occupancyText}`,
+                color: "green"
+            };
+        }
+    }
+
+    return { icon: AlertCircle, label: property.status, color: "gray" };
+};
 
 const FindPropertyViaMap = () => {
     const navigate = useNavigate();
@@ -86,7 +128,7 @@ const FindPropertyViaMap = () => {
         }
 
         navigator.geolocation.getCurrentPosition(
-            (position) => {
+            position => {
                 setUserLocation({
                     lat: position.coords.latitude,
                     lng: position.coords.longitude
@@ -95,11 +137,12 @@ const FindPropertyViaMap = () => {
                 setShowSuccessMessage(true);
                 setTimeout(() => setShowSuccessMessage(false), 4000);
             },
-            (error) => {
+            error => {
                 let errorMessage = "Unable to get your location";
                 switch (error.code) {
                     case error.PERMISSION_DENIED:
-                        errorMessage = "Please allow location access to use this feature";
+                        errorMessage =
+                            "Please allow location access to use this feature";
                         break;
                     case error.POSITION_UNAVAILABLE:
                         errorMessage = "Location information is unavailable";
@@ -115,7 +158,7 @@ const FindPropertyViaMap = () => {
         );
     };
 
-    const handleManualAddressConfirm = (addressData) => {
+    const handleManualAddressConfirm = addressData => {
         setManualAddress(addressData);
         setUserLocation(null);
         setShowSuccessMessage(true);
@@ -125,13 +168,12 @@ const FindPropertyViaMap = () => {
     const activeLocationLabel = userLocation
         ? "Using your current location"
         : manualAddress
-            ? manualAddress.fullAddress
-            : null;
+          ? manualAddress.fullAddress
+          : null;
 
     return (
         <div className="min-h-screen bg-gray-50 py-8">
             <div className="container mx-auto px-4">
-
                 {/* Header */}
                 <div className="mb-5">
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -161,7 +203,9 @@ const FindPropertyViaMap = () => {
                                 disabled={isLocating}
                                 className={`w-full sm:w-auto text-sm order-2 ${isLocating ? "[&_svg]:animate-spin" : ""}`}
                             >
-                                {isLocating ? "Getting location..." : "Use My Current Location"}
+                                {isLocating
+                                    ? "Getting location..."
+                                    : "Use My Current Location"}
                             </Button>
                         </div>
                     </div>
@@ -182,7 +226,10 @@ const FindPropertyViaMap = () => {
                     {locationError && (
                         <div className="mt-3 flex items-center justify-between gap-2 text-sm text-red-600 bg-red-50 px-4 py-2.5 rounded-xl border border-red-100">
                             <span>⚠️ {locationError}</span>
-                            <button onClick={() => setLocationError(null)} className="shrink-0 p-0.5 hover:bg-red-100 rounded">
+                            <button
+                                onClick={() => setLocationError(null)}
+                                className="shrink-0 p-0.5 hover:bg-red-100 rounded"
+                            >
                                 <X className="w-4 h-4" />
                             </button>
                         </div>
@@ -192,9 +239,14 @@ const FindPropertyViaMap = () => {
                     {!showSuccessMessage && activeLocationLabel && (
                         <div className="mt-3 flex items-center gap-2 text-xs text-gray-500 bg-white px-3 py-2 rounded-lg border border-gray-200 w-fit max-w-full">
                             <MapPin className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
-                            <span className="truncate">{activeLocationLabel}</span>
+                            <span className="truncate">
+                                {activeLocationLabel}
+                            </span>
                             <button
-                                onClick={() => { setUserLocation(null); setManualAddress(null); }}
+                                onClick={() => {
+                                    setUserLocation(null);
+                                    setManualAddress(null);
+                                }}
                                 className="shrink-0 text-gray-400 hover:text-gray-600"
                             >
                                 <X className="w-3 h-3" />
@@ -210,6 +262,7 @@ const FindPropertyViaMap = () => {
                             properties={allProperties}
                             getCapacityText={getCapacityText}
                             getSexText={getSexText}
+                            getStatusBadgeProps={getStatusBadgeProps} 
                             onPropertyClick={handlePropertyClick}
                             userLocation={userLocation}
                             manualAddress={manualAddress}

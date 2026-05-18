@@ -24,6 +24,8 @@ function App() {
                 {/* Main/Landing Routes */}
                 <Route path="/" element={<MainLayout />}>
                     <Route index element={<Home />} />
+                    <Route path="/home" element={<LandlordHome />} />
+        
                 </Route>
 
                 {/* Auth Routes */}
@@ -46,8 +48,7 @@ function App() {
                         element={<FindPropertyViaMap />}
                     />
 
-                    <Route path="/home" element={<LandlordHome />} />
-                </Route>
+        </Route>
 
                 {/* Dashboard Routes */}
                 <Route element={<DashboardLayout />}>

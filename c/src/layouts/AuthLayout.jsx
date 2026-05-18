@@ -12,7 +12,11 @@ const AuthLayout = () => {
     // Routes that should be full-width (no container padding)
     const fullWidthRoutes = ["/home"];
 
+    // Routes where back button should go to /home
+    const homeBackRoutes = ["/signin", "/signup"];
+
     const isFullWidthRoute = fullWidthRoutes.includes(location.pathname);
+    const shouldGoToHome = homeBackRoutes.includes(location.pathname);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -22,28 +26,17 @@ const AuthLayout = () => {
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
-    // Check if current page is SignIn or SignUp
-    const isSignInOrSignUp =
-        location.pathname === "/signin" ||
-        location.pathname === "/signup" ||
-        location.pathname === "/home";
-
-    // Get button text based on current page
-    const getButtonText = () => {
-        if (isSignInOrSignUp) {
-            return "Back to Home";
-        }
-        return "Back";
-    };
-
-    // Handle back navigation
+    // Handle back navigation - go to /home for signin/signup, otherwise go back
     const handleBack = () => {
-        if (isSignInOrSignUp) {
-            navigate("/");
+        if (shouldGoToHome) {
+            navigate("/home");
         } else {
             navigate(-1);
         }
     };
+
+    // Determine button text
+    const buttonText = shouldGoToHome ? "Back to Home" : "Back";
 
     return (
         <div className="min-h-screen bg-white">
@@ -62,7 +55,7 @@ const AuthLayout = () => {
                         iconPosition="left"
                         onClick={handleBack}
                     >
-                        {getButtonText()}
+                        {buttonText}
                     </Button>
                 </div>
             </header>
@@ -75,7 +68,7 @@ const AuthLayout = () => {
             >
                 <Outlet />
             </main>
- </div>
+        </div>
     );
 };
 

@@ -2,7 +2,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { ArrowRight, Key, Users, Search, Bed } from "lucide-react";
+import { ArrowRight, MapPin, Users, Search, Bed } from "lucide-react";
 import FeatureCard from "@/features/(landing)/components/FeatureCard";
 import Button from "@/shared/components/Button";
 import Badge from "@/shared/components/Badge";
@@ -183,13 +183,13 @@ const Home = () => {
                                 Find Property
                             </Button>
                         </Link>
-                        <Link to="/home" className="w-full sm:w-auto">
+                        <Link to="/find-properties-map" className="w-full sm:w-auto">
                             <Button
                                 variant="outline"
-                                icon={Key}
+                                icon={MapPin}
                                 className="w-full text-center !text-lg !px-8 !py-3 !bg-white !hover:bg-gray-200/80 !border-gray-400 !text-gray-800"
                             >
-                                List Property
+                                Find on Map
                             </Button>
                         </Link>
                     </div>
