@@ -96,7 +96,7 @@ const PropertyCard = ({
                 />
 
                 {/* Category Badge - Outline variant with white background */}
-                <div className="absolute top-4 right-4 z-10 flex flex-col gap-1.5">
+                <div className="absolute top-4 right-4 z-10 flex flex-col gap-1.5 items-end">
                     <Badge
                         variant="outline"
                         color={categoryColor}
@@ -106,10 +106,14 @@ const PropertyCard = ({
                     </Badge>
                     {/* Distance badge — only shown when a reference point exists */}
                     {distanceLabel && (
-                        <span className="flex items-center gap-1 bg-black/60 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full shadow-lg w-fit">
-                            <Navigation className="w-3 h-3 shrink-0" />
+                        <Badge
+                            variant="solid"
+                            color="gray"
+                            icon={Navigation}
+                            className="w-auto whitespace-nowrap"
+                        >
                             {distanceLabel}
-                        </span>
+                        </Badge>
                     )}
                 </div>
             </div>
@@ -152,7 +156,7 @@ const PropertyCard = ({
                                 Status:
                             </span>
                             <Badge
-                                variant="soft"
+                                variant="ghost"
                                 color={statusProps.color}
                                 icon={statusProps.icon}
                             >

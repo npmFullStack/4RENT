@@ -14,8 +14,8 @@ import SignUp from "@/features/(auth)/pages/SignUp";
 import ForgotPassword from "@/features/(auth)/pages/ForgotPassword";
 import CreateNewPassword from "@/features/(auth)/pages/CreateNewPassword";
 
-import Dashboard from "@/features/(dashboard)/pages/Dashboard";
-import MyProperties from "@/features/(dashboard)/pages/MyProperties";
+import Dashboard from "@/features/(app)/pages/Dashboard";
+import MyProperties from "@/features/(app)/pages/MyProperties";
 
 function App() {
     return (

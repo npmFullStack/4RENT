@@ -1,6 +1,6 @@
 // src/features/(landing)/pages/AllProperties.jsx
 import React, { useState } from "react";
-import { Search, Filter, MapPin, ArrowRight } from "lucide-react";
+import { Search, Filter, MapPin, ArrowRight, XCircle, CheckCircle, AlertCircle, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import Button from "@/shared/components/Button";
 import FilterMenu from "@/shared/components/FilterMenu";
@@ -19,7 +19,9 @@ const allProperties = [
         address: "123 Sunset Blvd, Barangay Sunset, Manila, Philippines",
         price: 4850,
         capacity: 2,
-        sex: "female"
+        sex: "female",
+        status: "available",
+        currentTenants: 0
     },
     {
         id: 2,
@@ -31,7 +33,9 @@ const allProperties = [
         bedrooms: 2,
         bathrooms: 1,
         capacity: null,
-        sex: null
+        sex: null,
+        status: "rented",
+        currentTenants: null
     },
     {
         id: 3,
@@ -41,9 +45,61 @@ const allProperties = [
         address: "789 Oak Ave, Barangay Riverside, Cebu City, Philippines",
         price: 3750,
         capacity: 3,
-        sex: "male"
+        sex: "male",
+        status: "full",
+        currentTenants: 3
     }
 ];
+
+const getCapacityText = capacity => {
+    if (capacity === 1) return "1 person/room";
+    if (capacity === 2) return "2 persons/room";
+    if (capacity === 3) return "3 persons/room";
+    if (capacity >= 4) return `${capacity}+ persons/room`;
+    return "";
+};
+
+const getSexText = sex => {
+    if (sex === "male") return "Male Only";
+    if (sex === "female") return "Female Only";
+    return "";
+};
+
+const getStatusBadgeProps = property => {
+    if (property.category === "apartment") {
+        if (property.status === "rented") {
+            return { icon: XCircle, label: "Rented", color: "red" };
+        }
+        return { icon: CheckCircle, label: "Available", color: "green" };
+    }
+
+    if (property.category === "boarding") {
+        const isFull = property.currentTenants === property.capacity;
+        const occupancyText = `${property.currentTenants}/${property.capacity}`;
+
+        if (isFull) {
+            return {
+                icon: XCircle,
+                label: `Full · ${occupancyText}`,
+                color: "red"
+            };
+        } else if (property.currentTenants > 0) {
+            return {
+                icon: Users,
+                label: `${property.currentTenants} / ${property.capacity} tenants`,
+                color: "orange"
+            };
+        } else {
+            return {
+                icon: CheckCircle,
+                label: `Vacant · ${occupancyText}`,
+                color: "green"
+            };
+        }
+    }
+
+    return { icon: AlertCircle, label: property.status, color: "gray" };
+};
 
 const AllProperties = () => {
     const [searchTerm, setSearchTerm] = useState("");
@@ -53,23 +109,9 @@ const AllProperties = () => {
         priceRange: { min: "", max: "" },
         sex: "all",
         capacity: "all",
-        bedrooms: "all",    // new filter for bedrooms
-        bathrooms: "all"    // new filter for bathrooms
+        bedrooms: "all",
+        bathrooms: "all"
     });
-
-    const getCapacityText = capacity => {
-        if (capacity === 1) return "1 person/room";
-        if (capacity === 2) return "2 persons/room";
-        if (capacity === 3) return "3 persons/room";
-        if (capacity >= 4) return `${capacity}+ persons/room`;
-        return "";
-    };
-
-    const getSexText = sex => {
-        if (sex === "male") return "Male Only";
-        if (sex === "female") return "Female Only";
-        return "";
-    };
 
     const filteredProperties = allProperties.filter(property => {
         // Search filter
@@ -266,8 +308,11 @@ const AllProperties = () => {
                                 sex={property.sex}
                                 bedrooms={property.bedrooms}
                                 bathrooms={property.bathrooms}
+                                status={property.status}
+                                currentTenants={property.currentTenants}
                                 getCapacityText={getCapacityText}
                                 getSexText={getSexText}
+                                getStatusBadgeProps={getStatusBadgeProps}
                             />
                         ))}
                     </div>
@@ -293,7 +338,7 @@ const AllProperties = () => {
                 )}
             </div>
 
-            {/* Filter Menu Component - You'll need to update FilterMenu to include bedroom/bathroom filters */}
+            {/* Filter Menu Component */}
             <FilterMenu
                 isOpen={isFilterOpen}
                 onClose={() => setIsFilterOpen(false)}

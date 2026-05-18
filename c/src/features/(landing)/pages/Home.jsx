@@ -2,15 +2,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
-import {
-    ArrowRight,
-    LayoutGrid,
-    HomeIcon,
-    Users,
-    Search,
-    Bed,
-    House
-} from "lucide-react";
+import { ArrowRight, Key, Users, Search, Bed } from "lucide-react";
 import FeatureCard from "@/features/(landing)/components/FeatureCard";
 import Button from "@/shared/components/Button";
 import Badge from "@/shared/components/Badge";
@@ -18,7 +10,7 @@ import PropertyCard from "@/features/(landing)/components/PropertyCard";
 import heroBg from "@/assets/images/heroBg.png";
 import ctaBg from "@/assets/images/ctaBg.png";
 import feature1 from "@/assets/images/feature1.png";
-import feature2 from "@/assets/images/feature2.png";
+import feature2 from "@/assets/images/feature2yeah.png";
 import feature3 from "@/assets/images/feature3.png";
 import property1 from "@/assets/images/property1.png";
 import property2 from "@/assets/images/property2.png";
@@ -185,7 +177,7 @@ const Home = () => {
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <Link to="/properties" className="w-full sm:w-auto">
                             <Button
-                                icon={House}
+                                icon={Search}
                                 className="w-full !text-lg !px-8 !py-3 text-center"
                             >
                                 Find Property
@@ -194,7 +186,7 @@ const Home = () => {
                         <Link to="/home" className="w-full sm:w-auto">
                             <Button
                                 variant="outline"
-                                icon={LayoutGrid}
+                                icon={Key}
                                 className="w-full text-center !text-lg !px-8 !py-3 !bg-white !hover:bg-gray-200/80 !border-gray-400 !text-gray-800"
                             >
                                 List Property

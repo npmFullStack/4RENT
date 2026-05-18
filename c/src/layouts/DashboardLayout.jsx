@@ -74,7 +74,7 @@ const DashboardLayout = () => {
         { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
         { icon: Home, label: "Properties", path: "/my-properties" },
         { icon: Users, label: "Tenants", path: "/tenants" },
-        { icon: Calendar, label: "Rent Calendar", path: "/rent-calendar" },
+        { icon: Calendar, label: "Calendar", path: "/calendar" },
         { icon: HandCoins, label: "Payments", path: "/payments" },
         { icon: Wrench, label: "Repairs", path: "/repairs" },
         { icon: FileText, label: "Reports", path: "/reports" },

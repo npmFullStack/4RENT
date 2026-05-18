@@ -1,4 +1,4 @@
-// src/features/(dashboard)/pages/Dashboard.jsx
+// src/features/(app)/pages/Dashboard.jsx
 import React, { useState } from "react";
 import {
     HelpCircle,

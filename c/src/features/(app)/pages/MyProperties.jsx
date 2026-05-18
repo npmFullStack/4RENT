@@ -1,4 +1,4 @@
-// src/features/(dashboard)/pages/MyProperties.jsx
+// src/features/(app)/pages/MyProperties.jsx
 import React, { useState } from "react";
 import {
     HelpCircle,
@@ -281,7 +281,7 @@ const MyProperties = () => {
             render: row => {
                 const { icon, label, color } = getStatusBadgeProps(row);
                 return (
-                    <Badge variant="soft" color={color} icon={icon}>
+                    <Badge variant="ghost" color={color} icon={icon}>
                         {label}
                     </Badge>
                 );
