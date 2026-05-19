@@ -281,7 +281,7 @@ const Table = ({
                                 </th>
                             ))}
                             {actions && (
-                                <th className="px-3 py-2 text-left font-semibold text-gray-700 text-xs whitespace-nowrap sticky right-0 bg-gray-50 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.05)]">
+                                <th className="px-3 py-2 text-left font-semibold text-gray-700 text-xs whitespace-nowrap sticky right-0 bg-gray-50 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.05)] z-10">
                                     Actions
                                 </th>
                             )}
@@ -319,7 +319,7 @@ const Table = ({
                                         </td>
                                     ))}
                                     {actions && (
-                                        <td className="px-3 py-2 sticky right-0 bg-white shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.05)]">
+                                        <td className="px-3 py-2 sticky right-0 bg-white shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.05)] z-10">
                                             {actions(row)}
                                         </td>
                                     )}
@@ -337,11 +337,11 @@ const Table = ({
                                     <img
                                         src={noMoreProperty}
                                         alt="No properties found"
-                                        className="w-48 h-48 mx-auto mb-4 object-contain"
+                                        className="w-96 h-96 mx-auto mb-4 object-contain"
                                         onError={e => {
                                             e.target.onerror = null;
                                             e.target.src =
-                                                "https://via.placeholder.com/192x192?text=No+Properties";
+                                                "https://via.placeholder.com/384x384?text=No+Properties";
                                         }}
                                     />
                                     {emptyMessage}

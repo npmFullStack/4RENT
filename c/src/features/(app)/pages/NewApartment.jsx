@@ -20,12 +20,12 @@ import Instructions from "../components/Instructions";
 import HelpPageModal from "@/shared/components/HelpPageModal";
 import Button from "@/shared/components/Button";
 import Badge from "@/shared/components/Badge";
+import Toast from "@/shared/components/Toast"; // Add Toast import
 
 const NewApartment = () => {
     const navigate = useNavigate();
     const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
-    const [isInstructionsDrawerOpen, setIsInstructionsDrawerOpen] =
-        useState(false);
+    const [isInstructionsDrawerOpen, setIsInstructionsDrawerOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Form state
@@ -39,34 +39,27 @@ const NewApartment = () => {
         images: []
     });
 
-    const [errors, setErrors] = useState({});
-
-    // Instructions items for the tutorial
+    // Instructions items
     const instructionItems = [
         {
             title: "Property Name",
-            description:
-                "Give your apartment a descriptive name that will attract tenants. Example: 'Sunset Tower Luxury Apartment'"
+            description: "Give your apartment a descriptive name that will attract tenants."
         },
         {
             title: "Address Details",
-            description:
-                "Provide the complete address including street, barangay, city, and province for accurate location."
+            description: "Provide the complete address for accurate location."
         },
         {
             title: "Apartment Features",
-            description:
-                "Specify the number of bedrooms and bathrooms/CR to help tenants find what they need."
+            description: "Specify the number of bedrooms and bathrooms to help tenants find what they need."
         },
         {
             title: "Upload Photos",
-            description:
-                "Add clear photos of the apartment including living area, kitchen, bedrooms, and bathroom. Maximum 4 photos."
+            description: "Add clear photos of the apartment. Maximum 4 photos."
         },
         {
             title: "Set Price",
-            description:
-                "Set a competitive monthly rent price based on location and amenities offered."
+            description: "Set a competitive monthly rent price based on location and amenities."
         }
     ];
 
@@ -74,22 +67,14 @@ const NewApartment = () => {
     const handleChange = e => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
-        // Clear error for this field
-        if (errors[name]) {
-            setErrors(prev => ({ ...prev, [name]: "" }));
-        }
     };
 
     // Handle image upload
     const handleImageUpload = e => {
         const files = Array.from(e.target.files);
 
-        // Check if adding these files would exceed maximum of 4
         if (formData.images.length + files.length > 4) {
-            setErrors(prev => ({
-                ...prev,
-                images: "Maximum 4 images allowed"
-            }));
+            Toast.warning("Maximum Photos Reached", "You can only upload up to 4 photos.");
             return;
         }
 
@@ -104,7 +89,6 @@ const NewApartment = () => {
             images: [...prev.images, ...newImages]
         }));
 
-        // If no selected image and this is the first image, set it as selected
         if (!formData.selectedImage && newImages.length > 0) {
             setFormData(prev => ({
                 ...prev,
@@ -112,10 +96,7 @@ const NewApartment = () => {
             }));
         }
 
-        // Clear image error if any
-        if (errors.images) {
-            setErrors(prev => ({ ...prev, images: "" }));
-        }
+        Toast.success("Photos Added", `${newImages.length} photo(s) uploaded successfully.`);
     };
 
     // Remove an image
@@ -131,7 +112,6 @@ const NewApartment = () => {
             images: newImages
         }));
 
-        // If the removed image was selected, select the first remaining image or clear
         if (formData.selectedImage === imageToRemove?.preview) {
             setFormData(prev => ({
                 ...prev,
@@ -140,66 +120,36 @@ const NewApartment = () => {
         }
     };
 
-    // Set selected image for display
+    // Set selected image
     const setSelectedImage = imagePreview => {
         setFormData(prev => ({ ...prev, selectedImage: imagePreview }));
+        Toast.info("Cover Photo Changed", "This will be displayed as the cover image.");
     };
 
-    // Validate form
-    const validateForm = () => {
-        const newErrors = {};
-
-        if (!formData.name.trim()) {
-            newErrors.name = "Property name is required";
-        }
-
-        if (!formData.address.trim()) {
-            newErrors.address = "Address is required";
-        }
-
-        if (!formData.numberOfBedrooms) {
-            newErrors.numberOfBedrooms = "Number of bedrooms is required";
-        } else if (formData.numberOfBedrooms < 1) {
-            newErrors.numberOfBedrooms = "Must have at least 1 bedroom";
-        }
-
-        if (!formData.numberOfCR) {
-            newErrors.numberOfCR = "Number of CR/bathrooms is required";
-        } else if (formData.numberOfCR < 1) {
-            newErrors.numberOfCR = "Must have at least 1 CR/bathroom";
-        }
-
-        if (!formData.pricePerMonth) {
-            newErrors.pricePerMonth = "Monthly rent price is required";
-        } else if (formData.pricePerMonth < 1000) {
-            newErrors.pricePerMonth = "Price must be at least ₱1,000";
-        }
-
-        if (formData.images.length === 0) {
-            newErrors.images = "At least one image is required";
-        }
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
-
-    // Handle form submission
+    // Handle form submission - No validation
     const handleSubmit = async e => {
         e.preventDefault();
-
-        if (!validateForm()) {
-            return;
-        }
-
+        
         setIsSubmitting(true);
 
-        // Simulate API call
         try {
             await new Promise(resolve => setTimeout(resolve, 1500));
             console.log("Form submitted:", formData);
-            navigate("/my-properties");
+            
+            Toast.success(
+                "Apartment Created!", 
+                `${formData.name || "New Apartment"} has been successfully listed.`
+            );
+            
+            setTimeout(() => {
+                navigate("/my-properties");
+            }, 1500);
         } catch (error) {
             console.error("Error submitting form:", error);
+            Toast.error(
+                "Submission Failed", 
+                "There was an error creating your apartment. Please try again."
+            );
         } finally {
             setIsSubmitting(false);
         }
@@ -209,31 +159,26 @@ const NewApartment = () => {
     const helpFeatures = [
         {
             title: "Adding a New Apartment",
-            description:
-                "Follow the form to add your apartment listing. All fields marked with an asterisk (*) are required.",
+            description: "Follow the form to add your apartment listing.",
             icon: "Building2"
         },
         {
             title: "Uploading Photos",
-            description:
-                "You can upload up to 4 photos of your apartment. The first photo will be the cover image. Click on any photo to change the cover.",
+            description: "You can upload up to 4 photos. Click on any photo to change the cover.",
             icon: "ImageIcon"
         },
         {
             title: "Property Details",
-            description:
-                "Provide accurate details about bedrooms, bathrooms, and location to help tenants find your property.",
+            description: "Provide accurate details about bedrooms, bathrooms, and location.",
             icon: "Home"
         },
         {
             title: "Pricing Your Apartment",
-            description:
-                "Set a competitive monthly rent based on your apartment's features and location.",
+            description: "Set a competitive monthly rent based on your apartment's features.",
             icon: "PhilippinePeso"
         }
     ];
 
-    // Get thumbnail images (exclude the selected cover image)
     const thumbnailImages = formData.images.filter(
         img => img.preview !== formData.selectedImage
     );
@@ -245,13 +190,12 @@ const NewApartment = () => {
                 <BreadCrumbs />
             </div>
 
-            {/* Header Section */}
+            {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => setIsHelpModalOpen(true)}
                         className="sm:hidden text-gray-500 bg-transparent hover:bg-gray-100 rounded-lg transition-colors p-2"
-                        aria-label="Help"
                     >
                         <HelpCircle size={24} />
                     </button>
@@ -266,7 +210,6 @@ const NewApartment = () => {
                 </div>
 
                 <div className="flex items-center gap-3">
-                    {/* Help Button (Desktop) */}
                     <button
                         onClick={() => setIsHelpModalOpen(true)}
                         className="hidden sm:flex px-3 py-2 text-gray-500 bg-transparent hover:bg-gray-100 rounded-lg transition-colors items-center gap-2"
@@ -279,26 +222,22 @@ const NewApartment = () => {
 
             {/* Form and Instructions Layout */}
             <div className="flex flex-col lg:flex-row gap-6">
-                {/* Form Section - Left */}
+                {/* Form Section */}
                 <div className="flex-1">
-                    <form
-                        onSubmit={handleSubmit}
-                        className="bg-white rounded-xl border border-gray-200 p-4 md:p-6"
-                    >
+                    <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-200 p-4 md:p-6">
                         <h2 className="text-lg font-semibold text-gray-800 mb-6">
                             Apartment Information
                         </h2>
 
-                        {/* Image Upload Section - Cover 75% / Thumbnails 25% layout */}
+                        {/* Image Upload Section */}
                         <div className="mb-6">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Property Photos{" "}
-                                <span className="text-red-500">*</span>
+                                Property Photos
                             </label>
 
                             {formData.images.length > 0 ? (
                                 <div className="flex gap-4">
-                                    {/* Cover Image - 75% width */}
+                                    {/* Cover Image - 75% */}
                                     <div className="w-3/4">
                                         <div className="relative rounded-lg overflow-hidden bg-gray-100 aspect-square">
                                             {formData.selectedImage ? (
@@ -317,30 +256,24 @@ const NewApartment = () => {
                                                     Cover Image
                                                 </span>
                                                 <span className="text-white text-xs font-medium block">
-                                                    Click any thumbnail to
-                                                    change the cover photo
+                                                    Click any thumbnail to change
                                                 </span>
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* Thumbnail Gallery - 25% width, vertical stack */}
+                                    {/* Thumbnails - 25% */}
                                     <div className="w-1/4">
                                         <div className="flex flex-col gap-1 h-full">
                                             {thumbnailImages.map(image => (
                                                 <div
                                                     key={image.id}
                                                     className={`relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 transition-all ${
-                                                        formData.selectedImage ===
-                                                        image.preview
+                                                        formData.selectedImage === image.preview
                                                             ? "border-primary ring-2 ring-primary/20"
                                                             : "border-gray-200 hover:border-gray-300"
                                                     }`}
-                                                    onClick={() =>
-                                                        setSelectedImage(
-                                                            image.preview
-                                                        )
-                                                    }
+                                                    onClick={() => setSelectedImage(image.preview)}
                                                 >
                                                     <img
                                                         src={image.preview}
@@ -351,9 +284,7 @@ const NewApartment = () => {
                                                         type="button"
                                                         onClick={e => {
                                                             e.stopPropagation();
-                                                            removeImage(
-                                                                image.id
-                                                            );
+                                                            removeImage(image.id);
                                                         }}
                                                         className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-md hover:bg-red-600"
                                                     >
@@ -361,7 +292,6 @@ const NewApartment = () => {
                                                     </button>
                                                 </div>
                                             ))}
-                                            {/* Show placeholder for empty slots if less than 4 thumbnails */}
                                             {thumbnailImages.length === 0 && (
                                                 <div className="aspect-square rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
                                                     <span className="text-xs text-gray-400 text-center px-2">
@@ -390,42 +320,32 @@ const NewApartment = () => {
                                         multiple
                                         onChange={handleImageUpload}
                                         className="hidden"
-                                        disabled={formData.images.length >= 5}
+                                        disabled={formData.images.length >= 4}
                                     />
-                                    <div
-                                        className={`px-4 py-2 border-2 border-dashed rounded-lg transition-colors flex items-center gap-2 ${
-                                            formData.images.length >= 5
-                                                ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                                                : "border-gray-300 hover:border-primary text-gray-600 hover:text-primary cursor-pointer"
-                                        }`}
-                                    >
+                                    <div className={`px-4 py-2 border-2 border-dashed rounded-lg transition-colors flex items-center gap-2 ${
+                                        formData.images.length >= 4
+                                            ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                                            : "border-gray-300 hover:border-primary text-gray-600 hover:text-primary cursor-pointer"
+                                    }`}>
                                         <Upload className="w-4 h-4" />
                                         <span className="text-sm">
-                                            {formData.images.length >= 5
-                                                ? "Maximum 5 images reached"
+                                            {formData.images.length >= 4
+                                                ? "Maximum 4 images reached"
                                                 : "Upload Photos"}
                                         </span>
-                                        {formData.images.length < 5 && (
-                                            <Plus className="w-3 h-3" />
-                                        )}
+                                        {formData.images.length < 4 && <Plus className="w-3 h-3" />}
                                     </div>
                                 </label>
                                 <span className="text-xs text-gray-500">
-                                    {formData.images.length}/5 image(s) uploaded
+                                    {formData.images.length}/4 image(s) uploaded
                                 </span>
                             </div>
-                            {errors.images && (
-                                <p className="text-xs text-red-500 mt-1">
-                                    {errors.images}
-                                </p>
-                            )}
                         </div>
 
                         {/* Property Name */}
                         <div className="mb-4">
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Property Name{" "}
-                                <span className="text-red-500">*</span>
+                                Property Name
                             </label>
                             <input
                                 type="text"
@@ -433,23 +353,14 @@ const NewApartment = () => {
                                 value={formData.name}
                                 onChange={handleChange}
                                 placeholder="e.g., Metro Central Tower"
-                                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 ${
-                                    errors.name
-                                        ? "border-red-500"
-                                        : "border-gray-300"
-                                }`}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
                             />
-                            {errors.name && (
-                                <p className="text-xs text-red-500 mt-1">
-                                    {errors.name}
-                                </p>
-                            )}
                         </div>
 
                         {/* Address */}
                         <div className="mb-4">
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Address <span className="text-red-500">*</span>
+                                Address
                             </label>
                             <div className="relative">
                                 <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -459,27 +370,17 @@ const NewApartment = () => {
                                     value={formData.address}
                                     onChange={handleChange}
                                     placeholder="Street, Barangay, City, Province"
-                                    className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 ${
-                                        errors.address
-                                            ? "border-red-500"
-                                            : "border-gray-300"
-                                    }`}
+                                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
                                 />
                             </div>
-                            {errors.address && (
-                                <p className="text-xs text-red-500 mt-1">
-                                    {errors.address}
-                                </p>
-                            )}
                         </div>
 
-                        {/* Bedrooms and CR Row - Stacks vertically on mobile */}
+                        {/* Bedrooms and CR */}
                         <div className="flex flex-col sm:grid sm:grid-cols-2 gap-4 mb-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     <Bed className="w-3.5 h-3.5 inline mr-1" />
-                                    Bedrooms{" "}
-                                    <span className="text-red-500">*</span>
+                                    Bedrooms
                                 </label>
                                 <input
                                     type="number"
@@ -488,23 +389,13 @@ const NewApartment = () => {
                                     onChange={handleChange}
                                     min="1"
                                     placeholder="Number of bedrooms"
-                                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 ${
-                                        errors.numberOfBedrooms
-                                            ? "border-red-500"
-                                            : "border-gray-300"
-                                    }`}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
                                 />
-                                {errors.numberOfBedrooms && (
-                                    <p className="text-xs text-red-500 mt-1">
-                                        {errors.numberOfBedrooms}
-                                    </p>
-                                )}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     <Bath className="w-3.5 h-3.5 inline mr-1" />
-                                    CR / Bathroom{" "}
-                                    <span className="text-red-500">*</span>
+                                    CR / Bathroom
                                 </label>
                                 <input
                                     type="number"
@@ -513,17 +404,8 @@ const NewApartment = () => {
                                     onChange={handleChange}
                                     min="1"
                                     placeholder="Number of CR"
-                                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 ${
-                                        errors.numberOfCR
-                                            ? "border-red-500"
-                                            : "border-gray-300"
-                                    }`}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
                                 />
-                                {errors.numberOfCR && (
-                                    <p className="text-xs text-red-500 mt-1">
-                                        {errors.numberOfCR}
-                                    </p>
-                                )}
                             </div>
                         </div>
 
@@ -531,8 +413,7 @@ const NewApartment = () => {
                         <div className="mb-6">
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 <PhilippinePeso className="w-3.5 h-3.5 inline mr-1" />
-                                Rent Price (per month){" "}
-                                <span className="text-red-500">*</span>
+                                Rent Price (per month)
                             </label>
                             <div className="relative">
                                 <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
@@ -546,24 +427,15 @@ const NewApartment = () => {
                                     min="1000"
                                     step="500"
                                     placeholder="0"
-                                    className={`w-full pl-8 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 ${
-                                        errors.pricePerMonth
-                                            ? "border-red-500"
-                                            : "border-gray-300"
-                                    }`}
+                                    className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
                                 />
                             </div>
-                            {errors.pricePerMonth && (
-                                <p className="text-xs text-red-500 mt-1">
-                                    {errors.pricePerMonth}
-                                </p>
-                            )}
                             <p className="text-xs text-gray-400 mt-1">
                                 Set a competitive monthly rental price
                             </p>
                         </div>
 
-                        {/* Submit Buttons - Stacks vertically on mobile */}
+                        {/* Submit Buttons */}
                         <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4 border-t border-gray-100">
                             <Button
                                 type="button"
@@ -580,15 +452,13 @@ const NewApartment = () => {
                                 icon={Plus}
                                 className="w-full sm:flex-1"
                             >
-                                {isSubmitting
-                                    ? "Creating..."
-                                    : "Create Apartment"}
+                                {isSubmitting ? "Creating..." : "Create Apartment"}
                             </Button>
                         </div>
                     </form>
                 </div>
 
-                {/* Instructions Section - Desktop only */}
+                {/* Instructions - Desktop */}
                 <div className="hidden lg:block lg:w-80 flex-shrink-0">
                     <Instructions
                         title="How to List an Apartment"
@@ -597,7 +467,7 @@ const NewApartment = () => {
                 </div>
             </div>
 
-            {/* Floating Instruction Button - Mobile only */}
+            {/* Floating Help Button - Mobile */}
             <div className="lg:hidden fixed bottom-6 right-6 z-40">
                 <button
                     onClick={() => setIsInstructionsDrawerOpen(true)}
@@ -607,31 +477,23 @@ const NewApartment = () => {
                 </button>
             </div>
 
-            {/* Instructions Drawer - Mobile only */}
+            {/* Instructions Drawer - Mobile */}
             {isInstructionsDrawerOpen && (
                 <>
-                    {/* Backdrop */}
                     <div
                         className="lg:hidden fixed inset-0 bg-black/50 z-50"
                         onClick={() => setIsInstructionsDrawerOpen(false)}
                     />
-
-                    {/* Drawer */}
                     <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-xl z-50 animate-in slide-in-from-bottom duration-300 max-h-[80vh] overflow-y-auto">
                         <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
                             <button
-                                onClick={() =>
-                                    setIsInstructionsDrawerOpen(false)
-                                }
+                                onClick={() => setIsInstructionsDrawerOpen(false)}
                                 className="p-1 hover:bg-gray-100 rounded-lg"
                             >
                                 <X className="w-5 h-5 text-gray-500" />
                             </button>
                         </div>
-
                         <div className="p-4">
-                            {/* Instructions Image */}
-
                             <Instructions
                                 title="How to List an Apartment"
                                 items={instructionItems}

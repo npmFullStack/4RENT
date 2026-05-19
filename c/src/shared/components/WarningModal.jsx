@@ -1,19 +1,26 @@
 // src/shared/components/WarningModal.jsx
-import React from 'react';
-import ModalPortal from './ModalPortal';
-import { AlertTriangle, X } from 'lucide-react';
+import React from "react";
+import ModalPortal from "./ModalPortal";
+import Button from "./Button";
+import { AlertTriangle, X, LogOut, Loader2 } from "lucide-react";
 
-const WarningModal = ({ 
-    isOpen, 
-    onClose, 
-    onConfirm, 
-    title = "Warning", 
+const WarningModal = ({
+    isOpen,
+    onClose,
+    onConfirm,
+    title = "Warning",
     description = "Are you sure you want to proceed?",
     icon: IconComponent = AlertTriangle,
-    confirmText = "Confirm",
-    cancelText = "Cancel"
+    confirmText = "Logout",
+    cancelText = "Cancel",
+    isLoading = false
 }) => {
     if (!isOpen) return null;
+
+    const handleConfirm = async () => {
+        if (isLoading) return;
+        await onConfirm();
+    };
 
     return (
         <ModalPortal isOpen={isOpen} onClose={onClose}>
@@ -21,7 +28,8 @@ const WarningModal = ({
                 {/* Close Button */}
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+                    disabled={isLoading}
+                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <X size={20} />
                 </button>
@@ -39,27 +47,28 @@ const WarningModal = ({
                 </h2>
 
                 {/* Description */}
-                <p className="text-gray-600 text-center mb-6">
-                    {description}
-                </p>
+                <p className="text-gray-600 text-center mb-6">{description}</p>
 
                 {/* Action Buttons */}
                 <div className="flex gap-3">
-                    <button
+                    <Button
+                        variant="ghost"
                         onClick={onClose}
-                        className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                        disabled={isLoading}
+                        className="flex-1 "
                     >
                         {cancelText}
-                    </button>
-                    <button
-                        onClick={() => {
-                            onConfirm();
-                            onClose();
-                        }}
-                        className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors"
+                    </Button>
+                    <Button
+                        variant="primary"
+                        onClick={handleConfirm}
+                        disabled={isLoading}
+                        icon={isLoading ? Loader2 : LogOut}
+                        iconPosition="left"
+                        className="flex-1 !bg-red-600 hover:bg-red-700 focus:ring-red-500"
                     >
-                        {confirmText}
-                    </button>
+                        {isLoading ? "Logging out..." : confirmText}
+                    </Button>
                 </div>
             </div>
         </ModalPortal>

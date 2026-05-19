@@ -18,6 +18,7 @@ import Dashboard from "@/features/(app)/pages/Dashboard";
 import MyProperties from "@/features/(app)/pages/MyProperties";
 import NewBoarding from "@/features/(app)/pages/NewBoarding";
 import NewApartment from "@/features/(app)/pages/NewApartment";
+import Tenants from "@/features/(app)/pages/Tenants";
 
 function App() {
     return (
@@ -56,6 +57,8 @@ function App() {
                     <Route path="my-properties" element={<MyProperties />} />
                     <Route path="new-boarding" element={<NewBoarding />} />
                     <Route path="new-apartment" element={<NewApartment />} />
+                    <Route path="/tenants" element={<Tenants />} />
+
                 </Route>
             </Routes>
         </BrowserRouter>

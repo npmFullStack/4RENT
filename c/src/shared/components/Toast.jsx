@@ -3,166 +3,162 @@ import { toast } from "sonner";
 import { AlertCircle, CheckCircle, Info, XCircle, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
-// Custom Toast Content Component with Progress Bar
-const ToastContent = ({ 
-  message, 
-  description, 
-  icon: Icon, 
-  type, 
-  onClose, 
-  duration = 4000 
+const ToastContent = ({
+    message,
+    description,
+    icon: Icon,
+    type,
+    onClose,
+    duration = 4000
 }) => {
-  const [progress, setProgress] = useState(100);
+    const [progress, setProgress] = useState(100);
 
-  useEffect(() => {
-    const startTime = Date.now();
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const remaining = Math.max(0, ((duration - elapsed) / duration) * 100);
-      setProgress(remaining);
-      
-      if (remaining <= 0) {
-        clearInterval(interval);
-      }
-    }, 16); // ~60fps
+    useEffect(() => {
+        const startTime = Date.now();
+        const interval = setInterval(() => {
+            const elapsed = Date.now() - startTime;
+            const remaining = Math.max(
+                0,
+                ((duration - elapsed) / duration) * 100
+            );
+            setProgress(remaining);
 
-    return () => clearInterval(interval);
-  }, [duration]);
+            if (remaining <= 0) {
+                clearInterval(interval);
+            }
+        }, 16);
 
-  const getColorStyles = () => {
-    const colors = {
-      success: "text-green-600",
-      error: "text-red-600",
-      info: "text-blue-600",
-      warning: "text-orange-600"
+        return () => clearInterval(interval);
+    }, [duration]);
+
+    const getStyles = () => {
+        switch (type) {
+            case "success":
+                return {
+                    accent: "bg-green-500",
+                    text: "text-green-600",
+                    lightBg: "bg-green-50"
+                };
+            case "error":
+                return {
+                    accent: "bg-red-500",
+                    text: "text-red-600",
+                    lightBg: "bg-red-50"
+                };
+            case "info":
+                return {
+                    accent: "bg-blue-500",
+                    text: "text-blue-600",
+                    lightBg: "bg-blue-50"
+                };
+            case "warning":
+                return {
+                    accent: "bg-orange-500",
+                    text: "text-orange-600",
+                    lightBg: "bg-orange-50"
+                };
+            default:
+                return {};
+        }
     };
-    const borderColors = {
-      success: "border-green-200",
-      error: "border-red-200",
-      info: "border-blue-200",
-      warning: "border-orange-200"
-    };
-    const progressColors = {
-      success: "bg-green-500",
-      error: "bg-red-500",
-      info: "bg-blue-500",
-      warning: "bg-orange-500"
-    };
-    
-    return {
-      iconColor: colors[type],
-      borderColor: borderColors[type],
-      progressColor: progressColors[type]
-    };
-  };
 
-  const { iconColor, borderColor, progressColor } = getColorStyles();
+    const { accent, text, lightBg } = getStyles();
 
-  return (
-    <div className={`relative bg-white border ${borderColor} rounded-lg shadow-lg overflow-hidden w-full max-w-sm`}>
-      {/* Progress Bar */}
-      <div 
-        className={`absolute bottom-0 left-0 h-1 ${progressColor} transition-all duration-75 ease-linear`}
-        style={{ width: `${progress}%` }}
-      />
-      
-      {/* Close Button */}
-      <button
-        onClick={onClose}
-        className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition-colors duration-200 z-10"
-      >
-        <X className="w-3.5 h-3.5" />
-      </button>
+    return (
+        <div className="relative bg-white rounded-lg shadow-lg w-80 max-w-[320px] overflow-hidden">
+            {/* Left accent bar */}
+            <div className={`absolute left-0 top-0 bottom-0 w-1 ${accent}`} />
 
-      {/* Content */}
-      <div className="p-4 pr-8">
-        <div className="flex items-start gap-3">
-          {/* Icon */}
-          <div className={`flex-shrink-0 ${iconColor}`}>
-            <Icon className="w-4 h-4" />
-          </div>
-          
-          {/* Text Content */}
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 tracking-tight">
-              {message}
-            </p>
-            {description && (
-              <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-                {description}
-              </p>
-            )}
-          </div>
+            {/* Progress bar at bottom */}
+            <div
+                className={`absolute bottom-0 left-0 h-0.5 ${accent} transition-all duration-75 ease-linear`}
+                style={{ width: `${progress}%` }}
+            />
+
+            <div className="pl-4 pr-8 py-2.5">
+                <div className="flex items-start gap-2.5">
+                    <div
+                        className={`${lightBg} p-1 rounded-full shrink-0 mt-0.5`}
+                    >
+                        <Icon
+                            className={`w-3.5 h-3.5 ${text}`}
+                            strokeWidth={2}
+                        />
+                    </div>
+
+<div className="flex-1 min-w-0">
+  <p className="text-[13px] font-medium text-gray-900 leading-tight truncate" title={message}>
+    {message}
+  </p>
+  {description && (
+    <p className="text-[11px] text-gray-500 mt-1 leading-relaxed truncate" title={description}>
+      {description}
+    </p>
+  )}
+</div>     <button
+                        onClick={onClose}
+                        className="shrink-0 -mt-0.5 p-0.5 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 transition-colors"
+                    >
+                        <X className="w-3 h-3" strokeWidth={1.5} />
+                    </button>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 const Toast = {
-  success: (message, description = "") => {
-    toast.custom((t) => (
-      <ToastContent
-        message={message}
-        description={description}
-        icon={CheckCircle}
-        type="success"
-        onClose={() => toast.dismiss(t)}
-        duration={4000}
-      />
-    ), {
-      duration: 4000,
-      position: "top-right",
-    });
-  },
+    success: (message, description = "") => {
+        toast.custom(t => (
+            <ToastContent
+                message={message}
+                description={description}
+                icon={CheckCircle}
+                type="success"
+                onClose={() => toast.dismiss(t)}
+                duration={4000}
+            />
+        ));
+    },
 
-  error: (message, description = "") => {
-    toast.custom((t) => (
-      <ToastContent
-        message={message}
-        description={description}
-        icon={AlertCircle}
-        type="error"
-        onClose={() => toast.dismiss(t)}
-        duration={4000}
-      />
-    ), {
-      duration: 4000,
-      position: "top-right",
-    });
-  },
+    error: (message, description = "") => {
+        toast.custom(t => (
+            <ToastContent
+                message={message}
+                description={description}
+                icon={AlertCircle}
+                type="error"
+                onClose={() => toast.dismiss(t)}
+                duration={4000}
+            />
+        ));
+    },
 
-  info: (message, description = "") => {
-    toast.custom((t) => (
-      <ToastContent
-        message={message}
-        description={description}
-        icon={Info}
-        type="info"
-        onClose={() => toast.dismiss(t)}
-        duration={3000}
-      />
-    ), {
-      duration: 3000,
-      position: "top-right",
-    });
-  },
+    info: (message, description = "") => {
+        toast.custom(t => (
+            <ToastContent
+                message={message}
+                description={description}
+                icon={Info}
+                type="info"
+                onClose={() => toast.dismiss(t)}
+                duration={3000}
+            />
+        ));
+    },
 
-  warning: (message, description = "") => {
-    toast.custom((t) => (
-      <ToastContent
-        message={message}
-        description={description}
-        icon={XCircle}
-        type="warning"
-        onClose={() => toast.dismiss(t)}
-        duration={4000}
-      />
-    ), {
-      duration: 4000,
-      position: "top-right",
-    });
-  },
+    warning: (message, description = "") => {
+        toast.custom(t => (
+            <ToastContent
+                message={message}
+                description={description}
+                icon={XCircle}
+                type="warning"
+                onClose={() => toast.dismiss(t)}
+                duration={4000}
+            />
+        ));
+    }
 };
 
 export default Toast;

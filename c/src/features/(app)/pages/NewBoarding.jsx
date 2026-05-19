@@ -1,5 +1,5 @@
 // src/features/(app)/pages/NewBoarding.jsx
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     HelpCircle,
@@ -12,17 +12,13 @@ import {
     Users,
     Trash2,
     Plus,
-    Image as ImageIcon,
-    ChevronUp,
-    ChevronDown,
-    AlertCircle
+    Image as ImageIcon
 } from "lucide-react";
 import BreadCrumbs from "../components/BreadCrumbs";
 import Instructions from "../components/Instructions";
 import HelpPageModal from "@/shared/components/HelpPageModal";
 import Button from "@/shared/components/Button";
-import Select from "@/shared/components/Select";
-
+import Toast from "@/shared/components/Toast";
 
 import FemaleIcon from "@/assets/icons/female.svg";
 import MaleIcon from "@/assets/icons/male.svg";
@@ -42,13 +38,13 @@ const NewBoarding = () => {
         numberOfCR: "",
         selectedImage: "",
         images: [],
-        boardingHouseSex: "", // male, female, or mixed
+        boardingHouseSex: "",
         bedrooms: [
             {
                 id: 1,
                 name: "Bedroom #1",
                 capacity: "",
-                gender: "" // male or female (only used when boardingHouseSex is mixed)
+                gender: ""
             }
         ],
         rules: [
@@ -56,12 +52,11 @@ const NewBoarding = () => {
                 id: 1,
                 text: ""
             }
-        ]
+        ],
+        pricePerMonth: ""
     });
 
-    const [errors, setErrors] = useState({});
-
-    // Gender options for boarding house
+    // Gender options
     const getBoardingHouseSexOptions = () => [
         {
             value: "male",
@@ -80,56 +75,41 @@ const NewBoarding = () => {
         }
     ];
 
-    // Gender options for bedroom (only used when mixed)
-    const getBedroomGenderOptions = () => [
-        {
-            value: "male",
-            label: "Male",
-            icon: <img src={MaleIcon} alt="male" className="w-4 h-4" />
-        },
-        {
-            value: "female",
-            label: "Female",
-            icon: <img src={FemaleIcon} alt="female" className="w-4 h-4" />
-        }
-    ];
-
-    // Instructions items for the tutorial
+    // Instructions items
     const instructionItems = [
         {
             title: "Property Name",
             description:
-                "Give your boarding house a descriptive name that will attract tenants. Example: 'Sunrise Boarding House'"
+                "Give your boarding house a descriptive name that will attract tenants."
         },
         {
             title: "Address Details",
             description:
-                "Provide the complete address including street, barangay, city, and province for accurate location."
+                "Provide the complete address including street, barangay, city, and province."
         },
         {
             title: "Boarding House Type",
             description:
-                "Select whether your boarding house is for Male Only, Female Only, or Mixed. This determines bedroom gender configuration options."
+                "Select Male Only, Female Only, or Mixed. This determines bedroom configuration."
         },
         {
             title: "Bedrooms Configuration",
             description:
-                "Add each bedroom separately. For each bedroom, specify the capacity. For mixed boarding houses, you can also specify gender exclusivity per bedroom."
+                "Add each bedroom separately and specify the capacity per room."
         },
         {
             title: "House Rules",
-            description:
-                "Add important rules tenants must follow, such as curfew, noise restrictions, visitor policies, etc."
+            description: "Add important rules tenants must follow."
         },
         {
             title: "Upload Photos",
             description:
-                "Add clear photos of the boarding house including common areas and rooms. Maximum 4 photos."
+                "Add clear photos of the boarding house. Maximum 4 photos."
         },
         {
             title: "Set Price",
             description:
-                "Set a competitive monthly rent price based on location and amenities offered."
+                "Set a competitive monthly rent price based on location and amenities."
         }
     ];
 
@@ -137,25 +117,18 @@ const NewBoarding = () => {
     const handleChange = e => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
-        if (errors[name]) {
-            setErrors(prev => ({ ...prev, [name]: "" }));
-        }
     };
 
     // Handle boarding house sex change
-    const handleBoardingHouseSexChange = (value) => {
-        setFormData(prev => ({ 
-            ...prev, 
+    const handleBoardingHouseSexChange = value => {
+        setFormData(prev => ({
+            ...prev,
             boardingHouseSex: value,
-            // Reset bedroom genders if switching from mixed to single-gender
             bedrooms: prev.bedrooms.map(bedroom => ({
                 ...bedroom,
                 gender: value !== "mixed" ? value : ""
             }))
         }));
-        if (errors.boardingHouseSex) {
-            setErrors(prev => ({ ...prev, boardingHouseSex: "" }));
-        }
     };
 
     // Bedroom handlers
@@ -169,29 +142,21 @@ const NewBoarding = () => {
                     id: newId,
                     name: `Bedroom #${newId}`,
                     capacity: "",
-                    gender: formData.boardingHouseSex !== "mixed" ? formData.boardingHouseSex : ""
+                    gender:
+                        formData.boardingHouseSex !== "mixed"
+                            ? formData.boardingHouseSex
+                            : ""
                 }
             ]
         }));
     };
 
     const removeBedroom = id => {
-        if (formData.bedrooms.length === 1) {
-            setErrors(prev => ({
-                ...prev,
-                bedrooms: "At least one bedroom is required"
-            }));
-            return;
-        }
-
+        if (formData.bedrooms.length === 1) return;
         setFormData(prev => ({
             ...prev,
             bedrooms: prev.bedrooms.filter(bedroom => bedroom.id !== id)
         }));
-
-        if (errors.bedrooms) {
-            setErrors(prev => ({ ...prev, bedrooms: "" }));
-        }
     };
 
     const updateBedroom = (id, field, value) => {
@@ -208,13 +173,7 @@ const NewBoarding = () => {
         const newId = formData.rules.length + 1;
         setFormData(prev => ({
             ...prev,
-            rules: [
-                ...prev.rules,
-                {
-                    id: newId,
-                    text: ""
-                }
-            ]
+            rules: [...prev.rules, { id: newId, text: "" }]
         }));
     };
 
@@ -239,10 +198,10 @@ const NewBoarding = () => {
         const files = Array.from(e.target.files);
 
         if (formData.images.length + files.length > 4) {
-            setErrors(prev => ({
-                ...prev,
-                images: "Maximum 4 images allowed"
-            }));
+            Toast.warning(
+                "Maximum Photos Reached",
+                "You can only upload up to 4 photos."
+            );
             return;
         }
 
@@ -264,12 +223,13 @@ const NewBoarding = () => {
             }));
         }
 
-        if (errors.images) {
-            setErrors(prev => ({ ...prev, images: "" }));
-        }
+        Toast.success(
+            "Photos Added",
+            `${newImages.length} photo(s) uploaded successfully.`
+        );
     };
 
-    // Remove an image
+    // Remove image
     const removeImage = imageId => {
         const imageToRemove = formData.images.find(img => img.id === imageId);
         if (imageToRemove) {
@@ -290,85 +250,21 @@ const NewBoarding = () => {
         }
     };
 
-    // Set selected image for display
+    // Set selected image
     const setSelectedImage = imagePreview => {
         setFormData(prev => ({ ...prev, selectedImage: imagePreview }));
-    };
-
-    // Validate form
-    const validateForm = () => {
-        const newErrors = {};
-
-        if (!formData.name.trim()) {
-            newErrors.name = "Property name is required";
-        }
-
-        if (!formData.address.trim()) {
-            newErrors.address = "Address is required";
-        }
-
-        if (!formData.numberOfCR) {
-            newErrors.numberOfCR = "Number of CR/bathrooms is required";
-        } else if (formData.numberOfCR < 1) {
-            newErrors.numberOfCR = "Must have at least 1 CR/bathroom";
-        }
-
-        // Validate boarding house sex
-        if (!formData.boardingHouseSex) {
-            newErrors.boardingHouseSex = "Boarding house type is required";
-        }
-
-        // Validate bedrooms
-        const bedroomErrors = [];
-        formData.bedrooms.forEach((bedroom, index) => {
-            if (!bedroom.capacity || bedroom.capacity < 1) {
-                bedroomErrors.push(
-                    `Bedroom #${bedroom.id}: Capacity is required and must be at least 1`
-                );
-            }
-            // Only validate gender if boarding house is mixed
-            if (formData.boardingHouseSex === "mixed" && !bedroom.gender) {
-                bedroomErrors.push(
-                    `Bedroom #${bedroom.id}: Gender selection is required`
-                );
-            }
-        });
-
-        if (bedroomErrors.length > 0) {
-            newErrors.bedrooms = bedroomErrors;
-        }
-
-        // Validate rules (at least one rule with text)
-        const hasValidRule = formData.rules.some(
-            rule => rule.text.trim().length > 0
+        Toast.info(
+            "Cover Photo Changed",
+            "This will be displayed as the cover image."
         );
-        if (!hasValidRule) {
-            newErrors.rules = "At least one house rule is required";
-        }
-
-        if (formData.images.length === 0) {
-            newErrors.images = "At least one image is required";
-        }
-
-        if (!formData.pricePerMonth || formData.pricePerMonth < 1000) {
-            newErrors.pricePerMonth = "Valid rent price is required (minimum ₱1,000)";
-        }
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
     };
 
-    // Handle form submission
+    // Handle form submission - No validation
     const handleSubmit = async e => {
         e.preventDefault();
 
-        if (!validateForm()) {
-            return;
-        }
-
         setIsSubmitting(true);
 
-        // Calculate total capacity from bedrooms
         const totalCapacity = formData.bedrooms.reduce(
             (sum, bedroom) => sum + (parseInt(bedroom.capacity) || 0),
             0
@@ -383,9 +279,21 @@ const NewBoarding = () => {
         try {
             await new Promise(resolve => setTimeout(resolve, 1500));
             console.log("Form submitted:", submitData);
-            navigate("/my-properties");
+
+            Toast.success(
+                "Boarding House Created!",
+                `${formData.name || "New Boarding House"} has been successfully listed.`
+            );
+
+            setTimeout(() => {
+                navigate("/my-properties");
+            }, 1500);
         } catch (error) {
             console.error("Error submitting form:", error);
+            Toast.error(
+                "Submission Failed",
+                "There was an error creating your boarding house. Please try again."
+            );
         } finally {
             setIsSubmitting(false);
         }
@@ -395,43 +303,38 @@ const NewBoarding = () => {
     const helpFeatures = [
         {
             title: "Adding a New Boarding House",
-            description:
-                "Follow the form to add your boarding house listing. All fields marked with an asterisk (*) are required.",
+            description: "Follow the form to add your boarding house listing.",
             icon: "Building2"
         },
         {
             title: "Boarding House Type",
-            description:
-                "Select Male Only, Female Only, or Mixed. For mixed boarding houses, you can specify gender per bedroom.",
+            description: "Select Male Only, Female Only, or Mixed.",
             icon: "Users"
         },
         {
             title: "Uploading Photos",
             description:
-                "You can upload up to 4 photos of your boarding house. The first photo will be the cover image. Click on any photo to change the cover.",
+                "You can upload up to 4 photos. Click any photo to change the cover.",
             icon: "ImageIcon"
         },
         {
             title: "Bedroom Configuration",
-            description:
-                "Add multiple bedrooms. Each bedroom has its own capacity. For mixed boarding houses, you can also set gender exclusivity per bedroom.",
+            description: "Add multiple bedrooms with individual capacities.",
             icon: "Bed"
         },
         {
             title: "House Rules",
-            description:
-                "Add important rules tenants must follow. These will be displayed to potential renters.",
+            description: "Add important rules tenants must follow.",
             icon: "FileText"
         },
         {
             title: "Pricing Your Boarding House",
-            description:
-                "Set a competitive monthly rent based on your boarding house's features and location.",
+            description: "Set a competitive monthly rent.",
             icon: "PhilippinePeso"
         }
     ];
 
-    // Get thumbnail images (exclude the selected cover image)
+    // Thumbnail images
     const thumbnailImages = formData.images.filter(
         img => img.preview !== formData.selectedImage
     );
@@ -443,13 +346,12 @@ const NewBoarding = () => {
                 <BreadCrumbs />
             </div>
 
-            {/* Header Section */}
+            {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => setIsHelpModalOpen(true)}
                         className="sm:hidden text-gray-500 bg-transparent hover:bg-gray-100 rounded-lg transition-colors p-2"
-                        aria-label="Help"
                     >
                         <HelpCircle size={24} />
                     </button>
@@ -476,7 +378,7 @@ const NewBoarding = () => {
 
             {/* Form and Instructions Layout */}
             <div className="flex flex-col lg:flex-row gap-6">
-                {/* Form Section - Left */}
+                {/* Form Section */}
                 <div className="flex-1">
                     <form
                         onSubmit={handleSubmit}
@@ -489,12 +391,12 @@ const NewBoarding = () => {
                         {/* Image Upload Section */}
                         <div className="mb-6">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Property Photos{" "}
-                                <span className="text-red-500">*</span>
+                                Property Photos
                             </label>
 
                             {formData.images.length > 0 ? (
                                 <div className="flex gap-4">
+                                    {/* Cover Image */}
                                     <div className="w-3/4">
                                         <div className="relative rounded-lg overflow-hidden bg-gray-100 aspect-square">
                                             {formData.selectedImage ? (
@@ -514,12 +416,13 @@ const NewBoarding = () => {
                                                 </span>
                                                 <span className="text-white text-xs font-medium block">
                                                     Click any thumbnail to
-                                                    change the cover photo
+                                                    change
                                                 </span>
                                             </div>
                                         </div>
                                     </div>
 
+                                    {/* Thumbnails */}
                                     <div className="w-1/4">
                                         <div className="flex flex-col gap-1 h-full">
                                             {thumbnailImages.map(image => (
@@ -575,6 +478,7 @@ const NewBoarding = () => {
                                 </div>
                             )}
 
+                            {/* Upload Button */}
                             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mt-4">
                                 <label className="cursor-pointer">
                                     <input
@@ -607,18 +511,12 @@ const NewBoarding = () => {
                                     {formData.images.length}/4 image(s) uploaded
                                 </span>
                             </div>
-                            {errors.images && (
-                                <p className="text-xs text-red-500 mt-1">
-                                    {errors.images}
-                                </p>
-                            )}
                         </div>
 
                         {/* Property Name */}
                         <div className="mb-4">
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Property Name{" "}
-                                <span className="text-red-500">*</span>
+                                Property Name
                             </label>
                             <input
                                 type="text"
@@ -626,23 +524,14 @@ const NewBoarding = () => {
                                 value={formData.name}
                                 onChange={handleChange}
                                 placeholder="e.g., Sunrise Boarding House"
-                                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 ${
-                                    errors.name
-                                        ? "border-red-500"
-                                        : "border-gray-300"
-                                }`}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
                             />
-                            {errors.name && (
-                                <p className="text-xs text-red-500 mt-1">
-                                    {errors.name}
-                                </p>
-                            )}
                         </div>
 
                         {/* Address */}
                         <div className="mb-4">
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Address <span className="text-red-500">*</span>
+                                Address
                             </label>
                             <div className="relative">
                                 <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -652,26 +541,16 @@ const NewBoarding = () => {
                                     value={formData.address}
                                     onChange={handleChange}
                                     placeholder="Street, Barangay, City, Province"
-                                    className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 ${
-                                        errors.address
-                                            ? "border-red-500"
-                                            : "border-gray-300"
-                                    }`}
+                                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
                                 />
                             </div>
-                            {errors.address && (
-                                <p className="text-xs text-red-500 mt-1">
-                                    {errors.address}
-                                </p>
-                            )}
                         </div>
 
                         {/* Number of CR */}
                         <div className="mb-6">
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 <Bath className="w-3.5 h-3.5 inline mr-1" />
-                                CR / Bathroom{" "}
-                                <span className="text-red-500">*</span>
+                                CR / Bathroom
                             </label>
                             <input
                                 type="number"
@@ -680,57 +559,50 @@ const NewBoarding = () => {
                                 onChange={handleChange}
                                 min="1"
                                 placeholder="Number of CR/bathrooms"
-                                className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 ${
-                                    errors.numberOfCR
-                                        ? "border-red-500"
-                                        : "border-gray-300"
-                                }`}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
                             />
-                            {errors.numberOfCR && (
-                                <p className="text-xs text-red-500 mt-1">
-                                    {errors.numberOfCR}
-                                </p>
-                            )}
                         </div>
 
-                        {/* Boarding House Sex Selection */}
+                        {/* Boarding House Type */}
                         <div className="mb-6">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Boarding House Type{" "}
-                                <span className="text-red-500">*</span>
+                                Boarding House Type
                             </label>
                             <div className="grid grid-cols-3 gap-3">
                                 {getBoardingHouseSexOptions().map(option => (
                                     <button
                                         key={option.value}
                                         type="button"
-                                        onClick={() => handleBoardingHouseSexChange(option.value)}
+                                        onClick={() =>
+                                            handleBoardingHouseSexChange(
+                                                option.value
+                                            )
+                                        }
                                         className={`flex flex-col items-center gap-2 p-3 border-2 rounded-lg transition-all ${
-                                            formData.boardingHouseSex === option.value
-                                                ? "border-primary bg-primary/5 ring-2 ring-primary/20"
+                                            formData.boardingHouseSex ===
+                                            option.value
+                                                ? "border-gray-500 bg-gray-300/5 ring-2 ring-gray-500/20"
                                                 : "border-gray-200 bg-white hover:border-gray-300"
                                         }`}
                                     >
                                         <div className="w-8 h-8 flex items-center justify-center">
                                             {option.icon}
                                         </div>
-                                        <span className={`text-sm font-medium ${
-                                            formData.boardingHouseSex === option.value
-                                                ? "text-primary"
-                                                : "text-gray-700"
-                                        }`}>
+                                        <span
+                                            className={`text-sm font-medium ${
+                                                formData.boardingHouseSex ===
+                                                option.value
+                                                    ? "text-primary"
+                                                    : "text-gray-700"
+                                            }`}
+                                        >
                                             {option.label}
                                         </span>
                                     </button>
                                 ))}
                             </div>
-                            {errors.boardingHouseSex && (
-                                <p className="text-xs text-red-500 mt-1">
-                                    {errors.boardingHouseSex}
-                                </p>
-                            )}
                             <p className="text-xs text-gray-400 mt-2">
-                                Select whether your boarding house is for Male Only, Female Only, or Mixed.
+                                Select your boarding house type
                             </p>
                         </div>
 
@@ -738,8 +610,7 @@ const NewBoarding = () => {
                         <div className="mb-6">
                             <div className="flex items-center justify-between mb-3">
                                 <label className="block text-sm font-medium text-gray-700">
-                                    Bedrooms Configuration{" "}
-                                    <span className="text-red-500">*</span>
+                                    Bedrooms Configuration
                                 </label>
                                 <button
                                     type="button"
@@ -752,7 +623,7 @@ const NewBoarding = () => {
                             </div>
 
                             <div className="space-y-4">
-                                {formData.bedrooms.map((bedroom, index) => (
+                                {formData.bedrooms.map(bedroom => (
                                     <div
                                         key={bedroom.id}
                                         className="border border-gray-200 rounded-lg p-4 bg-gray-50/50"
@@ -776,14 +647,13 @@ const NewBoarding = () => {
                                             )}
                                         </div>
 
-                                        <div className={`grid ${formData.boardingHouseSex === "mixed" ? "grid-cols-2" : "grid-cols-1"} gap-4`}>
+                                        <div
+                                            className={`grid ${formData.boardingHouseSex === "mixed" ? "grid-cols-2" : "grid-cols-1"} gap-4`}
+                                        >
                                             {/* Room Capacity */}
                                             <div>
                                                 <label className="block text-xs font-medium text-gray-600 mb-1">
                                                     Room Capacity (people)
-                                                    <span className="text-red-500 ml-0.5">
-                                                        *
-                                                    </span>
                                                 </label>
                                                 <input
                                                     type="number"
@@ -801,14 +671,12 @@ const NewBoarding = () => {
                                                 />
                                             </div>
 
-                                            {/* Gender Select - only shown for mixed boarding houses */}
-                                            {formData.boardingHouseSex === "mixed" && (
+                                            {/* Gender Select - only for mixed */}
+                                            {formData.boardingHouseSex ===
+                                                "mixed" && (
                                                 <div>
                                                     <label className="block text-xs font-medium text-gray-600 mb-1">
                                                         Exclusive For
-                                                        <span className="text-red-500 ml-0.5">
-                                                            *
-                                                        </span>
                                                     </label>
                                                     <div className="flex gap-3">
                                                         <button
@@ -866,51 +734,59 @@ const NewBoarding = () => {
                                             )}
                                         </div>
 
-                                        {/* Show gender badge for non-mixed boarding houses */}
-                                        {formData.boardingHouseSex !== "mixed" && formData.boardingHouseSex && (
-                                            <div className="mt-3 pt-2 border-t border-gray-200">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xs text-gray-500">This room is for:</span>
-                                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                                                        formData.boardingHouseSex === "male" 
-                                                            ? "bg-blue-100 text-blue-700"
-                                                            : "bg-pink-100 text-pink-700"
-                                                    }`}>
-                                                        {formData.boardingHouseSex === "male" ? (
-                                                            <img src={MaleIcon} alt="male" className="w-3 h-3" />
-                                                        ) : (
-                                                            <img src={FemaleIcon} alt="female" className="w-3 h-3" />
-                                                        )}
-                                                        {formData.boardingHouseSex === "male" ? "Male Only" : "Female Only"}
-                                                    </span>
+                                        {/* Gender badge for non-mixed */}
+                                        {formData.boardingHouseSex !==
+                                            "mixed" &&
+                                            formData.boardingHouseSex && (
+                                                <div className="mt-3 pt-2 border-t border-gray-200">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs text-gray-500">
+                                                            This room is for:
+                                                        </span>
+                                                        <span
+                                                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                                                                formData.boardingHouseSex ===
+                                                                "male"
+                                                                    ? "bg-blue-100 text-blue-700"
+                                                                    : "bg-pink-100 text-pink-700"
+                                                            }`}
+                                                        >
+                                                            {formData.boardingHouseSex ===
+                                                            "male" ? (
+                                                                <img
+                                                                    src={
+                                                                        MaleIcon
+                                                                    }
+                                                                    alt="male"
+                                                                    className="w-3 h-3"
+                                                                />
+                                                            ) : (
+                                                                <img
+                                                                    src={
+                                                                        FemaleIcon
+                                                                    }
+                                                                    alt="female"
+                                                                    className="w-3 h-3"
+                                                                />
+                                                            )}
+                                                            {formData.boardingHouseSex ===
+                                                            "male"
+                                                                ? "Male Only"
+                                                                : "Female Only"}
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )}
+                                            )}
                                     </div>
                                 ))}
                             </div>
-
-                            {errors.bedrooms && (
-                                <div className="mt-2 space-y-1">
-                                    {Array.isArray(errors.bedrooms) &&
-                                        errors.bedrooms.map((err, idx) => (
-                                            <p
-                                                key={idx}
-                                                className="text-xs text-red-500"
-                                            >
-                                                {err}
-                                            </p>
-                                        ))}
-                                </div>
-                            )}
                         </div>
 
-                        {/* House Rules Section */}
+                        {/* House Rules */}
                         <div className="mb-6">
                             <div className="flex items-center justify-between mb-3">
                                 <label className="block text-sm font-medium text-gray-700">
-                                    House Rules{" "}
-                                    <span className="text-red-500">*</span>
+                                    House Rules
                                 </label>
                                 <button
                                     type="button"
@@ -923,7 +799,7 @@ const NewBoarding = () => {
                             </div>
 
                             <div className="space-y-3">
-                                {formData.rules.map((rule, index) => (
+                                {formData.rules.map(rule => (
                                     <div
                                         key={rule.id}
                                         className="flex items-center gap-3"
@@ -938,7 +814,7 @@ const NewBoarding = () => {
                                                         e.target.value
                                                     )
                                                 }
-                                                placeholder={`e.g., No curfew, Quiet hours 10PM-6AM, No visitors after 8PM`}
+                                                placeholder="e.g., No curfew, Quiet hours 10PM-6AM, No visitors after 8PM"
                                                 className="w-full px-3 py-2 pr-8 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
                                             />
                                             {rule.text && (
@@ -956,15 +832,8 @@ const NewBoarding = () => {
                                     </div>
                                 ))}
                             </div>
-
-                            {errors.rules && (
-                                <p className="text-xs text-red-500 mt-1">
-                                    {errors.rules}
-                                </p>
-                            )}
                             <p className="text-xs text-gray-400 mt-2">
-                                Add important rules tenants must follow. Empty
-                                rules will be ignored.
+                                Add important rules tenants must follow
                             </p>
                         </div>
 
@@ -972,8 +841,7 @@ const NewBoarding = () => {
                         <div className="mb-6">
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 <PhilippinePeso className="w-3.5 h-3.5 inline mr-1" />
-                                Rent Price (per month){" "}
-                                <span className="text-red-500">*</span>
+                                Rent Price (per month)
                             </label>
                             <div className="relative">
                                 <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
@@ -987,20 +855,11 @@ const NewBoarding = () => {
                                     min="1000"
                                     step="500"
                                     placeholder="0"
-                                    className={`w-full pl-8 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 ${
-                                        errors.pricePerMonth
-                                            ? "border-red-500"
-                                            : "border-gray-300"
-                                    }`}
+                                    className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
                                 />
                             </div>
-                            {errors.pricePerMonth && (
-                                <p className="text-xs text-red-500 mt-1">
-                                    {errors.pricePerMonth}
-                                </p>
-                            )}
                             <p className="text-xs text-gray-400 mt-1">
-                                Set a competitive monthly rental price (minimum ₱1,000)
+                                Set a competitive monthly rental price
                             </p>
                         </div>
 
@@ -1023,13 +882,13 @@ const NewBoarding = () => {
                             >
                                 {isSubmitting
                                     ? "Creating..."
-                                    : "Create Boarding House"}
+                                    : "Create Boarding"}
                             </Button>
                         </div>
                     </form>
                 </div>
 
-                {/* Instructions Section - Desktop only */}
+                {/* Instructions - Desktop */}
                 <div className="hidden lg:block lg:w-80 flex-shrink-0">
                     <Instructions
                         title="How to List a Boarding House"
@@ -1038,7 +897,7 @@ const NewBoarding = () => {
                 </div>
             </div>
 
-            {/* Floating Instruction Button - Mobile only */}
+            {/* Floating Help Button - Mobile */}
             <div className="lg:hidden fixed bottom-6 right-6 z-40">
                 <button
                     onClick={() => setIsInstructionsDrawerOpen(true)}
@@ -1048,7 +907,7 @@ const NewBoarding = () => {
                 </button>
             </div>
 
-            {/* Instructions Drawer - Mobile only */}
+            {/* Instructions Drawer - Mobile */}
             {isInstructionsDrawerOpen && (
                 <>
                     <div

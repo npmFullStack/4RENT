@@ -21,6 +21,7 @@ import avatar from "@/assets/images/avatar.svg";
 import WarningModal from "@/shared/components/WarningModal";
 import NotificationMenu from "@/shared/components/NotificationMenu";
 import ProfileMenu from "@/shared/components/ProfileMenu";
+import Toast from "@/shared/components/Toast";
 
 const AppLayout = () => {
     const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
@@ -29,6 +30,7 @@ const AppLayout = () => {
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -99,10 +101,26 @@ const AppLayout = () => {
         setIsLogoutModalOpen(true);
     };
 
-    const confirmLogout = () => {
+    const confirmLogout = async () => {
+        setIsLoggingOut(true);
+
+        // Simulate logout API call
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
         console.log("Logging out...");
         setIsLogoutModalOpen(false);
-        navigate("/signin");
+        setIsLoggingOut(false);
+
+        // Show success toast
+        Toast.success(
+            "Logged out successfully",
+            "You have been signed out of your account"
+        );
+
+        // Navigate to signin page after a short delay
+        setTimeout(() => {
+            navigate("/signin");
+        }, 500);
     };
 
     // Check if a link is active
@@ -176,20 +194,23 @@ const AppLayout = () => {
                             key={link.path}
                             to={link.path}
                             onClick={onClose}
-                            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group relative ${
                                 active
-                                    ? "bg-primary text-white"
-                                    : "text-gray-700 hover:bg-gray-400 hover:text-white"
+                                    ? "bg-primary text-white shadow-xs"
+                                    : "text-gray-700 hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5 hover:text-primary"
                             } ${
                                 minimized && !isMobile ? "justify-center" : ""
                             }`}
                         >
-                            <link.icon className="w-5 h-5 flex-shrink-0" />
+                            <link.icon
+                                className={`w-5 h-5 flex-shrink-0 transition-transform duration-200 ${!active && "group-hover:scale-110"}`}
+                            />
                             {(!minimized || isMobile) && (
                                 <span className="font-medium">
                                     {link.label}
                                 </span>
                             )}
+
                         </Link>
                     );
                 })}
@@ -202,13 +223,13 @@ const AppLayout = () => {
                         if (onClose) onClose();
                         handleLogout();
                     }}
-                    className={`flex items-center gap-3 px-4 py-3 w-full rounded-lg text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors ${
+                    className={`flex items-center gap-3 px-4 py-3 w-full rounded-lg text-red-600 hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100 hover:text-red-700 transition-all duration-200 group ${
                         minimized && !isMobile ? "justify-center" : ""
                     }`}
                 >
-                    <LogOut className="w-5 h-5 flex-shrink-0" />
+                    <LogOut className="w-5 h-5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110" />
                     {(!minimized || isMobile) && (
-                        <span className="font-medium">Logout</span>
+                        <span className="font-medium">Sign Out</span>
                     )}
                 </button>
             </div>
@@ -379,9 +400,12 @@ const AppLayout = () => {
                 isOpen={isLogoutModalOpen}
                 onClose={() => setIsLogoutModalOpen(false)}
                 onConfirm={confirmLogout}
-                title="Logout Confirmation"
+                title="Sign Out Confirmation"
                 icon={LogOut}
-                description="Are you sure you want to log out? You will need to sign in again to access your account."
+                description="Are you sure you want to sign out? You will need to sign in again to access your account."
+                confirmText="Sign Out"
+                cancelText="Cancel"
+                isLoading={isLoggingOut}
             />
         </div>
     );
