@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Lock, Eye, EyeOff, Loader2, KeyRound } from "lucide-react";
 import Button from "@/shared/components/Button";
+import Toast from "@/shared/components/Toast";
 import logo from "@/assets/images/logo.svg";
 
 const CreateNewPassword = () => {
@@ -15,16 +16,24 @@ const CreateNewPassword = () => {
         confirmPassword: ""
     });
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async e => {
         e.preventDefault();
         setIsLoading(true);
+
         setTimeout(() => {
             setIsLoading(false);
-            navigate("/signin");
+            Toast.success(
+                "Password reset!",
+                "Your password has been successfully reset."
+            );
+
+            setTimeout(() => {
+                navigate("/signin");
+            }, 1500);
         }, 2000);
     };
 
-    const handleChange = (e) => {
+    const handleChange = e => {
         setFormData({
             ...formData,
             [e.target.name]: e.target.value
@@ -33,18 +42,16 @@ const CreateNewPassword = () => {
 
     return (
         <div className="max-w-md mx-auto">
-            {/* Logo beside 4 */}
+            {/* Logo */}
             <div className="flex justify-center items-baseline gap-1 mb-8">
                 <img src={logo} alt="4RENT" className="h-10 w-8" />
-                <span 
+                <span
                     className="text-primary text-4xl font-logo"
                     style={{ WebkitTextStroke: "1px black" }}
                 >
                     4
                 </span>
-                <span className="text-gray-800 text-3xl font-logo">
-                    RENT
-                </span>
+                <span className="text-gray-800 text-3xl font-logo">RENT</span>
             </div>
 
             {/* Message */}
@@ -53,11 +60,12 @@ const CreateNewPassword = () => {
                     Create New Password
                 </h1>
                 <p className="text-gray-600">
-                    Your new password must be different from your previous password
+                    Your new password must be different from your previous
+                    password
                 </p>
             </div>
 
-            {/* Form - No shadow */}
+            {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-5">
                 {/* New Password Field */}
                 <div>
@@ -79,7 +87,11 @@ const CreateNewPassword = () => {
                             onClick={() => setShowPassword(!showPassword)}
                             className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                         >
-                            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                            {showPassword ? (
+                                <EyeOff size={20} />
+                            ) : (
+                                <Eye size={20} />
+                            )}
                         </button>
                     </div>
                 </div>
@@ -101,15 +113,21 @@ const CreateNewPassword = () => {
                         />
                         <button
                             type="button"
-                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            onClick={() =>
+                                setShowConfirmPassword(!showConfirmPassword)
+                            }
                             className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                         >
-                            {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                            {showConfirmPassword ? (
+                                <EyeOff size={20} />
+                            ) : (
+                                <Eye size={20} />
+                            )}
                         </button>
                     </div>
                 </div>
 
-                {/* Submit Button with Icon */}
+                {/* Submit Button */}
                 <Button
                     type="submit"
                     disabled={isLoading}
@@ -122,7 +140,10 @@ const CreateNewPassword = () => {
 
             {/* Back to Sign In */}
             <p className="text-center mt-6">
-                <Link to="/signin" className="text-primary font-semibold hover:underline">
+                <Link
+                    to="/signin"
+                    className="text-primary font-semibold hover:underline"
+                >
                     Back to Sign In
                 </Link>
             </p>

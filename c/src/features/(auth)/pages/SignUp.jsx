@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, User, Eye, EyeOff, Loader2, UserPlus } from "lucide-react";
 import Button from "@/shared/components/Button";
+import Toast from "@/shared/components/Toast";
 import logo from "@/assets/images/logo.svg";
 
 const SignUp = () => {
@@ -21,9 +22,14 @@ const SignUp = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
+        
         setTimeout(() => {
             setIsLoading(false);
-            navigate("/dashboard");
+            Toast.success("Welcome to 4RENT!", "Your account has been created successfully.");
+            
+            setTimeout(() => {
+                navigate("/dashboard");
+            }, 2000);
         }, 2000);
     };
 
@@ -36,7 +42,7 @@ const SignUp = () => {
 
     return (
         <div className="max-w-md mx-auto">
-            {/* Logo beside 4 */}
+            {/* Logo */}
             <div className="flex justify-center items-baseline gap-1 mb-8">
                 <img src={logo} alt="4RENT" className="h-10 w-8" />
                 <span 
@@ -55,12 +61,12 @@ const SignUp = () => {
                 <h1 className="text-2xl font-bold text-gray-800 mb-2">
                     Create an Account
                 </h1>
-<p className="text-gray-600">
-    Join 4RENT to list your property and reach thousands of potential tenants
-</p>
+                <p className="text-gray-600">
+                    Join 4RENT to list your property and reach thousands of potential tenants
+                </p>
             </div>
 
-            {/* Form - No shadow */}
+            {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
                 {/* First Name & Last Name */}
                 <div className="grid grid-cols-2 gap-4">
@@ -166,7 +172,7 @@ const SignUp = () => {
                     </div>
                 </div>
 
-                {/* Submit Button with Icon */}
+                {/* Submit Button */}
                 <Button
                     type="submit"
                     disabled={isLoading}

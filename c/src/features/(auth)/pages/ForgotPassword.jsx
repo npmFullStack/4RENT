@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Mail, Loader2, Send } from "lucide-react";
 import Button from "@/shared/components/Button";
+import Toast from "@/shared/components/Toast";
 import logo from "@/assets/images/logo.svg";
 
 const ForgotPassword = () => {
@@ -13,8 +14,10 @@ const ForgotPassword = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
+        
         setTimeout(() => {
             setIsLoading(false);
+            Toast.success("Reset link sent!", `We've sent a password reset link to ${email || "your email"}`);
             setIsSubmitted(true);
         }, 2000);
     };
@@ -22,7 +25,7 @@ const ForgotPassword = () => {
     if (isSubmitted) {
         return (
             <div className="max-w-md mx-auto">
-                {/* Logo beside 4 */}
+                {/* Logo */}
                 <div className="flex justify-center items-baseline gap-1 mb-8">
                     <img src={logo} alt="4RENT" className="h-10 w-8" />
                     <span 
@@ -41,7 +44,7 @@ const ForgotPassword = () => {
                         Check Your Email
                     </h1>
                     <p className="text-gray-600 mb-6">
-                        We've sent a password reset link to <strong>{email}</strong>
+                        We've sent a password reset link to <strong>{email || "your email"}</strong>
                     </p>
                     <Link
                         to="/signin"
@@ -56,7 +59,7 @@ const ForgotPassword = () => {
 
     return (
         <div className="max-w-md mx-auto">
-            {/* Logo beside 4 */}
+            {/* Logo */}
             <div className="flex justify-center items-baseline gap-1 mb-8">
                 <img src={logo} alt="4RENT" className="h-10 w-8" />
                 <span 
@@ -80,7 +83,7 @@ const ForgotPassword = () => {
                 </p>
             </div>
 
-            {/* Form - No shadow */}
+            {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-5">
                 {/* Email Field */}
                 <div>
@@ -99,7 +102,7 @@ const ForgotPassword = () => {
                     </div>
                 </div>
 
-                {/* Submit Button with Icon */}
+                {/* Submit Button */}
                 <Button
                     type="submit"
                     disabled={isLoading}

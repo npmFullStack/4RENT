@@ -38,7 +38,7 @@ function App() {
                         element={<ForgotPassword />}
                     />
                     <Route
-                        path="/create-new-password"
+                        path="/new-password"
                         element={<CreateNewPassword />}
                     />
 

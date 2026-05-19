@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, Loader2, LogIn } from "lucide-react";
 import Button from "@/shared/components/Button";
+import Toast from "@/shared/components/Toast";
 import logo from "@/assets/images/logo.svg";
 
 const SignIn = () => {
@@ -14,16 +15,22 @@ const SignIn = () => {
         password: ""
     });
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async e => {
         e.preventDefault();
         setIsLoading(true);
+
+        // Simulate API call
         setTimeout(() => {
             setIsLoading(false);
-            navigate("/dashboard");
+            Toast.success("Welcome back!", "You have successfully signed in.");
+            
+            setTimeout(() => {
+                navigate("/dashboard");
+            }, 1000);
         }, 2000);
     };
 
-    const handleChange = (e) => {
+    const handleChange = e => {
         setFormData({
             ...formData,
             [e.target.name]: e.target.value
@@ -32,18 +39,16 @@ const SignIn = () => {
 
     return (
         <div className="max-w-md mx-auto">
-            {/* Logo beside 4 */}
+            {/* Logo */}
             <div className="flex justify-center items-baseline gap-1 mb-8">
                 <img src={logo} alt="4RENT" className="h-10 w-8" />
-                <span 
+                <span
                     className="text-primary text-4xl font-logo"
                     style={{ WebkitTextStroke: "1px black" }}
                 >
                     4
                 </span>
-                <span className="text-gray-800 text-3xl font-logo">
-                    RENT
-                </span>
+                <span className="text-gray-800 text-3xl font-logo">RENT</span>
             </div>
 
             {/* Welcome Message */}
@@ -56,7 +61,7 @@ const SignIn = () => {
                 </p>
             </div>
 
-            {/* Form - No shadow */}
+            {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-5">
                 {/* Email Field */}
                 <div>
@@ -76,7 +81,7 @@ const SignIn = () => {
                     </div>
                 </div>
 
-                {/* Password Field with Eye Icon */}
+                {/* Password Field */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                         Password
@@ -103,15 +108,15 @@ const SignIn = () => {
 
                 {/* Forgot Password Link */}
                 <div className="text-right">
-                    <Link 
-                        to="/forgot-password" 
+                    <Link
+                        to="/forgot-password"
                         className="text-sm text-primary hover:text-primary/80 transition-colors"
                     >
                         Forgot Password?
                     </Link>
                 </div>
 
-                {/* Submit Button with Icon */}
+                {/* Submit Button */}
                 <Button
                     type="submit"
                     disabled={isLoading}
@@ -125,7 +130,10 @@ const SignIn = () => {
             {/* Sign Up Link */}
             <p className="text-center mt-6 text-gray-600">
                 Don't have an account?{" "}
-                <Link to="/signup" className="text-primary font-semibold hover:underline">
+                <Link
+                    to="/signup"
+                    className="text-primary font-semibold hover:underline"
+                >
                     Sign Up
                 </Link>
             </p>
