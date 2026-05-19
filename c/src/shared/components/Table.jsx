@@ -1,12 +1,13 @@
 // src/shared/components/Table.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
     ChevronDown,
     ChevronUp,
     Search,
     ChevronLeft,
     ChevronRight,
-    X
+    X,
+    MoreHorizontal
 } from "lucide-react";
 import Select from "./Select";
 import noMoreProperty from "@/assets/images/no-more-property.png";
@@ -37,6 +38,10 @@ const Table = ({
     const [viewportWidth, setViewportWidth] = useState(
         typeof window !== "undefined" ? window.innerWidth : 1024
     );
+    const [openMenuRow, setOpenMenuRow] = useState(null);
+    const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+    const menuRef = useRef(null);
+    const tableRef = useRef(null);
 
     // Track viewport width changes
     useEffect(() => {
@@ -45,6 +50,17 @@ const Table = ({
         };
         window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
+    }, []);
+
+    // Close menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (menuRef.current && !menuRef.current.contains(event.target)) {
+                setOpenMenuRow(null);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
     // Determine which columns to show based on viewport width
@@ -247,8 +263,8 @@ const Table = ({
             )}
 
             {/* Table Container - Horizontal scroll on small screens */}
-            <div className="overflow-x-auto overflow-y-visible relative">
-                <table className="w-full text-xs border-collapse">
+            <div className="overflow-x-auto relative" ref={tableRef}>
+                <table className="w-full table-fixed text-xs border-collapse">
                     <thead className="bg-gray-50 border-b border-gray-200">
                         <tr className={headerClassName}>
                             {visibleColumns.map((column, index) => (
@@ -319,8 +335,28 @@ const Table = ({
                                         </td>
                                     ))}
                                     {actions && (
-                                        <td className="px-3 py-2 sticky right-0 bg-white shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.05)] z-10">
-                                            {actions(row)}
+                                        <td className="px-3 py-2 sticky right-0 bg-white shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.05)] z-10 w-12">
+                                            <div className="relative">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        if (openMenuRow === row[keyField]) {
+                                                            setOpenMenuRow(null);
+                                                        } else {
+                                                            const btn = e.currentTarget;
+                                                            const rect = btn.getBoundingClientRect();
+                                                            setMenuPosition({
+                                                                top: rect.bottom + window.scrollY + 4,
+                                                                left: rect.right + window.scrollX - 192
+                                                            });
+                                                            setOpenMenuRow(row[keyField]);
+                                                        }
+                                                    }}
+                                                    className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
+                                                >
+                                                    <MoreHorizontal className="w-4 h-4 text-gray-500" />
+                                                </button>
+                                            </div>
                                         </td>
                                     )}
                                 </tr>
@@ -351,6 +387,26 @@ const Table = ({
                     </tbody>
                 </table>
             </div>
+
+            {/* Fixed-position action menu overlay — renders above all elements */}
+            {openMenuRow !== null && actions && (
+                <div
+                    ref={menuRef}
+                    style={{
+                        position: "fixed",
+                        top: menuPosition.top,
+                        left: Math.max(8, menuPosition.left),
+                        zIndex: 9999,
+                        width: "192px"
+                    }}
+                    className="bg-white rounded-lg shadow-xl border border-gray-200 py-1"
+                >
+                    {actions(
+                        paginatedData.find(r => r[keyField] === openMenuRow),
+                        () => setOpenMenuRow(null)
+                    )}
+                </div>
+            )}
 
             {/* Responsive Pagination */}
             {totalPages > 1 && (

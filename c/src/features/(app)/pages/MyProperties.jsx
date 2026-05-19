@@ -11,7 +11,9 @@ import {
     Users,
     CheckCircle,
     XCircle,
-    AlertCircle
+    AlertCircle,
+    Edit,
+    Trash2
 } from "lucide-react";
 import HelpPageModal from "@/shared/components/HelpPageModal";
 import Table from "@/shared/components/Table";
@@ -183,6 +185,16 @@ const MyProperties = () => {
         console.log("View details:", property);
     };
 
+    // Handle edit property
+    const handleEditProperty = property => {
+        console.log("Edit property:", property);
+    };
+
+    // Handle remove property
+    const handleRemoveProperty = property => {
+        console.log("Remove property:", property);
+    };
+
     // Handle new property creation with navigation
     const handleNewProperty = type => {
         if (type === "boarding") {
@@ -236,61 +248,48 @@ const MyProperties = () => {
             key: "image",
             header: "Image",
             sortable: false,
-            width: "80px",
-            cellClassName: "!p-0",
-            render: row => (
-                <div className="relative flex items-center justify-center py-2">
-                    {/* Vertical colored line - Blue for Boarding, Red for Apartment */}
-                    <div
-                        className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-lg ${
-                            row.category === "boarding"
-                                ? "bg-blue-500"
-                                : "bg-red-500"
-                        }`}
-                    />
-                    <div className="w-14 h-14 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                        <img
-                            src={row.image}
-                            alt={row.name}
-                            className="w-full h-full object-cover"
-                        />
-                    </div>
-                </div>
-            )
-        },
-        {
-            key: "name",
-            header: "Property Name",
-            sortable: true,
-            width: "180px",
-            className: "font-medium text-gray-800 text-xs"
-        },
-        {
-            key: "category",
-            header: "Category",
-            sortable: true,
             width: "120px",
+            cellClassName: "!p-0 align-top",
             render: row => {
                 const isBoarding = row.category === "boarding";
                 return (
-                    <Badge
-                        variant="outline"
-                        color={isBoarding ? "blue" : "red"}
-                        icon={isBoarding ? Bed : Home}
-                    >
-                        {isBoarding ? "Boarding" : "Apartment"}
-                    </Badge>
+                    <div className="relative flex flex-col items-center gap-1.5 py-3">
+                        {/* Vertical colored line - Blue for Boarding, Red for Apartment */}
+                        <div
+                            className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-lg ${
+                                isBoarding ? "bg-blue-500" : "bg-red-500"
+                            }`}
+                        />
+                        <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                            <img
+                                src={row.image}
+                                alt={row.name}
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
+                        <Badge
+                            variant="outline"
+                            color={isBoarding ? "blue" : "red"}
+                            icon={isBoarding ? Bed : Home}
+                        >
+                            {isBoarding ? "Boarding" : "Apartment"}
+                        </Badge>
+                    </div>
                 );
             }
         },
         {
-            key: "address",
-            header: "Address",
+            key: "propertyInfo",
+            header: "Property Info",
             sortable: true,
-            width: "150px",
             render: row => (
-                <div className="max-w-[130px]">
-                    <p className="text-xs truncate">{row.address}</p>
+                <div>
+                    <p className="font-semibold text-gray-800 text-sm">
+                        {row.name}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+                        {row.address}
+                    </p>
                 </div>
             )
         },
@@ -298,7 +297,6 @@ const MyProperties = () => {
             key: "price",
             header: "Rent / Month",
             sortable: true,
-            width: "110px",
             render: row => (
                 <span className="font-semibold text-gray-800 text-sm">
                     ₱{row.price.toLocaleString()}
@@ -309,7 +307,6 @@ const MyProperties = () => {
             key: "status",
             header: "Status",
             sortable: true,
-            width: "150px",
             render: row => {
                 const { icon, label, color } = getStatusBadgeProps(row);
                 return (
@@ -332,18 +329,43 @@ const MyProperties = () => {
         );
     };
 
-    // Action buttons for each row
-    const renderActions = row => (
-        <div className="flex items-center">
-            <Button
-                variant="ghost"
-                onClick={() => handleViewDetails(row)}
-                className="!p-1 text-gray-600 hover:bg-gray-100 gap-1 text-xs"
-                title="View Details"
+    // Action menu for each row
+    const renderActions = (row, closeMenu) => (
+        <div className="py-1">
+            <button
+                onClick={(e) => {
+                    e.stopPropagation();
+                    handleViewDetails(row);
+                    closeMenu();
+                }}
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
             >
-                <span>View Details</span>
-                <ArrowRight className="w-3 h-3" />
-            </Button>
+                <ArrowRight className="w-4 h-4" />
+                View Details
+            </button>
+            <button
+                onClick={(e) => {
+                    e.stopPropagation();
+                    handleEditProperty(row);
+                    closeMenu();
+                }}
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+            >
+                <Edit className="w-4 h-4" />
+                Edit Property
+            </button>
+            <hr className="my-1 border-gray-200" />
+            <button
+                onClick={(e) => {
+                    e.stopPropagation();
+                    handleRemoveProperty(row);
+                    closeMenu();
+                }}
+                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+            >
+                <Trash2 className="w-4 h-4" />
+                Remove Property
+            </button>
         </div>
     );
 
@@ -370,8 +392,8 @@ const MyProperties = () => {
         {
             title: "Property Actions",
             description:
-                "Each property has a View Details button to see more information about the property.",
-            icon: "Eye"
+                "Click the ellipsis (⋯) button on any row to access property actions like View Details, Edit Property, or Remove Property.",
+            icon: "MoreHorizontal"
         }
     ];
 

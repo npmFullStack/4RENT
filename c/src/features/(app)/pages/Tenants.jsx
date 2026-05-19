@@ -7,12 +7,9 @@ import {
     CheckCircle,
     XCircle,
     AlertCircle,
-    Eye,
     CreditCard,
-    ArrowRight,
     Bed,
-    Home,
-    MoreVertical
+    Home
 } from "lucide-react";
 import HelpPageModal from "@/shared/components/HelpPageModal";
 import Table from "@/shared/components/Table";
@@ -201,7 +198,6 @@ const Tenants = () => {
     const [selectedTenant, setSelectedTenant] = useState(null);
     const [isMarkPaidModalOpen, setIsMarkPaidModalOpen] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
-    const [openMenuId, setOpenMenuId] = useState(null);
 
     // Get status badge props (no more partial status)
     const getStatusBadgeProps = status => {
@@ -221,13 +217,11 @@ const Tenants = () => {
     const handleMarkAsPaid = tenant => {
         setSelectedTenant(tenant);
         setIsMarkPaidModalOpen(true);
-        setOpenMenuId(null);
     };
 
     // Handle remove tenant
     const handleRemoveTenant = tenant => {
         console.log("Remove tenant:", tenant);
-        setOpenMenuId(null);
         // No logic yet - just frontend
     };
 
@@ -309,61 +303,58 @@ const Tenants = () => {
     // Table columns configuration
     const columns = [
         {
-            key: "property",
-            header: "Property",
-            sortable: true,
-            width: "280px",
-            render: row => (
-                <div className="flex items-center gap-3 min-w-0">
-                    {/* Colored line indicator - Blue for Boarding, Red for Apartment */}
-                    <div
-                        className={`w-1 h-12 rounded-full flex-shrink-0 ${
-                            row.propertyCategory === "boarding"
-                                ? "bg-blue-500"
-                                : "bg-red-500"
-                        }`}
-                    />
-                    <div className="w-14 h-14 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                        <img
-                            src={row.propertyImage}
-                            alt={row.propertyName}
-                            className="w-full h-full object-cover"
-                        />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                        <p className="font-medium text-gray-800 text-xs break-words">
-                            {row.propertyName}
-                        </p>
-                        <p className="text-gray-400 text-xs break-words">
-                            {row.propertyAddress}
-                        </p>
-                    </div>
-                </div>
-            )
-        },
-        {
-            key: "category",
-            header: "Category",
-            sortable: true,
-            width: "100px",
+            key: "image",
+            header: "Image",
+            sortable: false,
+            width: "120px",
+            cellClassName: "!p-0 align-top",
             render: row => {
                 const isBoarding = row.propertyCategory === "boarding";
                 return (
-                    <Badge
-                        variant="outline"
-                        color={isBoarding ? "blue" : "red"}
-                        icon={isBoarding ? Bed : Home}
-                    >
-                        {isBoarding ? "Boarding" : "Apartment"}
-                    </Badge>
+                    <div className="relative flex flex-col items-center gap-1.5 py-3">
+                        {/* Vertical colored line - Blue for Boarding, Red for Apartment */}
+                        <div
+                            className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-lg ${
+                                isBoarding ? "bg-blue-500" : "bg-red-500"
+                            }`}
+                        />
+                        <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                            <img
+                                src={row.propertyImage}
+                                alt={row.propertyName}
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
+                        <Badge
+                            variant="outline"
+                            color={isBoarding ? "blue" : "red"}
+                            icon={isBoarding ? Bed : Home}
+                        >
+                            {isBoarding ? "Boarding" : "Apartment"}
+                        </Badge>
+                    </div>
                 );
             }
+        },
+        {
+            key: "propertyInfo",
+            header: "Property Info",
+            sortable: true,
+            render: row => (
+                <div>
+                    <p className="font-semibold text-gray-800 text-sm">
+                        {row.propertyName}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
+                        {row.propertyAddress}
+                    </p>
+                </div>
+            )
         },
         {
             key: "tenantName",
             header: "Tenant Name",
             sortable: true,
-            width: "130px",
             sortKey: "lastName",
             render: row => (
                 <div className="flex items-center gap-1.5">
@@ -378,7 +369,6 @@ const Tenants = () => {
             key: "monthlyRent",
             header: "Rent / Month",
             sortable: true,
-            width: "100px",
             render: row => (
                 <span className="font-semibold text-gray-800 text-sm">
                     ₱{row.monthlyRent.toLocaleString()}
@@ -389,7 +379,6 @@ const Tenants = () => {
             key: "paymentDueDate",
             header: "Payment Due Date",
             sortable: true,
-            width: "110px",
             render: row => (
                 <span className="text-gray-600 text-xs whitespace-nowrap">
                     {formatDate(row.paymentDueDate)}
@@ -400,7 +389,6 @@ const Tenants = () => {
             key: "status",
             header: "Status",
             sortable: true,
-            width: "90px",
             render: row => {
                 const { icon, label, color } = getStatusBadgeProps(row.status);
                 return (
@@ -414,7 +402,6 @@ const Tenants = () => {
             key: "moveInDate",
             header: "Move In Date",
             sortable: true,
-            width: "100px",
             render: row => (
                 <span className="text-gray-600 text-xs whitespace-nowrap">
                     {formatDate(row.moveInDate)}
@@ -438,54 +425,32 @@ const Tenants = () => {
         );
     };
 
-    // Action buttons for each row - Ellipsis menu
-    const renderActions = row => (
-        <div className="relative">
+    // Action menu for each row — Table.jsx renders the portal dropdown
+    const renderActions = (row, closeMenu) => (
+        <div className="py-1">
             <button
                 onClick={e => {
                     e.stopPropagation();
-                    setOpenMenuId(openMenuId === row.id ? null : row.id);
+                    handleMarkAsPaid(row);
+                    closeMenu();
                 }}
-                className="p-1.5 rounded-md text-gray-500 hover:bg-gray-100 transition-colors"
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
             >
-                <MoreVertical className="w-4 h-4" />
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                Mark as Paid
             </button>
-
-            {/* Dropdown Menu */}
-            {openMenuId === row.id && (
-                <>
-                    {/* Backdrop to close menu when clicking outside */}
-                    <div
-                        className="fixed inset-0 z-[9999]"
-                        onClick={e => {
-                            e.stopPropagation();
-                            setOpenMenuId(null);
-                        }}
-                    />
-                    <div className="absolute right-0 mt-1 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-[10000]">
-                        <button
-                            onClick={e => {
-                                e.stopPropagation();
-                                handleMarkAsPaid(row);
-                            }}
-                            className="w-full px-3 py-2 text-left text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
-                        >
-                            <CheckCircle className="w-3.5 h-3.5 text-green-500" />
-                            Mark as Paid
-                        </button>
-                        <button
-                            onClick={e => {
-                                e.stopPropagation();
-                                handleRemoveTenant(row);
-                            }}
-                            className="w-full px-3 py-2 text-left text-xs text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
-                        >
-                            <XCircle className="w-3.5 h-3.5" />
-                            Remove Tenant
-                        </button>
-                    </div>
-                </>
-            )}
+            <hr className="my-1 border-gray-200" />
+            <button
+                onClick={e => {
+                    e.stopPropagation();
+                    handleRemoveTenant(row);
+                    closeMenu();
+                }}
+                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+            >
+                <XCircle className="w-4 h-4" />
+                Remove Tenant
+            </button>
         </div>
     );
 
