@@ -129,15 +129,60 @@ const formatDistance = km => {
     return km < 1 ? `${Math.round(km * 1000)}m` : `${km.toFixed(1)}km`;
 };
 
-// ─── Mock geocoding ─────────────────────────────────────────────────────────
+// ─── Nominatim geocoding ────────────────────────────────────────────────────
+//
+// Tries the query string with Nominatim. Returns {lat, lng} or null.
+const nominatimSearch = async query => {
+    try {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ph&q=${encodeURIComponent(query)}`;
+        const res = await fetch(url, {
+            headers: { "Accept-Language": "en", "User-Agent": "PropertyMapApp/1.0" }
+        });
+        const data = await res.json();
+        if (data && data.length > 0) {
+            return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+        }
+    } catch {
+        // ignore network errors
+    }
+    return null;
+};
+
+// Deterministic unique spread for fake/unresolvable addresses.
+// Seeds two independent hashes from the address string so every property
+// lands at a different spot rather than all collapsing to one point.
+const deterministicOffset = address => {
+    let h1 = 0, h2 = 0;
+    for (let i = 0; i < address.length; i++) {
+        const c = address.charCodeAt(i);
+        h1 = (h1 * 31 + c) >>> 0;
+        h2 = (h2 * 37 + c * 17) >>> 0;
+    }
+    // Spread within a ~12 km band around Manila centre
+    const lat = 14.5400 + (h1 % 1200) / 10000; // 14.54 – 14.66
+    const lng = 120.9500 + (h2 % 1500) / 10000; // 120.95 – 121.10
+    return { lat, lng };
+};
+
+// Geocode a plain address string (used for property markers).
 const getCoordinatesForAddress = async address => {
-    const hash = address
-        .split("")
-        .reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    return {
-        lat: 14.5995 + (hash % 100) / 1000,
-        lng: 120.9842 + (hash % 200) / 1000
-    };
+    const coords = await nominatimSearch(address);
+    // If Nominatim can't resolve (fake/test address), give it a unique spot
+    return coords ?? deterministicOffset(address);
+};
+
+// Geocode a manual address using geocodeParts (from most → least specific).
+// Tries progressively shorter queries until one succeeds so partial selections
+// (province only, city only, etc.) still pin correctly.
+const geocodeManualAddress = async manualAddress => {
+    const parts = manualAddress.geocodeParts ?? [manualAddress.fullAddress];
+    // Try each progressive slice: full → drop first part → drop two → …
+    for (let i = 0; i < parts.length; i++) {
+        const query = parts.slice(i).join(", ");
+        const coords = await nominatimSearch(query);
+        if (coords) return coords;
+    }
+    return null;
 };
 
 // ─── SVG overlay: curved network lines from user → each property ───────────
@@ -182,7 +227,6 @@ const NetworkLines = ({ mapRef, referencePoint, propertyLocations }) => {
 
             const isApartment = property.category === "apartment";
             const lineColor = isApartment ? "#ef4444" : "#3b82f6";
-            const lineColorRgb = isApartment ? "239,68,68" : "59,130,246";
 
             // Control point: offset perpendicular to mid-point for a network-cable curve
             const mx = (userPx.x + propPx.x) / 2;
@@ -199,19 +243,10 @@ const NetworkLines = ({ mapRef, referencePoint, propertyLocations }) => {
             const cpx = mx + perpX * curvature * direction;
             const cpy = my + perpY * curvature * direction;
 
-            // Dashed path (shadow / glow)
+            // Dashed path (one clean line — no glow layer)
             const pathData = `M ${userPx.x} ${userPx.y} Q ${cpx} ${cpy} ${propPx.x} ${propPx.y}`;
 
-            // Glow layer
-            const glow = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            glow.setAttribute("d", pathData);
-            glow.setAttribute("fill", "none");
-            glow.setAttribute("stroke", `rgba(${lineColorRgb},0.18)`);
-            glow.setAttribute("stroke-width", "6");
-            glow.setAttribute("stroke-linecap", "round");
-            svg.appendChild(glow);
-
-            // Main line
+            // Single line
             const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
             path.setAttribute("d", pathData);
             path.setAttribute("fill", "none");
@@ -219,7 +254,7 @@ const NetworkLines = ({ mapRef, referencePoint, propertyLocations }) => {
             path.setAttribute("stroke-width", "2");
             path.setAttribute("stroke-dasharray", "6 4");
             path.setAttribute("stroke-linecap", "round");
-            path.setAttribute("opacity", "0.85");
+            path.setAttribute("opacity", "0.75");
             svg.appendChild(path);
 
             // Distance label — placed at 60% along the curve (approx)
@@ -351,8 +386,20 @@ const PropertyMap = ({
             setManualCoords(null);
             return;
         }
-        getCoordinatesForAddress(manualAddress.fullAddress).then(setManualCoords);
+        geocodeManualAddress(manualAddress).then(coords => {
+            // coords may be null if Nominatim failed entirely — leave marker hidden
+            setManualCoords(coords);
+        });
     }, [manualAddress]);
+
+    // Zoom depends on how specific the manual address is
+    const getManualZoom = () => {
+        if (!manualAddress) return 14;
+        if (manualAddress.barangay) return 15;
+        if (manualAddress.city) return 13;
+        if (manualAddress.province) return 11;
+        return 9; // region only
+    };
 
     const referencePoint = userLocation || manualCoords || null;
 
@@ -366,8 +413,9 @@ const PropertyMap = ({
     useEffect(() => {
         if (referencePoint) {
             setInitialCenter([referencePoint.lat, referencePoint.lng]);
-            setInitialZoom(14);
+            setInitialZoom(userLocation ? 14 : getManualZoom());
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [referencePoint]);
 
     // ── Marker click: DO NOT zoom, just select ──────────────────────────────

@@ -3,14 +3,13 @@ import React, { useState, useEffect } from "react";
 import ModalPortal from "@/shared/components/ModalPortal";
 import Select from "@/shared/components/Select";
 import Button from "@/shared/components/Button";
-import { MapPin, X, CheckCircle, Loader2 } from "lucide-react";
+import { MapPin, X, CheckCircle } from "lucide-react";
 
-// --- Main Modal ---
 const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
+    const [regions, setRegions] = useState([]);
     const [provinces, setProvinces] = useState([]);
     const [cities, setCities] = useState([]);
     const [barangays, setBarangays] = useState([]);
-    const [regions, setRegions] = useState([]);
 
     const [selectedRegion, setSelectedRegion] = useState(null);
     const [selectedProvince, setSelectedProvince] = useState(null);
@@ -22,193 +21,142 @@ const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
     const [loadingCities, setLoadingCities] = useState(false);
     const [loadingBarangays, setLoadingBarangays] = useState(false);
 
-    // Fetch regions on open (for NCR, CAR, etc.)
+    const isNCR = selectedRegion === "130000000";
+
+    // ── Fetch regions on open ──────────────────────────────────────────────
     useEffect(() => {
         if (!isOpen) return;
         setLoadingRegions(true);
         fetch("https://psgc.gitlab.io/api/regions/")
             .then(r => r.json())
             .then(data => {
-                const sorted = [...data].sort((a, b) =>
-                    a.name.localeCompare(b.name)
-                );
+                const sorted = [...data].sort((a, b) => a.name.localeCompare(b.name));
                 setRegions(sorted.map(r => ({ value: r.code, label: r.name })));
             })
             .catch(() => setRegions([]))
             .finally(() => setLoadingRegions(false));
     }, [isOpen]);
 
-    // Fetch provinces (only if region is selected and region is NOT NCR)
+    // ── Reset cascades when region changes ────────────────────────────────
     useEffect(() => {
-        if (!selectedRegion) {
-            setProvinces([]);
-            setSelectedProvince(null);
-            return;
-        }
-
-        // Check if selected region is NCR (code starts with "13" or name contains "NCR")
-        const isNCR =
-            selectedRegion === "130000000" ||
-            regions
-                .find(r => r.value === selectedRegion)
-                ?.label.includes("NCR");
-
-        if (isNCR) {
-            // For NCR, we don't need provinces - handle cities directly
-            setProvinces([]);
-            setSelectedProvince(null);
-            fetchNC(selectedRegion);
-            return;
-        }
-
         setSelectedProvince(null);
         setSelectedCity(null);
         setSelectedBarangay(null);
+        setProvinces([]);
         setCities([]);
         setBarangays([]);
-        setLoadingProvinces(true);
 
-        fetch(`https://psgc.gitlab.io/api/regions/${selectedRegion}/provinces/`)
-            .then(r => r.json())
-            .then(data => {
-                const sorted = [...data].sort((a, b) =>
-                    a.name.localeCompare(b.name)
-                );
-                setProvinces(
-                    sorted.map(p => ({ value: p.code, label: p.name }))
-                );
-            })
-            .catch(() => setProvinces([]))
-            .finally(() => setLoadingProvinces(false));
-    }, [selectedRegion, regions]);
+        if (!selectedRegion) return;
 
-    // Fetch cities for NCR or from province
-    const fetchNC = regionCode => {
-        setLoadingCities(true);
-        fetch(
-            `https://psgc.gitlab.io/api/regions/${regionCode}/cities-municipalities/`
-        )
-            .then(r => r.json())
-            .then(data => {
-                const sorted = [...data].sort((a, b) =>
-                    a.name.localeCompare(b.name)
-                );
-                setCities(sorted.map(c => ({ value: c.code, label: c.name })));
-            })
-            .catch(() => setCities([]))
-            .finally(() => setLoadingCities(false));
-    };
-
-    // Fetch cities when province changes
-    useEffect(() => {
-        if (!selectedProvince) {
-            setCities([]);
-            setSelectedCity(null);
-            setSelectedBarangay(null);
-            return;
+        if (isNCR) {
+            // NCR has no provinces — load cities directly
+            setLoadingCities(true);
+            fetch(`https://psgc.gitlab.io/api/regions/${selectedRegion}/cities-municipalities/`)
+                .then(r => r.json())
+                .then(data => {
+                    const sorted = [...data].sort((a, b) => a.name.localeCompare(b.name));
+                    setCities(sorted.map(c => ({ value: c.code, label: c.name })));
+                })
+                .catch(() => setCities([]))
+                .finally(() => setLoadingCities(false));
+        } else {
+            setLoadingProvinces(true);
+            fetch(`https://psgc.gitlab.io/api/regions/${selectedRegion}/provinces/`)
+                .then(r => r.json())
+                .then(data => {
+                    const sorted = [...data].sort((a, b) => a.name.localeCompare(b.name));
+                    setProvinces(sorted.map(p => ({ value: p.code, label: p.name })));
+                })
+                .catch(() => setProvinces([]))
+                .finally(() => setLoadingProvinces(false));
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedRegion]);
 
+    // ── Fetch cities when province changes (non-NCR) ──────────────────────
+    useEffect(() => {
+        if (isNCR) return; // cities already loaded for NCR above
         setSelectedCity(null);
         setSelectedBarangay(null);
         setCities([]);
         setBarangays([]);
-        setLoadingCities(true);
 
-        fetch(
-            `https://psgc.gitlab.io/api/provinces/${selectedProvince}/cities-municipalities/`
-        )
+        if (!selectedProvince) return;
+
+        setLoadingCities(true);
+        fetch(`https://psgc.gitlab.io/api/provinces/${selectedProvince}/cities-municipalities/`)
             .then(r => r.json())
             .then(data => {
-                const sorted = [...data].sort((a, b) =>
-                    a.name.localeCompare(b.name)
-                );
+                const sorted = [...data].sort((a, b) => a.name.localeCompare(b.name));
                 setCities(sorted.map(c => ({ value: c.code, label: c.name })));
             })
             .catch(() => setCities([]))
             .finally(() => setLoadingCities(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedProvince]);
 
-    // Fetch barangays when city changes
+    // ── Fetch barangays when city changes ─────────────────────────────────
     useEffect(() => {
-        if (!selectedCity) {
-            setBarangays([]);
-            setSelectedBarangay(null);
-            return;
-        }
-
         setSelectedBarangay(null);
         setBarangays([]);
-        setLoadingBarangays(true);
 
-        fetch(
-            `https://psgc.gitlab.io/api/cities-municipalities/${selectedCity}/barangays/`
-        )
+        if (!selectedCity) return;
+
+        setLoadingBarangays(true);
+        fetch(`https://psgc.gitlab.io/api/cities-municipalities/${selectedCity}/barangays/`)
             .then(r => r.json())
             .then(data => {
-                const sorted = [...data].sort((a, b) =>
-                    a.name.localeCompare(b.name)
-                );
-                setBarangays(
-                    sorted.map(b => ({ value: b.code, label: b.name }))
-                );
+                const sorted = [...data].sort((a, b) => a.name.localeCompare(b.name));
+                setBarangays(sorted.map(b => ({ value: b.code, label: b.name })));
             })
             .catch(() => setBarangays([]))
             .finally(() => setLoadingBarangays(false));
     }, [selectedCity]);
 
-    // Check if address is complete
-    const isComplete =
-        selectedRegion !== null &&
-        (selectedProvince !== null ||
-            (selectedRegion === "130000000" && selectedCity !== null));
+    // ── Address is "complete enough" to pin if at least a region is chosen.
+    //    NCR needs a city (no province). Other regions need at least a province.
+    const isComplete = selectedRegion &&
+        (isNCR ? true : selectedProvince !== null);
+
+    // ── Build geocodable address parts from most-specific to least ────────
+    const buildAddressParts = () => {
+        const parts = [];
+        if (selectedBarangay) {
+            const b = barangays.find(x => x.value === selectedBarangay);
+            if (b) parts.push(b.label);
+        }
+        if (selectedCity) {
+            const c = cities.find(x => x.value === selectedCity);
+            if (c) parts.push(c.label);
+        }
+        if (selectedProvince) {
+            const p = provinces.find(x => x.value === selectedProvince);
+            if (p) parts.push(p.label);
+        } else if (isNCR) {
+            parts.push("Metro Manila");
+        }
+        if (selectedRegion) {
+            const r = regions.find(x => x.value === selectedRegion);
+            if (r) parts.push(r.label);
+        }
+        parts.push("Philippines");
+        return parts;
+    };
+
+    const previewAddress = isComplete ? buildAddressParts().join(", ") : null;
 
     const handleConfirm = () => {
-        const addressParts = [];
-
-        if (selectedBarangay) {
-            const barangayObj = barangays.find(
-                b => b.value === selectedBarangay
-            );
-            if (barangayObj) addressParts.push(barangayObj.label);
-        }
-
-        if (selectedCity) {
-            const cityObj = cities.find(c => c.value === selectedCity);
-            if (cityObj) addressParts.push(cityObj.label);
-        }
-
-        if (selectedProvince) {
-            const provinceObj = provinces.find(
-                p => p.value === selectedProvince
-            );
-            if (provinceObj) addressParts.push(provinceObj.label);
-        } else if (selectedRegion && selectedRegion === "130000000") {
-            addressParts.push("Metro Manila");
-        }
-
-        if (selectedRegion) {
-            const regionObj = regions.find(r => r.value === selectedRegion);
-            if (regionObj) addressParts.push(regionObj.label);
-        }
-
-        addressParts.push("Philippines");
-
-        const fullAddress = addressParts.join(", ");
+        const parts = buildAddressParts();
+        const fullAddress = parts.join(", ");
 
         onConfirm?.({
-            region: selectedRegion
-                ? regions.find(r => r.value === selectedRegion)
-                : null,
-            province: selectedProvince
-                ? provinces.find(p => p.value === selectedProvince)
-                : null,
-            city: selectedCity
-                ? cities.find(c => c.value === selectedCity)
-                : null,
-            barangay: selectedBarangay
-                ? barangays.find(b => b.value === selectedBarangay)
-                : null,
-            fullAddress
+            region:    selectedRegion   ? regions.find(x => x.value === selectedRegion)   : null,
+            province:  selectedProvince ? provinces.find(x => x.value === selectedProvince) : null,
+            city:      selectedCity     ? cities.find(x => x.value === selectedCity)       : null,
+            barangay:  selectedBarangay ? barangays.find(x => x.value === selectedBarangay): null,
+            fullAddress,
+            // Structured parts for accurate geocoding (most → least specific)
+            geocodeParts: parts
         });
         handleClose();
     };
@@ -244,6 +192,7 @@ const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
 
                 {/* Fields */}
                 <div className="px-6 py-5 flex flex-col gap-4">
+                    {/* Region */}
                     <div>
                         <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
                             Region
@@ -251,15 +200,15 @@ const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
                         <Select
                             options={regions}
                             value={selectedRegion}
-                            onChange={setSelectedRegion}
+                            onChange={val => setSelectedRegion(val)}
                             placeholder="Select region"
-                            isSearchable={true}
+                            isSearchable
                             isLoading={loadingRegions}
                         />
                     </div>
 
-                    {/* Only show province if region is NOT NCR */}
-                    {selectedRegion && selectedRegion !== "130000000" && (
+                    {/* Province — hidden for NCR */}
+                    {selectedRegion && !isNCR && (
                         <div>
                             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
                                 Province
@@ -267,95 +216,65 @@ const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
                             <Select
                                 options={provinces}
                                 value={selectedProvince}
-                                onChange={setSelectedProvince}
-                                placeholder="Select province"
-                                isSearchable={true}
+                                onChange={val => setSelectedProvince(val)}
+                                placeholder={loadingProvinces ? "Loading…" : "Select province"}
+                                isSearchable
                                 isLoading={loadingProvinces}
-                                isDisabled={!selectedRegion}
+                                isDisabled={!selectedRegion || loadingProvinces}
                             />
                         </div>
                     )}
 
-                    <div>
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
-                            Municipality / City
-                        </label>
-                        <Select
-                            options={cities}
-                            value={selectedCity}
-                            onChange={setSelectedCity}
-                            placeholder={
-                                selectedRegion
-                                    ? "Select city or municipality"
-                                    : "Select a region first"
-                            }
-                            isSearchable={true}
-                            isLoading={loadingCities}
-                            isDisabled={!selectedRegion}
-                        />
-                    </div>
+                    {/* Municipality / City — always shown once region (+ province for non-NCR) chosen */}
+                    {(isNCR || selectedProvince) && (
+                        <div>
+                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                                Municipality / City
+                                <span className="ml-1 text-gray-400 normal-case font-normal">(optional)</span>
+                            </label>
+                            <Select
+                                options={cities}
+                                value={selectedCity}
+                                onChange={val => setSelectedCity(val)}
+                                placeholder={loadingCities ? "Loading…" : "Select city or municipality"}
+                                isSearchable
+                                isLoading={loadingCities}
+                                isDisabled={loadingCities}
+                            />
+                        </div>
+                    )}
 
-                    <div>
-                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
-                            Barangay
-                        </label>
-                        <Select
-                            options={barangays}
-                            value={selectedBarangay}
-                            onChange={setSelectedBarangay}
-                            placeholder={
-                                selectedCity
-                                    ? "Select barangay"
-                                    : "Select a city first"
-                            }
-                            isSearchable={true}
-                            isLoading={loadingBarangays}
-                            isDisabled={!selectedCity}
-                        />
-                    </div>
+                    {/* Barangay — shown once city chosen */}
+                    {selectedCity && (
+                        <div>
+                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                                Barangay
+                                <span className="ml-1 text-gray-400 normal-case font-normal">(optional)</span>
+                            </label>
+                            <Select
+                                options={barangays}
+                                value={selectedBarangay}
+                                onChange={val => setSelectedBarangay(val)}
+                                placeholder={loadingBarangays ? "Loading…" : "Select barangay"}
+                                isSearchable
+                                isLoading={loadingBarangays}
+                                isDisabled={loadingBarangays}
+                            />
+                        </div>
+                    )}
 
                     {/* Address preview */}
-                    {isComplete && (
+                    {previewAddress && (
                         <div className="flex items-start gap-2.5 px-4 py-3 bg-green-50 rounded-xl border border-green-100">
                             <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
                             <p className="text-xs text-green-700 leading-relaxed">
-                                {(() => {
-                                    const parts = [];
-                                    if (selectedBarangay) {
-                                        const b = barangays.find(
-                                            b => b.value === selectedBarangay
-                                        );
-                                        if (b) parts.push(b.label);
-                                    }
-                                    if (selectedCity) {
-                                        const c = cities.find(
-                                            c => c.value === selectedCity
-                                        );
-                                        if (c) parts.push(c.label);
-                                    }
-                                    if (selectedProvince) {
-                                        const p = provinces.find(
-                                            p => p.value === selectedProvince
-                                        );
-                                        if (p) parts.push(p.label);
-                                    } else if (selectedRegion === "130000000") {
-                                        parts.push("Metro Manila");
-                                    }
-                                    if (selectedRegion) {
-                                        const r = regions.find(
-                                            r => r.value === selectedRegion
-                                        );
-                                        if (r) parts.push(r.label);
-                                    }
-                                    parts.push("Philippines");
-                                    return parts.join(", ");
-                                })()}
+                                {previewAddress}
                             </p>
                         </div>
                     )}
                 </div>
 
-                {/* Actions - Using Button component with responsive flex-col on mobile */}
+                {/* Actions */}
                 <div className="flex flex-col sm:flex-row gap-3 px-6 pb-6">
                     <Button
                         variant="ghost"
@@ -369,7 +288,7 @@ const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
                         icon={MapPin}
                         onClick={handleConfirm}
                         disabled={!isComplete}
-                        className={`flex-1 w-full truncate sm:w-auto ${!isComplete && "opacity-50 cursor-not-allowed"}`}
+                        className={`flex-1 w-full truncate sm:w-auto ${!isComplete ? "opacity-50 cursor-not-allowed" : ""}`}
                     >
                         Set Location
                     </Button>
