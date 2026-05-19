@@ -18,10 +18,21 @@ const allProperties = [
         category: "boarding",
         address: "123 Sunset Blvd, Barangay Sunset, Manila, Philippines",
         price: 4850,
-        capacity: 2,
-        sex: "female",
+        capacity: 2, // total capacity
+        bedroomDetails: [
+            {
+                id: 1,
+                name: "Bedroom #1",
+                capacity: 2,
+                gender: "female",
+                currentTenants: 0
+            }
+        ],
+        sex: "female", // kept for legacy
+        boardingHouseType: "female", // explicit boarding house type
         status: "available",
-        currentTenants: 0
+        currentTenants: 0,
+        bathrooms: 2
     },
     {
         id: 2,
@@ -45,9 +56,56 @@ const allProperties = [
         address: "789 Oak Ave, Barangay Riverside, Cebu City, Philippines",
         price: 3750,
         capacity: 3,
+        bedroomDetails: [
+            {
+                id: 1,
+                name: "Bedroom #1",
+                capacity: 2,
+                gender: "male",
+                currentTenants: 2
+            },
+            {
+                id: 2,
+                name: "Bedroom #2",
+                capacity: 1,
+                gender: "male",
+                currentTenants: 1
+            }
+        ],
         sex: "male",
+        boardingHouseType: "male",
         status: "full",
-        currentTenants: 3
+        currentTenants: 3,
+        bathrooms: 2
+    },
+    // Example property with mixed bedrooms
+    {
+        id: 4,
+        image: property1,
+        name: "Mixed Boarding House",
+        category: "boarding",
+        address: "123 Mixed St, Barangay Central, Manila, Philippines",
+        price: 4850,
+        bathrooms: 3,
+        bedroomDetails: [
+            {
+                id: 1,
+                name: "Bedroom #1",
+                capacity: 4,
+                gender: "male",
+                currentTenants: 1 // 1/4 filled
+            },
+            {
+                id: 2,
+                name: "Bedroom #2",
+                capacity: 4,
+                gender: "female",
+                currentTenants: 4 // Full
+            }
+        ],
+        sex: "mixed",
+        boardingHouseType: "mixed",
+        status: "partial"
     }
 ];
 
@@ -62,6 +120,7 @@ const getCapacityText = capacity => {
 const getSexText = sex => {
     if (sex === "male") return "Male Only";
     if (sex === "female") return "Female Only";
+    if (sex === "mixed") return "Mixed";
     return "";
 };
 
@@ -74,8 +133,63 @@ const getStatusBadgeProps = property => {
     }
 
     if (property.category === "boarding") {
-        const isFull = property.currentTenants === property.capacity;
-        const occupancyText = `${property.currentTenants}/${property.capacity}`;
+        // If property has bedroom details, calculate from bedrooms
+        if (property.bedroomDetails && property.bedroomDetails.length > 0) {
+            const totalCapacity = property.bedroomDetails.reduce(
+                (sum, room) => sum + (room.capacity || 0),
+                0
+            );
+            const totalCurrent = property.bedroomDetails.reduce(
+                (sum, room) => sum + (room.currentTenants || 0),
+                0
+            );
+            const isFull = totalCurrent === totalCapacity;
+            const occupancyText = `${totalCurrent}/${totalCapacity}`;
+
+            // Check individual bedroom statuses for a more detailed view
+            const bedroomsStatus = property.bedroomDetails.map(room => {
+                const current = room.currentTenants || 0;
+                const capacity = room.capacity || 0;
+                if (current === 0) return "vacant";
+                if (current === capacity) return "full";
+                return "partial";
+            });
+
+            const hasVacant = bedroomsStatus.includes("vacant");
+            const hasPartial = bedroomsStatus.includes("partial");
+
+            if (isFull) {
+                return {
+                    icon: XCircle,
+                    label: `Full · ${occupancyText}`,
+                    color: "red"
+                };
+            } else if (hasVacant && hasPartial) {
+                return {
+                    icon: Users,
+                    label: `${occupancyText} · Some vacancies`,
+                    color: "orange"
+                };
+            } else if (hasVacant) {
+                return {
+                    icon: CheckCircle,
+                    label: `Vacancies · ${occupancyText}`,
+                    color: "green"
+                };
+            } else {
+                return {
+                    icon: Users,
+                    label: `${occupancyText} tenants`,
+                    color: "orange"
+                };
+            }
+        }
+
+        // Legacy calculation for old data structure
+        const totalCapacity = property.capacity || 0;
+        const currentTenants = property.currentTenants || 0;
+        const isFull = currentTenants === totalCapacity;
+        const occupancyText = `${currentTenants}/${totalCapacity}`;
 
         if (isFull) {
             return {
@@ -83,10 +197,10 @@ const getStatusBadgeProps = property => {
                 label: `Full · ${occupancyText}`,
                 color: "red"
             };
-        } else if (property.currentTenants > 0) {
+        } else if (currentTenants > 0) {
             return {
                 icon: Users,
-                label: `${property.currentTenants} / ${property.capacity} tenants`,
+                label: `${currentTenants} / ${totalCapacity} tenants`,
                 color: "orange"
             };
         } else {
@@ -310,6 +424,8 @@ const AllProperties = () => {
                                 bathrooms={property.bathrooms}
                                 status={property.status}
                                 currentTenants={property.currentTenants}
+                                bedroomDetails={property.bedroomDetails}
+                                boardingHouseType={property.boardingHouseType}
                                 getCapacityText={getCapacityText}
                                 getSexText={getSexText}
                                 getStatusBadgeProps={getStatusBadgeProps}

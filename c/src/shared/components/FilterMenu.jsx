@@ -194,36 +194,36 @@ const FilterMenu = ({ isOpen, onClose, onApplyFilters, initialFilters }) => {
                         </div>
                     </div>
 
-                    {/* Sex Filter (Boarding House only) */}
+                    {/* Sex/Gender Filter (Boarding House only) - Updated with Mixed option */}
                     {showSexFilter && (
                         <div className="animate-fadeIn">
                             <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
                                 Preferred Tenant Gender
                             </label>
-                            <div className="flex gap-2">
+                            <div className="grid grid-cols-2 gap-2">
                                 <button
                                     onClick={() =>
                                         setFilters({ ...filters, sex: "all" })
                                     }
-                                    className={`flex-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                                    className={`px-2 py-1.5 rounded-lg font-medium transition-all text-xs ${
                                         isSexActive("all")
                                             ? "shadow-sm bg-gray-600 text-white font-semibold"
                                             : "bg-gray-100 text-gray-400 hover:bg-gray-300"
                                     }`}
                                 >
-                                    All
+                                    All Genders
                                 </button>
                                 <button
                                     onClick={() =>
                                         setFilters({ ...filters, sex: "male" })
                                     }
-                                    className={`flex-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                                    className={`px-2 py-1.5 rounded-lg font-medium transition-all text-xs ${
                                         isSexActive("male")
                                             ? "shadow-sm bg-gray-600 text-white font-semibold"
                                             : "bg-gray-100 text-gray-400 hover:bg-gray-300"
                                     }`}
                                 >
-                                    Male
+                                    Male Only
                                 </button>
                                 <button
                                     onClick={() =>
@@ -232,15 +232,33 @@ const FilterMenu = ({ isOpen, onClose, onApplyFilters, initialFilters }) => {
                                             sex: "female"
                                         })
                                     }
-                                    className={`flex-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                                    className={`px-2 py-1.5 rounded-lg font-medium transition-all text-xs ${
                                         isSexActive("female")
                                             ? "shadow-sm bg-gray-600 text-white font-semibold"
                                             : "bg-gray-100 text-gray-400 hover:bg-gray-300"
                                     }`}
                                 >
-                                    Female
+                                    Female Only
+                                </button>
+                                <button
+                                    onClick={() =>
+                                        setFilters({
+                                            ...filters,
+                                            sex: "mixed"
+                                        })
+                                    }
+                                    className={`px-2 py-1.5 rounded-lg font-medium transition-all text-xs ${
+                                        isSexActive("mixed")
+                                            ? "shadow-sm bg-gray-600 text-white font-semibold"
+                                            : "bg-gray-100 text-gray-400 hover:bg-gray-300"
+                                    }`}
+                                >
+                                    Mixed
                                 </button>
                             </div>
+                            <p className="text-xs text-gray-500 mt-2">
+                                Mixed = property has both male and female rooms
+                            </p>
                         </div>
                     )}
 
@@ -265,7 +283,7 @@ const FilterMenu = ({ isOpen, onClose, onApplyFilters, initialFilters }) => {
                                             : "bg-gray-100 text-gray-400 hover:bg-gray-300"
                                     }`}
                                 >
-                                    All
+                                    Any Capacity
                                 </button>
                                 <button
                                     onClick={() =>
@@ -352,7 +370,7 @@ const FilterMenu = ({ isOpen, onClose, onApplyFilters, initialFilters }) => {
                                             : "bg-gray-100 text-gray-400 hover:bg-gray-300"
                                     }`}
                                 >
-                                    All
+                                    Any
                                 </button>
                                 <button
                                     onClick={() =>
@@ -424,7 +442,7 @@ const FilterMenu = ({ isOpen, onClose, onApplyFilters, initialFilters }) => {
                                             : "bg-gray-100 text-gray-400 hover:bg-gray-300"
                                     }`}
                                 >
-                                    All
+                                    Any
                                 </button>
                                 <button
                                     onClick={() =>

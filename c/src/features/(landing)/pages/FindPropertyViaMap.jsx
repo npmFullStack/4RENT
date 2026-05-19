@@ -7,8 +7,9 @@ import Button from "@/shared/components/Button";
 import property1 from "@/assets/images/property1.png";
 import property2 from "@/assets/images/property2.png";
 import property3 from "@/assets/images/property3.png";
-import { Navigation, MapPin, Loader2, XCircle, X, CheckCircle } from "lucide-react";
+import { Navigation, MapPin, Loader2, XCircle, X, CheckCircle, Users, AlertCircle } from "lucide-react";
 
+// ─── Property data — keep in sync with AllProperties.jsx ───────────────────
 const allProperties = [
     {
         id: 1,
@@ -18,9 +19,20 @@ const allProperties = [
         address: "123 Sunset Blvd, Barangay Sunset, Manila, Philippines",
         price: 4850,
         capacity: 2,
+        bedroomDetails: [
+            {
+                id: 1,
+                name: "Bedroom #1",
+                capacity: 2,
+                gender: "female",
+                currentTenants: 0
+            }
+        ],
         sex: "female",
+        boardingHouseType: "female",
         status: "available",
-        currentTenants: 0
+        currentTenants: 0,
+        bathrooms: 2
     },
     {
         id: 2,
@@ -33,8 +45,8 @@ const allProperties = [
         bathrooms: 1,
         capacity: null,
         sex: null,
-        status: "available", // Add status
-        currentTenants: null // Add currentTenants
+        status: "rented",
+        currentTenants: null
     },
     {
         id: 3,
@@ -44,12 +56,59 @@ const allProperties = [
         address: "789 Oak Ave, Barangay Riverside, Cebu City, Philippines",
         price: 3750,
         capacity: 3,
+        bedroomDetails: [
+            {
+                id: 1,
+                name: "Bedroom #1",
+                capacity: 2,
+                gender: "male",
+                currentTenants: 2
+            },
+            {
+                id: 2,
+                name: "Bedroom #2",
+                capacity: 1,
+                gender: "male",
+                currentTenants: 1
+            }
+        ],
         sex: "male",
+        boardingHouseType: "male",
         status: "full",
-        currentTenants: 3
+        currentTenants: 3,
+        bathrooms: 2
+    },
+    {
+        id: 4,
+        image: property1,
+        name: "Mixed Boarding House",
+        category: "boarding",
+        address: "123 Mixed St, Barangay Central, Manila, Philippines",
+        price: 4850,
+        bathrooms: 3,
+        bedroomDetails: [
+            {
+                id: 1,
+                name: "Bedroom #1",
+                capacity: 4,
+                gender: "male",
+                currentTenants: 1
+            },
+            {
+                id: 2,
+                name: "Bedroom #2",
+                capacity: 4,
+                gender: "female",
+                currentTenants: 4
+            }
+        ],
+        sex: "mixed",
+        boardingHouseType: "mixed",
+        status: "partial"
     }
 ];
 
+// ─── Status badge — matches AllProperties.jsx logic exactly ────────────────
 const getStatusBadgeProps = property => {
     if (property.category === "apartment") {
         if (property.status === "rented") {
@@ -59,33 +118,59 @@ const getStatusBadgeProps = property => {
     }
 
     if (property.category === "boarding") {
-        const isFull = property.currentTenants === property.capacity;
-        const occupancyText = `${property.currentTenants}/${property.capacity}`;
+        if (property.bedroomDetails && property.bedroomDetails.length > 0) {
+            const totalCapacity = property.bedroomDetails.reduce(
+                (sum, room) => sum + (room.capacity || 0),
+                0
+            );
+            const totalCurrent = property.bedroomDetails.reduce(
+                (sum, room) => sum + (room.currentTenants || 0),
+                0
+            );
+            const isFull = totalCurrent === totalCapacity;
+            const occupancyText = `${totalCurrent}/${totalCapacity}`;
+
+            const bedroomsStatus = property.bedroomDetails.map(room => {
+                const current = room.currentTenants || 0;
+                const cap = room.capacity || 0;
+                if (current === 0) return "vacant";
+                if (current === cap) return "full";
+                return "partial";
+            });
+
+            const hasVacant = bedroomsStatus.includes("vacant");
+            const hasPartial = bedroomsStatus.includes("partial");
+
+            if (isFull) {
+                return { icon: XCircle, label: `Full · ${occupancyText}`, color: "red" };
+            } else if (hasVacant && hasPartial) {
+                return { icon: Users, label: `${occupancyText} · Some vacancies`, color: "orange" };
+            } else if (hasVacant) {
+                return { icon: CheckCircle, label: `Vacancies · ${occupancyText}`, color: "green" };
+            } else {
+                return { icon: Users, label: `${occupancyText} tenants`, color: "orange" };
+            }
+        }
+
+        // Legacy
+        const totalCapacity = property.capacity || 0;
+        const currentTenants = property.currentTenants || 0;
+        const isFull = currentTenants === totalCapacity;
+        const occupancyText = `${currentTenants}/${totalCapacity}`;
 
         if (isFull) {
-            return {
-                icon: XCircle,
-                label: `Full · ${occupancyText}`,
-                color: "red"
-            };
-        } else if (property.currentTenants > 0) {
-            return {
-                icon: Users,
-                label: `${property.currentTenants} / ${property.capacity} tenants`,
-                color: "orange"
-            };
+            return { icon: XCircle, label: `Full · ${occupancyText}`, color: "red" };
+        } else if (currentTenants > 0) {
+            return { icon: Users, label: `${currentTenants} / ${totalCapacity} tenants`, color: "orange" };
         } else {
-            return {
-                icon: CheckCircle,
-                label: `Vacant · ${occupancyText}`,
-                color: "green"
-            };
+            return { icon: CheckCircle, label: `Vacant · ${occupancyText}`, color: "green" };
         }
     }
 
     return { icon: AlertCircle, label: property.status, color: "gray" };
 };
 
+// ───────────────────────────────────────────────────────────────────────────
 const FindPropertyViaMap = () => {
     const navigate = useNavigate();
 
@@ -107,13 +192,12 @@ const FindPropertyViaMap = () => {
     const getSexText = sex => {
         if (sex === "male") return "Male Only";
         if (sex === "female") return "Female Only";
+        if (sex === "mixed") return "Mixed";
         return "";
     };
 
     const handlePropertyClick = property => {
-        navigate(`/property/${property.id}`, {
-            state: { ...property }
-        });
+        navigate(`/property/${property.id}`, { state: { ...property } });
     };
 
     const getUserLocation = () => {
@@ -141,8 +225,7 @@ const FindPropertyViaMap = () => {
                 let errorMessage = "Unable to get your location";
                 switch (error.code) {
                     case error.PERMISSION_DENIED:
-                        errorMessage =
-                            "Please allow location access to use this feature";
+                        errorMessage = "Please allow location access to use this feature";
                         break;
                     case error.POSITION_UNAVAILABLE:
                         errorMessage = "Location information is unavailable";
@@ -203,9 +286,7 @@ const FindPropertyViaMap = () => {
                                 disabled={isLocating}
                                 className={`w-full sm:w-auto text-sm order-2 ${isLocating ? "[&_svg]:animate-spin" : ""}`}
                             >
-                                {isLocating
-                                    ? "Getting location..."
-                                    : "Use My Current Location"}
+                                {isLocating ? "Getting location..." : "Use My Current Location"}
                             </Button>
                         </div>
                     </div>
@@ -239,9 +320,7 @@ const FindPropertyViaMap = () => {
                     {!showSuccessMessage && activeLocationLabel && (
                         <div className="mt-3 flex items-center gap-2 text-xs text-gray-500 bg-white px-3 py-2 rounded-lg border border-gray-200 w-fit max-w-full">
                             <MapPin className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
-                            <span className="truncate">
-                                {activeLocationLabel}
-                            </span>
+                            <span className="truncate">{activeLocationLabel}</span>
                             <button
                                 onClick={() => {
                                     setUserLocation(null);
@@ -262,7 +341,7 @@ const FindPropertyViaMap = () => {
                             properties={allProperties}
                             getCapacityText={getCapacityText}
                             getSexText={getSexText}
-                            getStatusBadgeProps={getStatusBadgeProps} 
+                            getStatusBadgeProps={getStatusBadgeProps}
                             onPropertyClick={handlePropertyClick}
                             userLocation={userLocation}
                             manualAddress={manualAddress}

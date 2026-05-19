@@ -21,6 +21,7 @@ import Select from "@/shared/components/Select";
 import property1 from "@/assets/images/property1.png";
 import property2 from "@/assets/images/property2.png";
 import property3 from "@/assets/images/property3.png";
+import noMoreProperty from "@/assets/images/no-more-property.png";
 
 // Mock data for properties with unique entries (removed duplicates)
 const mockProperties = [
@@ -94,7 +95,8 @@ const mockProperties = [
         image: property3,
         name: "Metro Central Tower",
         category: "apartment",
-        address: "789 Business Ave, Barangay Commercial, Makati City, Philippines",
+        address:
+            "789 Business Ave, Barangay Commercial, Makati City, Philippines",
         price: 22500,
         capacity: null,
         currentTenants: null,
@@ -239,9 +241,11 @@ const MyProperties = () => {
             render: row => (
                 <div className="relative flex items-center justify-center py-2">
                     {/* Vertical colored line - Blue for Boarding, Red for Apartment */}
-                    <div 
+                    <div
                         className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-lg ${
-                            row.category === "boarding" ? "bg-blue-500" : "bg-red-500"
+                            row.category === "boarding"
+                                ? "bg-blue-500"
+                                : "bg-red-500"
                         }`}
                     />
                     <div className="w-14 h-14 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
@@ -373,8 +377,8 @@ const MyProperties = () => {
 
     return (
         <div className="p-4 md:p-6 bg-neutral-50 min-h-screen">
-            {/* Header Section */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            {/* Header Section - Similar layout to Random Properties in Home.jsx */}
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => setIsHelpModalOpen(true)}
@@ -394,7 +398,7 @@ const MyProperties = () => {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center justify-end gap-3">
                     {/* Help Button (Desktop) */}
                     <button
                         onClick={() => setIsHelpModalOpen(true)}
@@ -403,7 +407,7 @@ const MyProperties = () => {
                         <HelpCircle size={20} />
                         <span className="font-medium">Help</span>
                     </button>
-                    {/* New Property Select Component */}
+                    {/* New Property Select Component - Now aligned to the right on mobile */}
                     <div className="w-50">
                         <Select
                             options={propertyTypeOptions}

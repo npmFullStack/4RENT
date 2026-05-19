@@ -9,6 +9,7 @@ import {
     X
 } from "lucide-react";
 import Select from "./Select";
+import noMoreProperty from "@/assets/images/no-more-property.png";
 
 const Table = ({
     columns = [],
@@ -333,6 +334,16 @@ const Table = ({
                                     }
                                     className="px-3 py-8 text-center text-gray-400 text-xs"
                                 >
+                                    <img
+                                        src={noMoreProperty}
+                                        alt="No properties found"
+                                        className="w-48 h-48 mx-auto mb-4 object-contain"
+                                        onError={e => {
+                                            e.target.onerror = null;
+                                            e.target.src =
+                                                "https://via.placeholder.com/192x192?text=No+Properties";
+                                        }}
+                                    />
                                     {emptyMessage}
                                 </td>
                             </tr>
