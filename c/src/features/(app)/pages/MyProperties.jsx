@@ -198,18 +198,21 @@ const MyProperties = () => {
         {
             value: "view",
             label: "View Details",
-            icon: <Eye className="w-3 h-3" />
+            icon: <Eye className="w-3 h-3" />,
+            className: "text-gray-800" // Add this for gray-800 text
         },
         {
             value: "edit",
             label: "Edit Property",
-            icon: <Edit className="w-3 h-3" />
+            icon: <Edit className="w-3 h-3" />,
+            className: "text-gray-800" 
         },
         {
             value: "remove",
             label: "Remove Property",
-            icon: <Trash2 className="w-3 h-3" />
-        }
+            icon: <Trash2 className="w-3 h-3" />,
+            className: "text-red-600",
+            separator: true         }
     ];
 
     const handleViewDetails = property => {

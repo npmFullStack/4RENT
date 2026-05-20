@@ -159,11 +159,18 @@ const Select = ({
                 color = "#374151";
             }
 
+            // Get the option data to check for separator
+            const optionData = state.data;
+            const hasSeparator = optionData && optionData.separator;
+
             return {
                 ...base,
                 backgroundColor,
                 color,
                 cursor: "pointer",
+                borderTop: hasSeparator ? "1px solid #E5E7EB" : "none",
+                marginTop: hasSeparator ? "4px" : "0",
+                paddingTop: hasSeparator ? "8px" : sizeStyles.optionPadding,
                 "&:active": {
                     backgroundColor: state.isSelected ? "#C4A000" : "#FEF3C7"
                 },
@@ -189,7 +196,7 @@ const Select = ({
             alignItems: "center",
             gap: "8px"
         }),
-        valueContainer: (base) => ({
+        valueContainer: base => ({
             ...base,
             padding: sizeStyles.padding,
             gap: "4px",
@@ -197,7 +204,7 @@ const Select = ({
             justifyContent: variant === "primary" ? "center" : "flex-start",
             flexWrap: "nowrap"
         }),
-        input: (base) => ({
+        input: base => ({
             ...base,
             padding: "0",
             margin: "0",
@@ -246,15 +253,21 @@ const Select = ({
     // Format option with optional icon
     const defaultFormatOptionLabel = (option, { context }) => {
         const showIcon = option.icon || icon;
-        
+
         return (
-            <div className={`flex items-center gap-2 ${size === "lg" ? "gap-3" : "gap-2"}`}>
+            <div
+                className={`flex items-center gap-2 ${size === "lg" ? "gap-3" : "gap-2"} ${option.className || ""}`}
+            >
                 {showIcon && (
-                    <span className={`${sizeStyles.iconSize} flex items-center justify-center shrink-0`}>
+                    <span
+                        className={`${sizeStyles.iconSize} flex items-center justify-center shrink-0`}
+                    >
                         {option.icon || icon}
                     </span>
                 )}
-                <span className={`truncate ${size === "lg" ? "text-base" : "text-xs"}`}>
+                <span
+                    className={`truncate ${size === "lg" ? "text-base" : "text-xs"} ${option.className || ""}`}
+                >
                     {option.label}
                 </span>
             </div>
@@ -262,24 +275,29 @@ const Select = ({
     };
 
     // Custom format for the selected value
-    const formatSelectedValue = (option) => {
+    const formatSelectedValue = option => {
         if (!option) return null;
         const showIcon = option.icon || icon;
-        
+
         return (
-            <div className={`flex items-center gap-2 ${variant === "primary" ? "w-full justify-center" : ""}`}>
+            <div
+                className={`flex items-center gap-2 ${variant === "primary" ? "w-full justify-center" : ""} ${option.className || ""}`}
+            >
                 {showIcon && (
-                    <span className={`${sizeStyles.iconSize} flex items-center justify-center shrink-0`}>
+                    <span
+                        className={`${sizeStyles.iconSize} flex items-center justify-center shrink-0`}
+                    >
                         {option.icon || icon}
                     </span>
                 )}
-                <span className={`truncate ${size === "lg" ? "text-base" : "text-xs"}`}>
+                <span
+                    className={`truncate ${size === "lg" ? "text-base" : "text-xs"} ${option.className || ""}`}
+                >
                     {option.label}
                 </span>
             </div>
         );
     };
-
     // Transform options to react-select format
     const selectOptions = options.map(opt => ({
         value: opt.value,
@@ -299,15 +317,23 @@ const Select = ({
             onChange={option => onChange && onChange(option?.value ?? null)}
             placeholder={
                 variant === "primary" && icon ? (
-                    <span className={`flex items-center gap-2 justify-center w-full ${size === "lg" ? "gap-3" : "gap-2"}`}>
-                        <span className={`${sizeStyles.iconSize} flex items-center justify-center shrink-0`}>
+                    <span
+                        className={`flex items-center gap-2 justify-center w-full ${size === "lg" ? "gap-3" : "gap-2"}`}
+                    >
+                        <span
+                            className={`${sizeStyles.iconSize} flex items-center justify-center shrink-0`}
+                        >
                             {icon}
                         </span>
-                        <span className={size === "lg" ? "text-base" : "text-xs"}>
+                        <span
+                            className={size === "lg" ? "text-base" : "text-xs"}
+                        >
                             {placeholder}
                         </span>
                     </span>
-                ) : placeholder
+                ) : (
+                    placeholder
+                )
             }
             isSearchable={isSearchable}
             isClearable={isClearable}
@@ -315,7 +341,7 @@ const Select = ({
             isLoading={isLoading}
             styles={customStyles}
             formatOptionLabel={(option, { context }) => {
-                if (context === 'value') {
+                if (context === "value") {
                     return formatSelectedValue(option);
                 }
                 return defaultFormatOptionLabel(option, { context });

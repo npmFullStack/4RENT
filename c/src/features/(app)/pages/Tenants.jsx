@@ -238,12 +238,15 @@ const Tenants = () => {
         {
             value: "markPaid",
             label: "Mark as Paid",
-            icon: <CheckCircle className="w-3 h-3" />
+            icon: <CheckCircle className="w-3 h-3" />,
+className: "text-gray-800"
         },
         {
             value: "remove",
             label: "Remove Tenant",
-            icon: <XCircle className="w-3 h-3" />
+            icon: <XCircle className="w-3 h-3" />,
+ className: "text-red-600",
+            separator: true
         }
     ];
 
