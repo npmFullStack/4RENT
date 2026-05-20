@@ -8,8 +8,7 @@ import {
     XCircle,
     AlertCircle,
     CreditCard,
-    Bed,
-    Home
+    MoreHorizontal
 } from "lucide-react";
 import HelpPageModal from "@/shared/components/HelpPageModal";
 import Table from "@/shared/components/Table";
@@ -17,6 +16,7 @@ import Button from "@/shared/components/Button";
 import Badge from "@/shared/components/Badge";
 import Toast from "@/shared/components/Toast";
 import WarningModal from "@/shared/components/WarningModal";
+import Select from "@/shared/components/Select";
 
 // Import property images
 import property1 from "@/assets/images/property1.png";
@@ -26,6 +26,19 @@ import property3 from "@/assets/images/property3.png";
 // Import gender icons
 import MaleIcon from "@/assets/icons/male.svg";
 import FemaleIcon from "@/assets/icons/female.svg";
+
+// Helper function to generate tenant ID
+const generateTenantId = id => {
+    const paddedNumber = String(id).padStart(4, "0");
+    return `TNT-${paddedNumber}`;
+};
+
+// Helper function to generate property ID
+const generatePropertyId = (id, category) => {
+    const prefix = category === "boarding" ? "BRD" : "APT";
+    const paddedNumber = String(id).padStart(4, "0");
+    return `${prefix}-${paddedNumber}`;
+};
 
 // Mock data for tenants with property images from MyProperties
 const mockTenants = [
@@ -43,6 +56,7 @@ const mockTenants = [
         leaseEndDate: "2025-01-15",
         status: "paid",
         paymentDueDate: "2026-05-22",
+        rentDueDate: "2026-06-01",
         sex: "female"
     },
     {
@@ -59,6 +73,7 @@ const mockTenants = [
         leaseEndDate: "2025-02-20",
         status: "unpaid",
         paymentDueDate: "2026-05-22",
+        rentDueDate: "2026-06-01",
         sex: "male"
     },
     {
@@ -75,6 +90,7 @@ const mockTenants = [
         leaseEndDate: "2025-01-10",
         status: "paid",
         paymentDueDate: "2026-05-22",
+        rentDueDate: "2026-06-01",
         sex: "female"
     },
     {
@@ -91,6 +107,7 @@ const mockTenants = [
         leaseEndDate: "2025-03-01",
         status: "overdue",
         paymentDueDate: "2026-04-15",
+        rentDueDate: "2026-05-01",
         sex: "male"
     },
     {
@@ -107,6 +124,7 @@ const mockTenants = [
         leaseEndDate: "2025-03-15",
         status: "paid",
         paymentDueDate: "2026-05-22",
+        rentDueDate: "2026-06-01",
         sex: "female"
     },
     {
@@ -123,6 +141,7 @@ const mockTenants = [
         leaseEndDate: "2025-01-20",
         status: "paid",
         paymentDueDate: "2026-05-22",
+        rentDueDate: "2026-06-01",
         sex: "male"
     },
     {
@@ -139,6 +158,7 @@ const mockTenants = [
         leaseEndDate: "2025-02-10",
         status: "unpaid",
         paymentDueDate: "2026-05-22",
+        rentDueDate: "2026-06-01",
         sex: "female"
     },
     {
@@ -155,6 +175,7 @@ const mockTenants = [
         leaseEndDate: "2025-01-05",
         status: "paid",
         paymentDueDate: "2026-05-22",
+        rentDueDate: "2026-06-01",
         sex: "male"
     },
     {
@@ -171,6 +192,7 @@ const mockTenants = [
         leaseEndDate: "2025-03-20",
         status: "overdue",
         paymentDueDate: "2026-04-10",
+        rentDueDate: "2026-05-01",
         sex: "female"
     },
     {
@@ -187,19 +209,45 @@ const mockTenants = [
         leaseEndDate: "2025-02-28",
         status: "paid",
         paymentDueDate: "2026-05-22",
+        rentDueDate: "2026-06-01",
         sex: "female"
     }
 ];
 
+// Add tenantId and propertyId to each mock tenant
+const tenantsWithIds = mockTenants.map(tenant => ({
+    ...tenant,
+    tenantId: generateTenantId(tenant.id),
+    propertyFormattedId: generatePropertyId(
+        tenant.propertyId,
+        tenant.propertyCategory
+    )
+}));
+
 const Tenants = () => {
     const navigate = useNavigate();
     const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
-    const [tenants, setTenants] = useState(mockTenants);
+    const [tenants, setTenants] = useState(tenantsWithIds);
     const [selectedTenant, setSelectedTenant] = useState(null);
     const [isMarkPaidModalOpen, setIsMarkPaidModalOpen] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [actionValues, setActionValues] = useState({});
 
-    // Get status badge props (no more partial status)
+    // Action options for the Select dropdown
+    const actionOptions = [
+        {
+            value: "markPaid",
+            label: "Mark as Paid",
+            icon: <CheckCircle className="w-3 h-3" />
+        },
+        {
+            value: "remove",
+            label: "Remove Tenant",
+            icon: <XCircle className="w-3 h-3" />
+        }
+    ];
+
+    // Get status badge props
     const getStatusBadgeProps = status => {
         switch (status) {
             case "paid":
@@ -222,7 +270,31 @@ const Tenants = () => {
     // Handle remove tenant
     const handleRemoveTenant = tenant => {
         console.log("Remove tenant:", tenant);
-        // No logic yet - just frontend
+        Toast.info(
+            "Remove Tenant",
+            `Removing ${tenant.firstName} ${tenant.lastName}`
+        );
+    };
+
+    // Handle action change from dropdown
+    const handleActionChange = (tenant, actionValue) => {
+        if (!actionValue) return;
+
+        switch (actionValue) {
+            case "markPaid":
+                handleMarkAsPaid(tenant);
+                break;
+            case "remove":
+                handleRemoveTenant(tenant);
+                break;
+            default:
+                break;
+        }
+        // Reset the select after action
+        setActionValues(prev => ({
+            ...prev,
+            [tenant.id]: null
+        }));
     };
 
     const confirmMarkAsPaid = async () => {
@@ -303,70 +375,43 @@ const Tenants = () => {
     // Table columns configuration
     const columns = [
         {
-            key: "image",
-            header: "Image",
-            sortable: false,
-            width: "120px",
-            cellClassName: "!p-0 align-top",
-            render: row => {
-                const isBoarding = row.propertyCategory === "boarding";
-                return (
-                    <div className="relative flex flex-col items-center gap-1.5 py-3">
-                        {/* Vertical colored line - Blue for Boarding, Red for Apartment */}
-                        <div
-                            className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-lg ${
-                                isBoarding ? "bg-blue-500" : "bg-red-500"
-                            }`}
-                        />
-                        <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                            <img
-                                src={row.propertyImage}
-                                alt={row.propertyName}
-                                className="w-full h-full object-cover"
-                            />
-                        </div>
-                        <Badge
-                            variant="outline"
-                            color={isBoarding ? "blue" : "red"}
-                            icon={isBoarding ? Bed : Home}
-                        >
-                            {isBoarding ? "Boarding" : "Apartment"}
-                        </Badge>
-                    </div>
-                );
-            }
-        },
-        {
-            key: "propertyInfo",
-            header: "Property Info",
+            key: "tenantId",
+            header: "Tenant ID",
             sortable: true,
+            width: "100px",
             render: row => (
-                <div>
-                    <p className="font-semibold text-gray-800 text-sm">
-                        {row.propertyName}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
-                        {row.propertyAddress}
-                    </p>
-                </div>
+                <span className="font-mono text-xs font-semibold text-gray-700">
+                    {row.tenantId}
+                </span>
             )
         },
         {
-            key: "tenantName",
-            header: "Tenant Name",
+            key: "tenantInfo",
+            header: "Tenant Info",
             sortable: true,
             sortKey: "lastName",
+            width: "180px",
             render: row => (
                 <div className="flex items-center gap-1.5">
                     {getSexIcon(row.sex)}
-                    <span className="text-gray-800 text-xs truncate">
+                    <span className="font-semibold text-gray-800 text-sm whitespace-nowrap">
                         {row.firstName} {row.lastName}
                     </span>
                 </div>
             )
         },
         {
-            key: "monthlyRent",
+            key: "propertyId",
+            header: "Property ID",
+            sortable: true,
+            render: row => (
+                <span className="font-mono text-xs font-semibold text-gray-700">
+                    {row.propertyFormattedId}
+                </span>
+            )
+        },
+        {
+            key: "rentPerMonth",
             header: "Rent / Month",
             sortable: true,
             render: row => (
@@ -376,12 +421,12 @@ const Tenants = () => {
             )
         },
         {
-            key: "paymentDueDate",
-            header: "Payment Due Date",
+            key: "rentDueDate",
+            header: "Rent Due Date",
             sortable: true,
             render: row => (
                 <span className="text-gray-600 text-xs whitespace-nowrap">
-                    {formatDate(row.paymentDueDate)}
+                    {formatDate(row.rentDueDate)}
                 </span>
             )
         },
@@ -419,38 +464,34 @@ const Tenants = () => {
                 `${tenant.firstName} ${tenant.lastName}`
                     .toLowerCase()
                     .includes(searchTerm.toLowerCase()) ||
-                tenant.propertyName
+                tenant.tenantId
+                    .toLowerCase()
+                    .includes(searchTerm.toLowerCase()) ||
+                tenant.propertyFormattedId
                     .toLowerCase()
                     .includes(searchTerm.toLowerCase())
         );
     };
 
-    // Action menu for each row — Table.jsx renders the portal dropdown
-    const renderActions = (row, closeMenu) => (
-        <div className="py-1">
-            <button
-                onClick={e => {
-                    e.stopPropagation();
-                    handleMarkAsPaid(row);
-                    closeMenu();
+    // Render actions with Select dropdown
+    const renderActions = row => (
+        <div className="w-28 relative">
+            <Select
+                options={actionOptions}
+                value={actionValues[row.id] || null}
+                onChange={value => {
+                    setActionValues(prev => ({
+                        ...prev,
+                        [row.id]: value
+                    }));
+                    handleActionChange(row, value);
                 }}
-                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-            >
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                Mark as Paid
-            </button>
-            <hr className="my-1 border-gray-200" />
-            <button
-                onClick={e => {
-                    e.stopPropagation();
-                    handleRemoveTenant(row);
-                    closeMenu();
-                }}
-                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-            >
-                <XCircle className="w-4 h-4" />
-                Remove Tenant
-            </button>
+                placeholder="More"
+                variant="outline"
+                isSearchable={false}
+                isClearable={true}
+                className="text-xs w-full"
+            />
         </div>
     );
 
@@ -474,12 +515,12 @@ const Tenants = () => {
         {
             title: "Tenant Actions",
             description:
-                "Each tenant has an ellipsis menu with options to Mark as Paid or Remove Tenant."
+                "Each tenant has a 'More' dropdown with options to Mark as Paid or Remove Tenant."
         },
         {
             title: "Search & Filter",
             description:
-                "Use the search bar to find tenants by name or property."
+                "Use the search bar to find tenants by name, Tenant ID, or Property ID."
         }
     ];
 
@@ -535,7 +576,7 @@ const Tenants = () => {
                     keyField="id"
                     onRowClick={handleViewDetails}
                     showSearch={true}
-                    searchPlaceholder="Search by tenant name or property..."
+                    searchPlaceholder="Search by tenant name, Tenant ID, or Property ID..."
                     onSearch={handleTableSearch}
                     itemsPerPageOptions={[5, 10, 20, -1]}
                     itemsPerPage={5}

@@ -6,8 +6,7 @@ import {
     Search,
     ChevronLeft,
     ChevronRight,
-    X,
-    MoreHorizontal
+    X
 } from "lucide-react";
 import Select from "./Select";
 import noMoreProperty from "@/assets/images/no-more-property.png";
@@ -38,9 +37,6 @@ const Table = ({
     const [viewportWidth, setViewportWidth] = useState(
         typeof window !== "undefined" ? window.innerWidth : 1024
     );
-    const [openMenuRow, setOpenMenuRow] = useState(null);
-    const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
-    const menuRef = useRef(null);
     const tableRef = useRef(null);
 
     // Track viewport width changes
@@ -52,43 +48,28 @@ const Table = ({
         return () => window.removeEventListener("resize", handleResize);
     }, []);
 
-    // Close menu when clicking outside
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (menuRef.current && !menuRef.current.contains(event.target)) {
-                setOpenMenuRow(null);
-            }
-        };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
     // Determine which columns to show based on viewport width
     const getVisibleColumns = () => {
         if (!responsive) return columns;
 
-        // Define breakpoints
-        const isMobile = viewportWidth < 640; // <640px
-        const isTabletSmall = viewportWidth >= 640 && viewportWidth < 768; // 640-768px
-        const isTabletLarge = viewportWidth >= 768 && viewportWidth < 1024; // 768-1024px
-        const isDesktop = viewportWidth >= 1024; // >=1024px
+        const isMobile = viewportWidth < 640;
+        const isTabletSmall = viewportWidth >= 640 && viewportWidth < 768;
+        const isTabletLarge = viewportWidth >= 768 && viewportWidth < 1024;
+        const isDesktop = viewportWidth >= 1024;
 
         if (isDesktop) {
-            return columns; // Show all columns on desktop
+            return columns;
         }
 
         if (isTabletLarge) {
-            // Show first 4 columns on tablet large
             return columns.slice(0, Math.min(4, columns.length));
         }
 
         if (isTabletSmall) {
-            // Show first 3 columns on tablet small
             return columns.slice(0, Math.min(3, columns.length));
         }
 
         if (isMobile) {
-            // Show first 2 columns on mobile
             return columns.slice(0, Math.min(2, columns.length));
         }
 
@@ -97,7 +78,6 @@ const Table = ({
 
     const visibleColumns = getVisibleColumns();
 
-    // Handle sorting
     const handleSort = columnKey => {
         if (sortColumn === columnKey) {
             setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -107,7 +87,6 @@ const Table = ({
         }
     };
 
-    // Filter data based on search term
     const filteredData = React.useMemo(() => {
         if (!searchTerm.trim() && !onSearch) {
             return data;
@@ -124,7 +103,6 @@ const Table = ({
         });
     }, [data, searchTerm, onSearch]);
 
-    // Sort data
     const sortedData = React.useMemo(() => {
         if (!sortColumn) return filteredData;
 
@@ -150,13 +128,11 @@ const Table = ({
         });
     }, [filteredData, sortColumn, sortDirection]);
 
-    // Get rows per page value (handle -1 for "All")
     const getRowsPerPageValue = () => {
         if (rowsPerPage === -1) return sortedData.length;
         return rowsPerPage;
     };
 
-    // Pagination
     const rowsPerPageValue = getRowsPerPageValue();
     const totalPages =
         rowsPerPageValue === 0
@@ -189,7 +165,6 @@ const Table = ({
         setCurrentPage(1);
     };
 
-    // Get sort icon
     const getSortIcon = columnKey => {
         if (sortColumn !== columnKey) return null;
         return sortDirection === "asc" ? (
@@ -199,13 +174,11 @@ const Table = ({
         );
     };
 
-    // Get display text for rows per page
     const getRowsPerPageText = value => {
         if (value === -1) return "All";
         return value;
     };
 
-    // Prepare options for Select component
     const selectOptions = itemsPerPageOptions.map(option => ({
         value: option,
         label: getRowsPerPageText(option)
@@ -213,7 +186,7 @@ const Table = ({
 
     return (
         <div className={`w-full ${className}`}>
-            {/* Search Bar and Records Selector - Responsive layout */}
+            {/* Search Bar and Records Selector */}
             {showSearch && (
                 <div className="mb-4 flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
                     <div className="relative flex-1 max-w-full sm:max-w-md">
@@ -262,7 +235,7 @@ const Table = ({
                 </div>
             )}
 
-            {/* Table Container - Horizontal scroll on small screens */}
+            {/* Table Container */}
             <div className="overflow-x-auto relative" ref={tableRef}>
                 <table className="w-full table-fixed text-xs border-collapse">
                     <thead className="bg-gray-50 border-b border-gray-200">
@@ -297,7 +270,7 @@ const Table = ({
                                 </th>
                             ))}
                             {actions && (
-                                <th className="px-3 py-2 text-left font-semibold text-gray-700 text-xs whitespace-nowrap sticky right-0 bg-gray-50 shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.05)] z-10">
+                                <th className="px-3 py-2 text-left font-semibold text-gray-700 text-xs whitespace-nowrap">
                                     Actions
                                 </th>
                             )}
@@ -335,28 +308,8 @@ const Table = ({
                                         </td>
                                     ))}
                                     {actions && (
-                                        <td className="px-3 py-2 sticky right-0 bg-white shadow-[-4px_0_8px_-4px_rgba(0,0,0,0.05)] z-10 w-12">
-                                            <div className="relative">
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        if (openMenuRow === row[keyField]) {
-                                                            setOpenMenuRow(null);
-                                                        } else {
-                                                            const btn = e.currentTarget;
-                                                            const rect = btn.getBoundingClientRect();
-                                                            setMenuPosition({
-                                                                top: rect.bottom + window.scrollY + 4,
-                                                                left: rect.right + window.scrollX - 192
-                                                            });
-                                                            setOpenMenuRow(row[keyField]);
-                                                        }
-                                                    }}
-                                                    className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
-                                                >
-                                                    <MoreHorizontal className="w-4 h-4 text-gray-500" />
-                                                </button>
-                                            </div>
+                                        <td className="px-3 py-2">
+                                            {actions(row)}
                                         </td>
                                     )}
                                 </tr>
@@ -373,7 +326,7 @@ const Table = ({
                                     <img
                                         src={noMoreProperty}
                                         alt="No properties found"
-                                        className="w-96 h-96 mx-auto mb-4 object-contain"
+                                        className="w-40 h-40 mx-auto mb-4 object-contain"
                                         onError={e => {
                                             e.target.onerror = null;
                                             e.target.src =
@@ -388,27 +341,7 @@ const Table = ({
                 </table>
             </div>
 
-            {/* Fixed-position action menu overlay — renders above all elements */}
-            {openMenuRow !== null && actions && (
-                <div
-                    ref={menuRef}
-                    style={{
-                        position: "fixed",
-                        top: menuPosition.top,
-                        left: Math.max(8, menuPosition.left),
-                        zIndex: 9999,
-                        width: "192px"
-                    }}
-                    className="bg-white rounded-lg shadow-xl border border-gray-200 py-1"
-                >
-                    {actions(
-                        paginatedData.find(r => r[keyField] === openMenuRow),
-                        () => setOpenMenuRow(null)
-                    )}
-                </div>
-            )}
-
-            {/* Responsive Pagination */}
+            {/* Pagination */}
             {totalPages > 1 && (
                 <div className="flex justify-center sm:justify-end items-center mt-4 pt-4 border-t border-gray-200">
                     <div className="flex gap-1 overflow-x-auto max-w-full pb-1">
@@ -424,11 +357,9 @@ const Table = ({
                             <ChevronLeft className="w-4 h-4" />
                         </button>
 
-                        {/* Show limited page numbers on mobile */}
                         {Array.from({ length: totalPages }, (_, i) => i + 1)
                             .filter(page => {
                                 if (viewportWidth < 640) {
-                                    // On mobile, show current page, first, last, and neighbors
                                     return (
                                         page === 1 ||
                                         page === totalPages ||
@@ -438,7 +369,6 @@ const Table = ({
                                 return true;
                             })
                             .map((page, index, filteredArray) => {
-                                // Add ellipsis indicator
                                 if (
                                     index > 0 &&
                                     page - filteredArray[index - 1] > 1

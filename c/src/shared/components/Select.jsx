@@ -14,9 +14,39 @@ const Select = ({
     className = "",
     icon = null,
     formatOptionLabel = null,
-    variant = "default", // default, outline, primary, ghost
+    variant = "default",
+    menuPortalTarget = null,
+    menuPosition = "absolute",
+    size = "default",
     ...props
 }) => {
+    // Get size styles
+    const getSizeStyles = () => {
+        const sizes = {
+            default: {
+                minHeight: "28px",
+                fontSize: "0.75rem",
+                padding: "0 8px",
+                iconSize: "w-3 h-3",
+                optionPadding: "6px 10px",
+                indicatorPadding: "0 6px 0 0",
+                indicatorMargin: "8px"
+            },
+            lg: {
+                minHeight: "42px",
+                fontSize: "1rem",
+                padding: "0 12px",
+                iconSize: "w-5 h-5",
+                optionPadding: "10px 12px",
+                indicatorPadding: "0 8px 0 0",
+                indicatorMargin: "10px"
+            }
+        };
+        return sizes[size] || sizes.default;
+    };
+
+    const sizeStyles = getSizeStyles();
+
     // Variant styles
     const getVariantStyles = state => {
         const variants = {
@@ -56,39 +86,6 @@ const Select = ({
         return variants[variant] || variants.default;
     };
 
-    // Format option with optional icon
-    const defaultFormatOptionLabel = (option, { context }) => {
-        const showIcon = option.icon || icon;
-        
-        return (
-            <div className="flex items-center gap-2">
-                {showIcon && (
-                    <span className="w-4 h-4 flex items-center justify-center shrink-0">
-                        {option.icon || icon}
-                    </span>
-                )}
-                <span className="truncate">{option.label}</span>
-            </div>
-        );
-    };
-
-    // Custom format for the selected value (to show icon in the selected value)
-    const formatSelectedValue = (option) => {
-        if (!option) return null;
-        const showIcon = option.icon || icon;
-        
-        return (
-            <div className={`flex items-center gap-2 ${variant === "primary" ? "w-full justify-center" : ""}`}>
-                {showIcon && (
-                    <span className="w-4 h-4 flex items-center justify-center shrink-0">
-                        {option.icon || icon}
-                    </span>
-                )}
-                <span className="truncate">{option.label}</span>
-            </div>
-        );
-    };
-
     // Custom styles for Tailwind integration
     const customStyles = {
         control: (base, state) => {
@@ -98,7 +95,7 @@ const Select = ({
                 backgroundColor: variantStyles.backgroundColor,
                 borderColor: variantStyles.borderColor,
                 borderWidth: variant === "ghost" ? "0px" : "1px",
-                borderRadius: "0.5rem",
+                borderRadius: "0.375rem",
                 boxShadow:
                     state.isFocused && variant !== "ghost"
                         ? variantStyles.focusRing
@@ -107,9 +104,9 @@ const Select = ({
                     borderColor: variantStyles.hoverBorderColor,
                     backgroundColor: variantStyles.hoverBg
                 },
-                minHeight: "38px",
+                minHeight: sizeStyles.minHeight,
                 padding: "0",
-                fontSize: "0.875rem",
+                fontSize: sizeStyles.fontSize,
                 fontWeight: "500",
                 color: variantStyles.textColor,
                 cursor: "pointer",
@@ -142,12 +139,13 @@ const Select = ({
             borderRadius: "0.5rem",
             overflow: "hidden",
             boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
-            zIndex: 50
+            zIndex: 9999
         }),
         menuList: base => ({
             ...base,
             padding: "4px 0",
-            fontSize: "0.875rem"
+            fontSize: sizeStyles.fontSize,
+            maxHeight: "200px"
         }),
         option: (base, state) => {
             let backgroundColor = "white";
@@ -169,14 +167,14 @@ const Select = ({
                 "&:active": {
                     backgroundColor: state.isSelected ? "#C4A000" : "#FEF3C7"
                 },
-                padding: "8px 12px",
-                fontSize: "0.875rem"
+                padding: sizeStyles.optionPadding,
+                fontSize: sizeStyles.fontSize
             };
         },
         singleValue: (base, state) => ({
             ...base,
             color: variant === "primary" ? "white" : "#374151",
-            fontSize: "0.875rem",
+            fontSize: sizeStyles.fontSize,
             display: "flex",
             alignItems: "center",
             justifyContent: variant === "primary" ? "center" : "flex-start"
@@ -184,7 +182,7 @@ const Select = ({
         placeholder: base => ({
             ...base,
             color: variant === "primary" ? "white" : "#9CA3AF",
-            fontSize: "0.875rem",
+            fontSize: sizeStyles.fontSize,
             textAlign: "left",
             width: "100%",
             display: "flex",
@@ -193,7 +191,7 @@ const Select = ({
         }),
         valueContainer: (base) => ({
             ...base,
-            padding: "0 12px",
+            padding: sizeStyles.padding,
             gap: "4px",
             display: "flex",
             justifyContent: variant === "primary" ? "center" : "flex-start",
@@ -203,12 +201,12 @@ const Select = ({
             ...base,
             padding: "0",
             margin: "0",
-            fontSize: "0.875rem"
+            fontSize: sizeStyles.fontSize
         }),
         dropdownIndicator: (base, state) => ({
             ...base,
             color: variant === "primary" ? "white" : "#9CA3AF",
-            padding: "0 8px 0 0",
+            padding: sizeStyles.indicatorPadding,
             "&:hover": {
                 color:
                     variant === "primary" ? "rgba(255,255,255,0.8)" : "#6B7280"
@@ -227,22 +225,59 @@ const Select = ({
             ...base,
             backgroundColor:
                 variant === "primary" ? "rgba(255,255,255,0.3)" : "#D1D5DB",
-            marginTop: "8px",
-            marginBottom: "8px",
+            marginTop: sizeStyles.indicatorMargin,
+            marginBottom: sizeStyles.indicatorMargin,
             ...(variant === "ghost" && { display: "none" })
         }),
         noOptionsMessage: base => ({
             ...base,
             color: "#9CA3AF",
-            fontSize: "0.875rem",
-            padding: "12px"
+            fontSize: sizeStyles.fontSize,
+            padding: size === "lg" ? "16px" : "12px"
         }),
         loadingMessage: base => ({
             ...base,
             color: "#9CA3AF",
-            fontSize: "0.875rem",
-            padding: "12px"
+            fontSize: sizeStyles.fontSize,
+            padding: size === "lg" ? "16px" : "12px"
         })
+    };
+
+    // Format option with optional icon
+    const defaultFormatOptionLabel = (option, { context }) => {
+        const showIcon = option.icon || icon;
+        
+        return (
+            <div className={`flex items-center gap-2 ${size === "lg" ? "gap-3" : "gap-2"}`}>
+                {showIcon && (
+                    <span className={`${sizeStyles.iconSize} flex items-center justify-center shrink-0`}>
+                        {option.icon || icon}
+                    </span>
+                )}
+                <span className={`truncate ${size === "lg" ? "text-base" : "text-xs"}`}>
+                    {option.label}
+                </span>
+            </div>
+        );
+    };
+
+    // Custom format for the selected value
+    const formatSelectedValue = (option) => {
+        if (!option) return null;
+        const showIcon = option.icon || icon;
+        
+        return (
+            <div className={`flex items-center gap-2 ${variant === "primary" ? "w-full justify-center" : ""}`}>
+                {showIcon && (
+                    <span className={`${sizeStyles.iconSize} flex items-center justify-center shrink-0`}>
+                        {option.icon || icon}
+                    </span>
+                )}
+                <span className={`truncate ${size === "lg" ? "text-base" : "text-xs"}`}>
+                    {option.label}
+                </span>
+            </div>
+        );
     };
 
     // Transform options to react-select format
@@ -264,9 +299,13 @@ const Select = ({
             onChange={option => onChange && onChange(option?.value ?? null)}
             placeholder={
                 variant === "primary" && icon ? (
-                    <span className="flex items-center gap-2 justify-center w-full">
-                        <span className="w-4 h-4 flex items-center justify-center shrink-0">{icon}</span>
-                        <span>{placeholder}</span>
+                    <span className={`flex items-center gap-2 justify-center w-full ${size === "lg" ? "gap-3" : "gap-2"}`}>
+                        <span className={`${sizeStyles.iconSize} flex items-center justify-center shrink-0`}>
+                            {icon}
+                        </span>
+                        <span className={size === "lg" ? "text-base" : "text-xs"}>
+                            {placeholder}
+                        </span>
                     </span>
                 ) : placeholder
             }
@@ -276,15 +315,15 @@ const Select = ({
             isLoading={isLoading}
             styles={customStyles}
             formatOptionLabel={(option, { context }) => {
-                // Show icon in the selected value area
                 if (context === 'value') {
                     return formatSelectedValue(option);
                 }
-                // Show icon in dropdown options
                 return defaultFormatOptionLabel(option, { context });
             }}
-            className={`text-sm ${className}`}
+            className={`${size === "lg" ? "text-base" : "text-xs"} ${className}`}
             classNamePrefix="react-select"
+            menuPortalTarget={menuPortalTarget}
+            menuPosition={menuPosition}
             {...props}
         />
     );

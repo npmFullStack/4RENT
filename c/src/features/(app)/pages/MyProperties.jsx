@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import {
     HelpCircle,
     Plus,
-    ChevronDown,
     Bed,
     Home,
     ArrowRight,
@@ -13,19 +12,24 @@ import {
     XCircle,
     AlertCircle,
     Edit,
-    Trash2
+    Trash2,
+    Eye
 } from "lucide-react";
 import HelpPageModal from "@/shared/components/HelpPageModal";
 import Table from "@/shared/components/Table";
-import Button from "@/shared/components/Button";
 import Badge from "@/shared/components/Badge";
 import Select from "@/shared/components/Select";
 import property1 from "@/assets/images/property1.png";
 import property2 from "@/assets/images/property2.png";
 import property3 from "@/assets/images/property3.png";
-import noMoreProperty from "@/assets/images/no-more-property.png";
 
-// Mock data for properties with unique entries (removed duplicates)
+// Helper function to generate property ID
+const generatePropertyId = (id, category, createdAt) => {
+    const prefix = category === "boarding" ? "BRD" : "APT";
+    const paddedNumber = String(id).padStart(4, "0");
+    return `${prefix}-${paddedNumber}`;
+};
+
 const mockProperties = [
     {
         id: 1,
@@ -159,43 +163,90 @@ const mockProperties = [
         createdAt: "2024-02-28"
     }
 ];
+// Add propertyId to each mock property
+const propertiesWithId = mockProperties.map(property => ({
+    ...property,
+    propertyId: generatePropertyId(
+        property.id,
+        property.category,
+        property.createdAt
+    )
+}));
 
 const MyProperties = () => {
     const navigate = useNavigate();
     const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
     const [selectedPropertyType, setSelectedPropertyType] = useState(null);
-    const [properties, setProperties] = useState(mockProperties);
+    const [properties, setProperties] = useState(propertiesWithId);
+    const [actionValues, setActionValues] = useState({});
 
-    // Property type options for Select
     const propertyTypeOptions = [
         {
             value: "boarding",
             label: "Boarding",
-            icon: <Bed className="w-3 h-3" />
+            icon: <Bed className="w-4 h-4" />
         },
         {
             value: "apartment",
             label: "Apartment",
-            icon: <Home className="w-3 h-3" />
+            icon: <Home className="w-4 h-4" />
         }
     ];
 
-    // Handle view details
+    // Action options for the Select dropdown
+    const actionOptions = [
+        {
+            value: "view",
+            label: "View Details",
+            icon: <Eye className="w-3 h-3" />
+        },
+        {
+            value: "edit",
+            label: "Edit Property",
+            icon: <Edit className="w-3 h-3" />
+        },
+        {
+            value: "remove",
+            label: "Remove Property",
+            icon: <Trash2 className="w-3 h-3" />
+        }
+    ];
+
     const handleViewDetails = property => {
         console.log("View details:", property);
     };
 
-    // Handle edit property
     const handleEditProperty = property => {
         console.log("Edit property:", property);
     };
 
-    // Handle remove property
     const handleRemoveProperty = property => {
         console.log("Remove property:", property);
     };
 
-    // Handle new property creation with navigation
+    const handleActionChange = (property, actionValue) => {
+        if (!actionValue) return;
+
+        switch (actionValue) {
+            case "view":
+                handleViewDetails(property);
+                break;
+            case "edit":
+                handleEditProperty(property);
+                break;
+            case "remove":
+                handleRemoveProperty(property);
+                break;
+            default:
+                break;
+        }
+        // Reset the select after action
+        setActionValues(prev => ({
+            ...prev,
+            [property.id]: null
+        }));
+    };
+
     const handleNewProperty = type => {
         if (type === "boarding") {
             navigate("/new-boarding");
@@ -205,7 +256,6 @@ const MyProperties = () => {
         setSelectedPropertyType(null);
     };
 
-    // Get status badge props
     const getStatusBadgeProps = row => {
         if (row.category === "apartment") {
             if (row.status === "rented") {
@@ -242,8 +292,18 @@ const MyProperties = () => {
         return { icon: AlertCircle, label: row.status, color: "gray" };
     };
 
-    // Table columns configuration
     const columns = [
+        {
+            key: "propertyId",
+            header: "Property ID",
+            sortable: true,
+            width: "100px",
+            render: row => (
+                <span className="font-mono text-xs font-semibold text-gray-700">
+                    {row.propertyId}
+                </span>
+            )
+        },
         {
             key: "image",
             header: "Image",
@@ -253,27 +313,14 @@ const MyProperties = () => {
             render: row => {
                 const isBoarding = row.category === "boarding";
                 return (
-                    <div className="relative flex flex-col items-center gap-1.5 py-3">
-                        {/* Vertical colored line - Blue for Boarding, Red for Apartment */}
-                        <div
-                            className={`absolute left-0 top-0 bottom-0 w-1 rounded-l-lg ${
-                                isBoarding ? "bg-blue-500" : "bg-red-500"
-                            }`}
-                        />
-                        <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                    <div className="relative flex flex-col items-center gap-1 py-3">
+                        <div className="w-20 h-20 bg-gray-100 rounded-md overflow-hidden flex-shrink-0">
                             <img
                                 src={row.image}
                                 alt={row.name}
                                 className="w-full h-full object-cover"
                             />
                         </div>
-                        <Badge
-                            variant="outline"
-                            color={isBoarding ? "blue" : "red"}
-                            icon={isBoarding ? Bed : Home}
-                        >
-                            {isBoarding ? "Boarding" : "Apartment"}
-                        </Badge>
                     </div>
                 );
             }
@@ -282,9 +329,10 @@ const MyProperties = () => {
             key: "propertyInfo",
             header: "Property Info",
             sortable: true,
+            width: "250px",
             render: row => (
                 <div>
-                    <p className="font-semibold text-gray-800 text-sm">
+                    <p className="font-semibold text-gray-800 text-xs">
                         {row.name}
                     </p>
                     <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">
@@ -292,6 +340,23 @@ const MyProperties = () => {
                     </p>
                 </div>
             )
+        },
+        {
+            key: "type",
+            header: "Type",
+            sortable: true,
+            render: row => {
+                const isBoarding = row.category === "boarding";
+                return (
+                    <Badge
+                        variant="outline"
+                        color={isBoarding ? "blue" : "red"}
+                        icon={isBoarding ? Bed : Home}
+                    >
+                        {isBoarding ? "Boarding" : "Apartment"}
+                    </Badge>
+                );
+            }
         },
         {
             key: "price",
@@ -318,88 +383,66 @@ const MyProperties = () => {
         }
     ];
 
-    // Table search handler
     const handleTableSearch = (searchTerm, data) => {
         if (!searchTerm.trim()) return data;
-
         return data.filter(
             item =>
                 item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                item.address.toLowerCase().includes(searchTerm.toLowerCase())
+                item.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                item.propertyId.toLowerCase().includes(searchTerm.toLowerCase())
         );
     };
 
-    // Action menu for each row
-    const renderActions = (row, closeMenu) => (
-        <div className="py-1">
-            <button
-                onClick={(e) => {
-                    e.stopPropagation();
-                    handleViewDetails(row);
-                    closeMenu();
+    // Fixed renderActions - no portal, proper positioning
+    const renderActions = row => (
+        <div className="w-28 relative">
+            <Select
+                options={actionOptions}
+                value={actionValues[row.id] || null}
+                onChange={value => {
+                    setActionValues(prev => ({
+                        ...prev,
+                        [row.id]: value
+                    }));
+                    handleActionChange(row, value);
                 }}
-                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-            >
-                <ArrowRight className="w-4 h-4" />
-                View Details
-            </button>
-            <button
-                onClick={(e) => {
-                    e.stopPropagation();
-                    handleEditProperty(row);
-                    closeMenu();
-                }}
-                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-            >
-                <Edit className="w-4 h-4" />
-                Edit Property
-            </button>
-            <hr className="my-1 border-gray-200" />
-            <button
-                onClick={(e) => {
-                    e.stopPropagation();
-                    handleRemoveProperty(row);
-                    closeMenu();
-                }}
-                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-            >
-                <Trash2 className="w-4 h-4" />
-                Remove Property
-            </button>
+                placeholder="More"
+                variant="outline"
+                isSearchable={false}
+                isClearable={true}
+                className="text-xs w-full"
+            />
         </div>
     );
 
-    // Help modal features
     const helpFeatures = [
         {
             title: "My Properties",
-            description:
-                "View and manage all your properties in one place. You can see property details, status, and take actions.",
+            description: "View and manage all your properties in one place.",
             icon: "Building2"
         },
         {
             title: "Add New Property",
             description:
-                "Click the 'New Property' button to add a boarding house or apartment. Fill in the property details to list it.",
+                "Click the 'New Property' button to add a boarding house or apartment.",
             icon: "Plus"
         },
         {
             title: "Search",
             description:
-                "Use the search bar to find properties by name or address.",
+                "Use the search bar to find properties by name, address, or Property ID.",
             icon: "Search"
         },
         {
             title: "Property Actions",
             description:
-                "Click the ellipsis (⋯) button on any row to access property actions like View Details, Edit Property, or Remove Property.",
+                "Click the 'More' dropdown to access View Details, Edit Property, or Remove Property.",
             icon: "MoreHorizontal"
         }
     ];
 
     return (
         <div className="p-4 md:p-6 bg-neutral-50 min-h-screen">
-            {/* Header Section - Similar layout to Random Properties in Home.jsx */}
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
                 <div className="flex items-center gap-3">
                     <button
@@ -421,7 +464,6 @@ const MyProperties = () => {
                 </div>
 
                 <div className="flex items-center justify-end gap-3">
-                    {/* Help Button (Desktop) */}
                     <button
                         onClick={() => setIsHelpModalOpen(true)}
                         className="hidden sm:flex px-3 py-2 text-gray-500 bg-transparent hover:bg-gray-100 rounded-lg transition-colors items-center gap-2"
@@ -429,8 +471,8 @@ const MyProperties = () => {
                         <HelpCircle size={20} />
                         <span className="font-medium">Help</span>
                     </button>
-                    {/* New Property Select Component - Now aligned to the right on mobile */}
-                    <div className="w-50">
+                    {/* Larger New Property button */}
+                    <div className="w-54">
                         <Select
                             options={propertyTypeOptions}
                             value={selectedPropertyType}
@@ -439,13 +481,13 @@ const MyProperties = () => {
                             variant="primary"
                             isSearchable={false}
                             isClearable={false}
-                            icon={<Plus className="w-4 h-4" />}
+                            icon={<Plus className="w-5 h-5" />}
+                            size="lg"
                         />
                     </div>
                 </div>
             </div>
 
-            {/* Table */}
             <div className="rounded-xl overflow-hidden">
                 <Table
                     columns={columns}
@@ -453,7 +495,7 @@ const MyProperties = () => {
                     keyField="id"
                     onRowClick={handleViewDetails}
                     showSearch={true}
-                    searchPlaceholder="Search by property name or address..."
+                    searchPlaceholder="Search by property name, address, or Property ID..."
                     onSearch={handleTableSearch}
                     itemsPerPageOptions={[5, 10, 20, -1]}
                     itemsPerPage={5}
@@ -462,7 +504,6 @@ const MyProperties = () => {
                 />
             </div>
 
-            {/* Help Modal */}
             <HelpPageModal
                 isOpen={isHelpModalOpen}
                 onClose={() => setIsHelpModalOpen(false)}
