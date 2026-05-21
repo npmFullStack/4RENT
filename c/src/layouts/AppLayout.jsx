@@ -19,7 +19,7 @@ import {
 import logo from "@/assets/images/logo.svg";
 import avatar from "@/assets/images/avatar.svg";
 import WarningModal from "@/shared/components/WarningModal";
-import NotificationMenu from "@/shared/components/NotificationMenu";
+import NotificationMenu from "@/features/(app)/components/NotificationMenu";
 import ProfileMenu from "@/shared/components/ProfileMenu";
 import Toast from "@/shared/components/Toast";
 

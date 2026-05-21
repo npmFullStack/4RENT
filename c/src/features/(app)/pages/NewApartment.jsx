@@ -187,7 +187,10 @@ const NewApartment = () => {
         <div className="p-4 md:p-6 bg-neutral-50 min-h-screen">
             {/* Breadcrumbs */}
             <div className="mb-4">
-                <BreadCrumbs />
+<BreadCrumbs items={[
+    { label: "My Properties", path: "/my-properties" },
+    { label: "New Apartment", path: "/new-apartment" }
+]} />
             </div>
 
             {/* Header */}

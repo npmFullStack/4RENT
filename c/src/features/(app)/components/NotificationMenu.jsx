@@ -1,4 +1,4 @@
-// src/shared/components/NotificationMenu.jsx
+// src/features/(app)/components/NotificationMenu.jsx
 import React from "react";
 import {
     Bell,
