@@ -15,7 +15,7 @@ import Table from "@/shared/components/Table";
 import Button from "@/shared/components/Button";
 import Badge from "@/shared/components/Badge";
 import Toast from "@/shared/components/Toast";
-import WarningModal from "@/shared/components/WarningModal";
+import ConfirmModal from "@/shared/components/ConfirmModal"; // Changed from WarningModal
 import Select from "@/shared/components/Select";
 
 // Import property images
@@ -239,13 +239,13 @@ const Tenants = () => {
             value: "markPaid",
             label: "Mark as Paid",
             icon: <CheckCircle className="w-3 h-3" />,
-className: "text-gray-800"
+            className: "text-gray-800"
         },
         {
             value: "remove",
             label: "Remove Tenant",
             icon: <XCircle className="w-3 h-3" />,
- className: "text-red-600",
+            className: "text-red-600",
             separator: true
         }
     ];
@@ -588,14 +588,14 @@ className: "text-gray-800"
                 />
             </div>
 
-            {/* Mark as Paid Confirmation Modal */}
-            <WarningModal
+            {/* Mark as Paid Confirmation Modal - Using info variant for payment confirmation */}
+            <ConfirmModal
                 isOpen={isMarkPaidModalOpen}
                 onClose={() => setIsMarkPaidModalOpen(false)}
                 onConfirm={confirmMarkAsPaid}
                 title="Mark as Paid"
-                icon={CreditCard}
-                description={`Mark ${selectedTenant?.firstName} ${selectedTenant?.lastName}'s rent payment as paid for this month?`}
+                message={`Mark ${selectedTenant?.firstName} ${selectedTenant?.lastName}'s rent payment as paid for this month?`}
+                variant="info"
                 confirmText="Mark as Paid"
                 cancelText="Cancel"
                 isLoading={isProcessing}

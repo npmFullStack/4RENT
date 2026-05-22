@@ -1,4 +1,4 @@
-// src/layoutsAppLayout.jsx
+// src/layoutsAppLayout.jsx (updated imports and modal usage)
 import React, { useState, useEffect, useRef } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import logo from "@/assets/images/logo.svg";
 import avatar from "@/assets/images/avatar.svg";
-import WarningModal from "@/shared/components/WarningModal";
+import ConfirmModal from "@/shared/components/ConfirmModal"; // Changed import
 import NotificationMenu from "@/features/(app)/components/NotificationMenu";
 import ProfileMenu from "@/shared/components/ProfileMenu";
 import Toast from "@/shared/components/Toast";
@@ -395,14 +395,14 @@ const AppLayout = () => {
             {/* Mobile Drawer */}
             <MobileDrawer />
 
-            {/* Logout Warning Modal */}
-            <WarningModal
+            {/* Logout Confirmation Modal */}
+            <ConfirmModal
                 isOpen={isLogoutModalOpen}
                 onClose={() => setIsLogoutModalOpen(false)}
                 onConfirm={confirmLogout}
                 title="Sign Out Confirmation"
-                icon={LogOut}
-                description="Are you sure you want to sign out? You will need to sign in again to access your account."
+                message="Are you sure you want to sign out? You will need to sign in again to access your account."
+                variant="danger"
                 confirmText="Sign Out"
                 cancelText="Cancel"
                 isLoading={isLoggingOut}
