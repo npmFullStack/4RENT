@@ -7,7 +7,7 @@ import {
     Users,
     Home,
     CheckCircle,
-    DollarSign,
+    PhilippinePeso,
     Wrench,
     UserPlus,
     UserMinus,
@@ -36,7 +36,7 @@ const MONTH_NAMES = [
 const DAY_LABELS = ["S", "M", "T", "W", "T", "F", "S"];
 
 const EVENT_CONFIG = {
-    rent_due: { color: "red", label: "Rent Due", icon: DollarSign },
+    rent_due: { color: "red", label: "Rent Due", icon: PhilippinePeso },
     rent_paid: { color: "green", label: "Rent Paid", icon: CheckCircle },
     move_in: { color: "blue", label: "Move In", icon: UserPlus },
     move_out: { color: "purple", label: "Move Out", icon: UserMinus },

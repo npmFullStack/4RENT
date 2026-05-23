@@ -259,7 +259,12 @@ const NewBoarding = () => {
         );
     };
 
-    // Handle form submission - No validation
+    // Thumbnail images
+    const thumbnailImages = formData.images.filter(
+        img => img.preview !== formData.selectedImage
+    );
+
+    // Handle form submission
     const handleSubmit = async e => {
         e.preventDefault();
 
@@ -334,16 +339,33 @@ const NewBoarding = () => {
         }
     ];
 
-    // Thumbnail images
-    const thumbnailImages = formData.images.filter(
-        img => img.preview !== formData.selectedImage
-    );
+    // Get card style based on type and selection
+    const getCardStyle = (optionValue, isSelected) => {
+        if (!isSelected) {
+            return "border-gray-200 bg-white hover:border-gray-300";
+        }
+
+        if (optionValue === "male") {
+            return "border-blue-500 bg-blue-50 ring-2 ring-blue-500/20";
+        }
+
+        if (optionValue === "female") {
+            return "border-pink-500 bg-pink-50 ring-2 ring-pink-500/20";
+        }
+
+        return "border-gray-500 bg-gray-100 ring-2 ring-gray-500/20";
+    };
 
     return (
         <div className="p-4 md:p-6 bg-neutral-50 min-h-screen">
             {/* Breadcrumbs */}
             <div className="mb-4">
-                <BreadCrumbs />
+                <BreadCrumbs
+                    items={[
+                        { label: "My Properties", path: "/my-properties" },
+                        { label: "New Boarding", path: "/new-boarding" }
+                    ]}
+                />
             </div>
 
             {/* Header */}
@@ -563,49 +585,93 @@ const NewBoarding = () => {
                             />
                         </div>
 
-                        {/* Boarding House Type */}
-                        <div className="mb-6">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Boarding House Type
-                            </label>
-                            <div className="grid grid-cols-3 gap-3">
-                                {getBoardingHouseSexOptions().map(option => (
-                                    <button
-                                        key={option.value}
-                                        type="button"
-                                        onClick={() =>
-                                            handleBoardingHouseSexChange(
-                                                option.value
-                                            )
-                                        }
-                                        className={`flex flex-col items-center gap-2 p-3 border-2 rounded-lg transition-all ${
-                                            formData.boardingHouseSex ===
-                                            option.value
-                                                ? "border-gray-500 bg-gray-300/5 ring-2 ring-gray-500/20"
-                                                : "border-gray-200 bg-white hover:border-gray-300"
-                                        }`}
-                                    >
-                                        <div className="w-8 h-8 flex items-center justify-center">
-                                            {option.icon}
-                                        </div>
-                                        <span
-                                            className={`text-sm font-medium ${
-                                                formData.boardingHouseSex ===
-                                                option.value
-                                                    ? "text-primary"
-                                                    : "text-gray-700"
-                                            }`}
-                                        >
-                                            {option.label}
-                                        </span>
-                                    </button>
-                                ))}
-                            </div>
-                            <p className="text-xs text-gray-400 mt-2">
-                                Select your boarding house type
-                            </p>
-                        </div>
+{/* Boarding House Type - Updated */}
+<div className="mb-6">
+    <label className="block text-sm font-medium text-gray-700 mb-2">
+        Boarding House Type
+    </label>
+    <div className="grid grid-cols-3 gap-3">
+        {getBoardingHouseSexOptions().map(option => {
+            const isSelected =
+                formData.boardingHouseSex ===
+                option.value;
 
+            return (
+                <button
+                    key={option.value}
+                    type="button"
+                    onClick={() =>
+                        handleBoardingHouseSexChange(
+                            option.value
+                        )
+                    }
+                    className={`
+                        relative flex items-center justify-center gap-2 p-4 
+                        rounded-lg transition-all duration-200 border-2
+                        whitespace-nowrap
+                        ${getCardStyle(option.value, isSelected)}
+                    `}
+                    style={{
+                        background:
+                            option.value === "mixed" &&
+                            isSelected
+                                ? "linear-gradient(to bottom right, #eff6ff, #fce7f7)"
+                                : undefined
+                    }}
+                >
+                    {/* Mixed gradient border overlay - top and left blue, right and bottom pink */}
+                    {option.value === "mixed" &&
+                        isSelected && (
+                            <>
+                                <div className="absolute inset-0 rounded-lg -z-10" 
+                                     style={{
+                                         background: "linear-gradient(135deg, #3b82f6 0%, #3b82f6 50%, #ec4899 50%, #ec4899 100%)",
+                                         padding: "2px",
+                                         mask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+                                         WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+                                         WebkitMaskComposite: "xor",
+                                         maskComposite: "exclude"
+                                     }}
+                                />
+                                {/* Individual border approach for better browser support */}
+                                <div className="absolute inset-0 rounded-lg pointer-events-none"
+                                     style={{
+                                         borderTop: "2px solid #3b82f6",
+                                         borderLeft: "2px solid #3b82f6",
+                                         borderRight: "2px solid #ec4899",
+                                         borderBottom: "2px solid #ec4899",
+                                         borderRadius: "0.5rem"
+                                     }}
+                                />
+                            </>
+                        )}
+
+                    <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center">
+                        {option.icon}
+                    </div>
+                    <span
+                        className={`text-sm font-medium flex-shrink-0 ${
+                            isSelected
+                                ? option.value ===
+                                  "male"
+                                    ? "text-blue-700"
+                                    : option.value ===
+                                        "female"
+                                      ? "text-pink-700"
+                                      : "text-gray-800"
+                                : "text-gray-700"
+                        }`}
+                    >
+                        {option.label}
+                    </span>
+                </button>
+            );
+        })}
+    </div>
+    <p className="text-xs text-gray-400 mt-2">
+        Select your boarding house type
+    </p>
+</div>
                         {/* Bedrooms Section */}
                         <div className="mb-6">
                             <div className="flex items-center justify-between mb-3">

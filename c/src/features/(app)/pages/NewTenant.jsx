@@ -15,7 +15,8 @@ import {
     Calendar as CalendarIcon,
     User,
     ChevronDown,
-    ChevronUp
+    ChevronUp,
+    ArrowRight
 } from "lucide-react";
 import BreadCrumbs from "../components/BreadCrumbs";
 import Instructions from "../components/Instructions";
@@ -285,19 +286,25 @@ const NewTenant = () => {
     });
 
     // Determine which properties to display
-    const displayedProperties = selectedProperty 
-        ? [selectedProperty]  // Show only selected property if one is selected
-        : propertiesWithId;   // Show all properties if no property selected
+    const displayedProperties = selectedProperty
+        ? [selectedProperty] // Show only selected property if one is selected
+        : propertiesWithId; // Show all properties if no property selected
 
     // Filtered properties based on search (only applies when no property is selected)
-    const filteredProperties = selectedProperty 
-        ? displayedProperties  // No filtering when a property is selected
+    const filteredProperties = selectedProperty
+        ? displayedProperties // No filtering when a property is selected
         : displayedProperties.filter(
-            property =>
-                property.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                property.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                property.propertyId.toLowerCase().includes(searchTerm.toLowerCase())
-        );
+              property =>
+                  property.name
+                      .toLowerCase()
+                      .includes(searchTerm.toLowerCase()) ||
+                  property.address
+                      .toLowerCase()
+                      .includes(searchTerm.toLowerCase()) ||
+                  property.propertyId
+                      .toLowerCase()
+                      .includes(searchTerm.toLowerCase())
+          );
 
     // Instructions items
     const instructionItems = [
@@ -348,7 +355,10 @@ const NewTenant = () => {
         setSelectedProperty(null);
         setSelectedRoom(null);
         setExpandedPropertyId(null);
-        Toast.info("Property Selection Cleared", "You can now select a different property.");
+        Toast.info(
+            "Property Selection Cleared",
+            "You can now select a different property."
+        );
     };
 
     // Toggle property expansion
@@ -628,30 +638,12 @@ const NewTenant = () => {
                                         property.category === "boarding" &&
                                         property.bedrooms?.length > 0;
 
-                                    // Determine button styling based on selection state
-                                    const getButtonStyle = () => {
-                                        if (isSelected) {
-                                            return {
-                                                variant: "ghost",
-                                                className: "text-green-600 bg-white border-green-200 hover:bg-green-50",
-                                                icon: CheckCircle
-                                            };
-                                        }
-                                        return {
-                                            variant: "outline",
-                                            className: "",
-                                            icon: null
-                                        };
-                                    };
-
-                                    const buttonConfig = getButtonStyle();
-
                                     return (
                                         <div
                                             key={property.id}
                                             className={`border rounded-xl overflow-hidden transition-all ${
                                                 isSelected
-                                                    ? "border-green-300 ring-2 ring-green-200 bg-white"
+                                                    ? "border-gray-800 ring-2 ring-gray-200 bg-white"
                                                     : "border-gray-200 hover:border-gray-300"
                                             }`}
                                         >
@@ -748,22 +740,30 @@ const NewTenant = () => {
                                                                     </div>
                                                                 )}
                                                             </div>
-                                                            <Button
-                                                                type="button"
-                                                                variant={buttonConfig.variant}
-                                                                size="sm"
-                                                                icon={buttonConfig.icon}
-                                                                onClick={() =>
-                                                                    handleSelectProperty(
-                                                                        property
-                                                                    )
-                                                                }
-                                                                className={`px-4 py-1.5 text-sm ${buttonConfig.className}`}
-                                                            >
-                                                                {isSelected
-                                                                    ? "Selected"
-                                                                    : "Select"}
-                                                            </Button>
+                                                            {/* Property Select Button - bg-gray-800 with white text */}
+                                                            {!isSelected ? (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        handleSelectProperty(
+                                                                            property
+                                                                        )
+                                                                    }
+                                                                    className="px-5 py-2 text-sm bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors flex items-center gap-1"
+                                                                >
+                                                                    Select
+                                                                    <ArrowRight className="w-4 h-4" />
+                                                                </button>
+                                                            ) : (
+                                                                <button
+                                                                    type="button"
+                                                                    disabled
+                                                                    className="px-4 py-1.5 text-sm bg-gray-100 text-gray-500 rounded-lg cursor-not-allowed flex items-center gap-1"
+                                                                >
+                                                                    <CheckCircle className="w-4 h-4" />
+                                                                    Selected
+                                                                </button>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -802,7 +802,7 @@ const NewTenant = () => {
                                                                         }
                                                                         className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
                                                                             isRoomSelected
-                                                                                ? "border-green-300 bg-green-50"
+                                                                                ? "border-gray-300 bg-gray-50"
                                                                                 : room.status ===
                                                                                     "full"
                                                                                   ? "border-gray-200 bg-gray-100 opacity-60"
@@ -875,29 +875,40 @@ const NewTenant = () => {
                                                                                 )}
                                                                             </div>
                                                                         </div>
-                                                                        <Button
-                                                                            type="button"
-                                                                            variant={
-                                                                                isRoomSelected
-                                                                                    ? "ghost"
-                                                                                    : "outline"
-                                                                            }
-                                                                            size="sm"
-                                                                            onClick={() =>
-                                                                                handleSelectRoom(
-                                                                                    room
-                                                                                )
-                                                                            }
-                                                                            disabled={
-                                                                                room.status ===
-                                                                                "full"
-                                                                            }
-                                                                            className="px-3 py-1 text-xs ml-3"
-                                                                        >
-                                                                            {isRoomSelected
-                                                                                ? "Selected"
-                                                                                : "Select Room"}
-                                                                        </Button>
+                                                                        {/* Room Select Button - bg-gray-800 with white text */}
+                                                                        {!isRoomSelected ? (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() =>
+                                                                                    handleSelectRoom(
+                                                                                        room
+                                                                                    )
+                                                                                }
+                                                                                disabled={
+                                                                                    room.status ===
+                                                                                    "full"
+                                                                                }
+                                                                                className={`px-3 py-2 text-xs rounded-lg flex items-center gap-1 transition-colors ml-3 ${
+                                                                                    room.status ===
+                                                                                    "full"
+                                                                                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                                                                        : "bg-gray-800 text-white hover:bg-gray-700"
+                                                                                }`}
+                                                                            >
+                                                                                Select
+                                                                                Room
+                                                                                <ArrowRight className="w-3 h-3" />
+                                                                            </button>
+                                                                        ) : (
+                                                                            <button
+                                                                                type="button"
+                                                                                disabled
+                                                                                className="px-3 py-1 text-xs bg-gray-100 text-gray-500 rounded-lg cursor-not-allowed flex items-center gap-1 ml-3"
+                                                                            >
+                                                                                <CheckCircle className="w-3 h-3" />
+                                                                                Selected
+                                                                            </button>
+                                                                        )}
                                                                     </div>
                                                                 );
                                                             }
@@ -910,22 +921,29 @@ const NewTenant = () => {
                                 })}
                             </div>
 
-                            {!selectedProperty && filteredProperties.length === 0 && searchTerm && (
-                                <div className="text-center py-8 text-gray-500">
-                                    <Search className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                                    <p>
-                                        No properties found matching "
-                                        {searchTerm}"
-                                    </p>
-                                </div>
-                            )}
+                            {!selectedProperty &&
+                                filteredProperties.length === 0 &&
+                                searchTerm && (
+                                    <div className="text-center py-8 text-gray-500">
+                                        <Search className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                                        <p>
+                                            No properties found matching "
+                                            {searchTerm}"
+                                        </p>
+                                    </div>
+                                )}
 
-                            {!selectedProperty && filteredProperties.length === 0 && !searchTerm && (
-                                <div className="text-center py-8 text-gray-500">
-                                    <Home className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                                    <p>Start typing to search for properties</p>
-                                </div>
-                            )}
+                            {!selectedProperty &&
+                                filteredProperties.length === 0 &&
+                                !searchTerm && (
+                                    <div className="text-center py-8 text-gray-500">
+                                        <Home className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                                        <p>
+                                            Start typing to search for
+                                            properties
+                                        </p>
+                                    </div>
+                                )}
                         </div>
 
                         {/* Submit Buttons */}
