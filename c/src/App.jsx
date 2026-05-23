@@ -20,6 +20,7 @@ import NewBoarding from "@/features/(app)/pages/NewBoarding";
 import NewApartment from "@/features/(app)/pages/NewApartment";
 import Tenants from "@/features/(app)/pages/Tenants";
 import NewTenant from "@/features/(app)/pages/NewTenant";
+import CalendarPage from "@/features/(app)/pages/Calendar";
 
 function App() {
     return (
@@ -60,6 +61,7 @@ function App() {
                     <Route path="new-apartment" element={<NewApartment />} />
                     <Route path="/tenants" element={<Tenants />} />
                     <Route path="new-tenant" element={<NewTenant />} />
+                    <Route path="calendar" element={<CalendarPage />} />
                 </Route>
             </Routes>
         </BrowserRouter>
