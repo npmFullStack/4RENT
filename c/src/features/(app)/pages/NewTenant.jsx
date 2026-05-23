@@ -3,27 +3,19 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     HelpCircle,
-    Upload,
     X,
-    MapPin,
     Bed,
-    Bath,
-    PhilippinePeso,
-    Building2,
+    Home,
     Trash2,
     Plus,
-    Image as ImageIcon,
-    ChevronUp,
     Search,
     Users,
     CheckCircle,
     AlertCircle,
     Calendar as CalendarIcon,
     User,
-    Mail,
-    Phone,
-    FileText,
-Home
+    ChevronDown,
+    ChevronUp
 } from "lucide-react";
 import BreadCrumbs from "../components/BreadCrumbs";
 import Instructions from "../components/Instructions";
@@ -32,7 +24,6 @@ import Button from "@/shared/components/Button";
 import Badge from "@/shared/components/Badge";
 import Toast from "@/shared/components/Toast";
 import DatePicker from "@/shared/components/DatePicker";
-import Select from "@/shared/components/Select";
 
 // Import property images (same as MyProperties)
 import property1 from "@/assets/images/property1.png";
@@ -42,6 +33,7 @@ import property3 from "@/assets/images/property3.png";
 // Import gender icons
 import MaleIcon from "@/assets/icons/male.svg";
 import FemaleIcon from "@/assets/icons/female.svg";
+import MixedIcon from "@/assets/icons/mixed.svg";
 
 // Helper function to generate property ID
 const generatePropertyId = (id, category, createdAt) => {
@@ -65,8 +57,22 @@ const mockProperties = [
         status: "available",
         createdAt: "2024-01-15",
         bedrooms: [
-            { id: 1, name: "Bedroom #1", capacity: 4, gender: "female", currentOccupancy: 0, status: "vacant" },
-            { id: 2, name: "Bedroom #2", capacity: 3, gender: "female", currentOccupancy: 2, status: "partial" }
+            {
+                id: 1,
+                name: "Bedroom #1",
+                capacity: 4,
+                gender: "female",
+                currentOccupancy: 0,
+                status: "vacant"
+            },
+            {
+                id: 2,
+                name: "Bedroom #2",
+                capacity: 3,
+                gender: "female",
+                currentOccupancy: 2,
+                status: "partial"
+            }
         ]
     },
     {
@@ -96,7 +102,14 @@ const mockProperties = [
         status: "full",
         createdAt: "2024-01-10",
         bedrooms: [
-            { id: 1, name: "Bedroom #1", capacity: 3, gender: "male", currentOccupancy: 3, status: "full" }
+            {
+                id: 1,
+                name: "Bedroom #1",
+                capacity: 3,
+                gender: "male",
+                currentOccupancy: 3,
+                status: "full"
+            }
         ]
     },
     {
@@ -122,11 +135,18 @@ const mockProperties = [
         price: 4200,
         capacity: 2,
         currentTenants: 1,
-        sex: "female",
+        sex: "mixed",
         status: "available",
         createdAt: "2024-03-15",
         bedrooms: [
-            { id: 1, name: "Studio Room", capacity: 2, gender: "female", currentOccupancy: 1, status: "partial" }
+            {
+                id: 1,
+                name: "Studio Room",
+                capacity: 2,
+                gender: "female",
+                currentOccupancy: 1,
+                status: "partial"
+            }
         ]
     },
     {
@@ -134,7 +154,8 @@ const mockProperties = [
         image: property3,
         name: "Metro Central Tower",
         category: "apartment",
-        address: "789 Business Ave, Barangay Commercial, Makati City, Philippines",
+        address:
+            "789 Business Ave, Barangay Commercial, Makati City, Philippines",
         price: 22500,
         capacity: null,
         currentTenants: null,
@@ -152,12 +173,26 @@ const mockProperties = [
         price: 3500,
         capacity: 5,
         currentTenants: 2,
-        sex: "female",
+        sex: "mixed",
         status: "available",
         createdAt: "2024-02-10",
         bedrooms: [
-            { id: 1, name: "Room A", capacity: 2, gender: "female", currentOccupancy: 1, status: "partial" },
-            { id: 2, name: "Room B", capacity: 3, gender: "female", currentOccupancy: 1, status: "partial" }
+            {
+                id: 1,
+                name: "Room A",
+                capacity: 2,
+                gender: "female",
+                currentOccupancy: 1,
+                status: "partial"
+            },
+            {
+                id: 2,
+                name: "Room B",
+                capacity: 3,
+                gender: "male",
+                currentOccupancy: 1,
+                status: "partial"
+            }
         ]
     },
     {
@@ -187,8 +222,22 @@ const mockProperties = [
         status: "full",
         createdAt: "2024-03-20",
         bedrooms: [
-            { id: 1, name: "Room 1", capacity: 2, gender: "male", currentOccupancy: 2, status: "full" },
-            { id: 2, name: "Room 2", capacity: 2, gender: "male", currentOccupancy: 2, status: "full" }
+            {
+                id: 1,
+                name: "Room 1",
+                capacity: 2,
+                gender: "male",
+                currentOccupancy: 2,
+                status: "full"
+            },
+            {
+                id: 2,
+                name: "Room 2",
+                capacity: 2,
+                gender: "male",
+                currentOccupancy: 2,
+                status: "full"
+            }
         ]
     },
     {
@@ -210,57 +259,62 @@ const mockProperties = [
 // Add propertyId to each mock property
 const propertiesWithId = mockProperties.map(property => ({
     ...property,
-    propertyId: generatePropertyId(property.id, property.category, property.createdAt)
+    propertyId: generatePropertyId(
+        property.id,
+        property.category,
+        property.createdAt
+    )
 }));
 
 const NewTenant = () => {
     const navigate = useNavigate();
     const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
-    const [isInstructionsDrawerOpen, setIsInstructionsDrawerOpen] = useState(false);
+    const [isInstructionsDrawerOpen, setIsInstructionsDrawerOpen] =
+        useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedProperty, setSelectedProperty] = useState(null);
     const [selectedRoom, setSelectedRoom] = useState(null);
-    const [showRoomSelection, setShowRoomSelection] = useState(false);
+    const [expandedPropertyId, setExpandedPropertyId] = useState(null);
 
-    // Form state
+    // Form state - only first name, last name, and move in date
     const [formData, setFormData] = useState({
         firstName: "",
         lastName: "",
-        email: "",
-        phone: "",
-        moveInDate: null,
-        leaseEndDate: null
+        moveInDate: null
     });
 
-    // Filtered properties based on search
-    const filteredProperties = propertiesWithId.filter(property =>
-        property.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        property.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        property.propertyId.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Determine which properties to display
+    const displayedProperties = selectedProperty 
+        ? [selectedProperty]  // Show only selected property if one is selected
+        : propertiesWithId;   // Show all properties if no property selected
+
+    // Filtered properties based on search (only applies when no property is selected)
+    const filteredProperties = selectedProperty 
+        ? displayedProperties  // No filtering when a property is selected
+        : displayedProperties.filter(
+            property =>
+                property.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                property.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                property.propertyId.toLowerCase().includes(searchTerm.toLowerCase())
+        );
 
     // Instructions items
     const instructionItems = [
         {
             title: "Tenant Information",
-            description: "Enter the tenant's first name, last name, and contact details."
+            description:
+                "Enter the tenant's first name, last name, and move-in date."
         },
         {
             title: "Select Property",
-            description: "Search and select the property where the tenant will be assigned."
+            description:
+                "Search and select the property where the tenant will be assigned."
         },
         {
             title: "Select Room (Boarding Only)",
-            description: "For boarding houses, select the specific room for the tenant."
-        },
-        {
-            title: "Move In Date",
-            description: "Set the date when the tenant will move in."
-        },
-        {
-            title: "Lease End Date",
-            description: "Set the lease end date for the contract period."
+            description:
+                "For boarding houses, select the specific room for the tenant."
         }
     ];
 
@@ -270,85 +324,86 @@ const NewTenant = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    // Handle property selection
-    const handleSelectProperty = (property) => {
+    // Handle property selection (selects the property without expanding)
+    const handleSelectProperty = property => {
         setSelectedProperty(property);
         setSelectedRoom(null);
-        
-        // Check if property is boarding with multiple rooms
-        if (property.category === "boarding" && property.bedrooms && property.bedrooms.length > 0) {
-            // Filter available rooms (not full)
-            const availableRooms = property.bedrooms.filter(room => room.status !== "full");
-            if (availableRooms.length > 0) {
-                setShowRoomSelection(true);
-                Toast.info("Select Room", "Please select a room for this tenant.");
-            } else {
-                Toast.warning("No Available Rooms", "All rooms in this boarding house are full.");
-                setSelectedProperty(null);
-            }
-        } else if (property.category === "apartment") {
-            setShowRoomSelection(false);
-            Toast.success("Property Selected", `${property.name} has been selected.`);
+
+        // Auto-expand if boarding house with rooms
+        if (
+            property.category === "boarding" &&
+            property.bedrooms &&
+            property.bedrooms.length > 0
+        ) {
+            setExpandedPropertyId(property.id);
+        } else {
+            setExpandedPropertyId(null);
+        }
+
+        Toast.info("Property Selected", `${property.name} has been selected.`);
+    };
+
+    // Handle clear property selection
+    const handleClearPropertySelection = () => {
+        setSelectedProperty(null);
+        setSelectedRoom(null);
+        setExpandedPropertyId(null);
+        Toast.info("Property Selection Cleared", "You can now select a different property.");
+    };
+
+    // Toggle property expansion
+    const toggleExpand = propertyId => {
+        if (expandedPropertyId === propertyId) {
+            setExpandedPropertyId(null);
+        } else {
+            setExpandedPropertyId(propertyId);
         }
     };
 
     // Handle room selection
-    const handleSelectRoom = (room) => {
+    const handleSelectRoom = room => {
+        if (room.status === "full") {
+            Toast.warning("Room Full", "This room is already fully occupied.");
+            return;
+        }
         setSelectedRoom(room);
-        Toast.success("Room Selected", `${room.name} has been selected for this tenant.`);
+        Toast.success(
+            "Room Selected",
+            `${room.name} has been selected for this tenant.`
+        );
     };
 
-    // Handle form submission
+    // Handle form submission - no validation
     const handleSubmit = async e => {
         e.preventDefault();
-        
-        // Basic validation
-        if (!formData.firstName || !formData.lastName) {
-            Toast.error("Missing Information", "Please enter tenant's first and last name.");
-            return;
-        }
-        
-        if (!selectedProperty) {
-            Toast.error("Missing Information", "Please select a property.");
-            return;
-        }
-        
-        if (selectedProperty.category === "boarding" && !selectedRoom) {
-            Toast.error("Missing Information", "Please select a room for the boarding house.");
-            return;
-        }
-        
-        if (!formData.moveInDate) {
-            Toast.error("Missing Information", "Please select a move-in date.");
-            return;
-        }
-        
+
         setIsSubmitting(true);
 
         const submitData = {
             ...formData,
             selectedProperty,
-            selectedRoom: selectedRoom ? { ...selectedRoom, propertyId: selectedProperty.id } : null,
-            moveInDate: formData.moveInDate?.toISOString(),
-            leaseEndDate: formData.leaseEndDate?.toISOString()
+            selectedRoom: selectedRoom
+                ? { ...selectedRoom, propertyId: selectedProperty?.id }
+                : null,
+            moveInDate: formData.moveInDate?.toISOString()
         };
 
         try {
             await new Promise(resolve => setTimeout(resolve, 1500));
             console.log("Form submitted:", submitData);
-            
+
             Toast.success(
-                "Tenant Added!", 
-                `${formData.firstName} ${formData.lastName} has been successfully added to ${selectedProperty.name}.`
+                "Tenant Added!",
+                `${formData.firstName || "New Tenant"} has been successfully added.`
             );
-            
+
             setTimeout(() => {
                 navigate("/tenants");
             }, 1500);
         } catch (error) {
             console.error("Error submitting form:", error);
             Toast.error(
-                "Submission Failed", 
+                "Submission Failed",
                 "There was an error adding the tenant. Please try again."
             );
         } finally {
@@ -364,20 +419,18 @@ const NewTenant = () => {
         },
         {
             title: "Property Search",
-            description: "Search for properties by name, address, or Property ID."
+            description:
+                "Search for properties by name, address, or Property ID."
         },
         {
             title: "Room Selection",
-            description: "For boarding houses, select an available room for the tenant."
-        },
-        {
-            title: "Lease Dates",
-            description: "Set move-in date and lease end date for the contract."
+            description:
+                "For boarding houses, select an available room for the tenant."
         }
     ];
 
     // Get status badge for room
-    const getRoomStatusBadge = (status) => {
+    const getRoomStatusBadge = status => {
         switch (status) {
             case "vacant":
                 return { icon: CheckCircle, label: "Vacant", color: "green" };
@@ -387,6 +440,32 @@ const NewTenant = () => {
                 return { icon: AlertCircle, label: "Full", color: "red" };
             default:
                 return { icon: AlertCircle, label: "Unknown", color: "gray" };
+        }
+    };
+
+    // Get gender icon and label
+    const getGenderInfo = sex => {
+        switch (sex) {
+            case "male":
+                return { icon: MaleIcon, label: "Male Only" };
+            case "female":
+                return { icon: FemaleIcon, label: "Female Only" };
+            case "mixed":
+                return { icon: MixedIcon, label: "Mixed" };
+            default:
+                return null;
+        }
+    };
+
+    // Get room gender icon
+    const getRoomGenderIcon = gender => {
+        switch (gender) {
+            case "male":
+                return MaleIcon;
+            case "female":
+                return FemaleIcon;
+            default:
+                return null;
         }
     };
 
@@ -436,7 +515,10 @@ const NewTenant = () => {
             <div className="flex flex-col lg:flex-row gap-6">
                 {/* Form Section */}
                 <div className="flex-1">
-                    <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-200 p-4 md:p-6">
+                    <form
+                        onSubmit={handleSubmit}
+                        className="bg-white rounded-xl border border-gray-200 p-4 md:p-6"
+                    >
                         <h2 className="text-lg font-semibold text-gray-800 mb-6">
                             Tenant Information
                         </h2>
@@ -477,289 +559,371 @@ const NewTenant = () => {
                             </div>
                         </div>
 
-                        {/* Email and Phone */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Email Address
-                                </label>
-                                <div className="relative">
-                                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                    <input
-                                        type="email"
-                                        name="email"
-                                        value={formData.email}
-                                        onChange={handleChange}
-                                        placeholder="tenant@example.com"
-                                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Phone Number
-                                </label>
-                                <div className="relative">
-                                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                    <input
-                                        type="tel"
-                                        name="phone"
-                                        value={formData.phone}
-                                        onChange={handleChange}
-                                        placeholder="+63 912 345 6789"
-                                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Move In Date and Lease End Date */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Move In Date
-                                </label>
-                                <DatePicker
-                                    value={formData.moveInDate}
-                                    onChange={(date) => setFormData(prev => ({ ...prev, moveInDate: date }))}
-                                    placeholder="Select move-in date"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Lease End Date
-                                </label>
-                                <DatePicker
-                                    value={formData.leaseEndDate}
-                                    onChange={(date) => setFormData(prev => ({ ...prev, leaseEndDate: date }))}
-                                    placeholder="Select lease end date"
-                                    minDate={formData.moveInDate || undefined}
-                                />
-                            </div>
+                        {/* Move In Date only */}
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Move In Date
+                            </label>
+                            <DatePicker
+                                value={formData.moveInDate}
+                                onChange={date =>
+                                    setFormData(prev => ({
+                                        ...prev,
+                                        moveInDate: date
+                                    }))
+                                }
+                                placeholder="Select move-in date"
+                            />
                         </div>
 
                         {/* Property Selection Section */}
                         <div className="border-t border-gray-200 pt-6 mt-2">
-                            <h3 className="text-md font-semibold text-gray-800 mb-4">
-                                Property Assignment
-                            </h3>
-
-                            {/* Property Search */}
-                            <div className="mb-4">
-                                <div className="relative">
-                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                    <input
-                                        type="text"
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        placeholder="Search by property name, address, or Property ID..."
-                                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                    />
-                                </div>
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-md font-semibold text-gray-800">
+                                    Property Assignment
+                                </h3>
+                                {selectedProperty && (
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={handleClearPropertySelection}
+                                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                    >
+                                        <X className="w-4 h-4 mr-1" />
+                                        Clear Selection
+                                    </Button>
+                                )}
                             </div>
 
-                            {/* Property Cards Grid */}
-                            {searchTerm && filteredProperties.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                                    {filteredProperties.map(property => (
+                            {/* Property Search - Only show when no property selected */}
+                            {!selectedProperty && (
+                                <div className="mb-4">
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                        <input
+                                            type="text"
+                                            value={searchTerm}
+                                            onChange={e =>
+                                                setSearchTerm(e.target.value)
+                                            }
+                                            placeholder="Search by property name, address, or Property ID..."
+                                            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Property Cards - 1 per row */}
+                            <div className="space-y-3">
+                                {filteredProperties.map(property => {
+                                    const genderInfo = getGenderInfo(
+                                        property.sex
+                                    );
+                                    const isSelected =
+                                        selectedProperty?.id === property.id;
+                                    const isExpanded =
+                                        expandedPropertyId === property.id;
+                                    const hasRooms =
+                                        property.category === "boarding" &&
+                                        property.bedrooms?.length > 0;
+
+                                    // Determine button styling based on selection state
+                                    const getButtonStyle = () => {
+                                        if (isSelected) {
+                                            return {
+                                                variant: "ghost",
+                                                className: "text-green-600 bg-white border-green-200 hover:bg-green-50",
+                                                icon: CheckCircle
+                                            };
+                                        }
+                                        return {
+                                            variant: "outline",
+                                            className: "",
+                                            icon: null
+                                        };
+                                    };
+
+                                    const buttonConfig = getButtonStyle();
+
+                                    return (
                                         <div
                                             key={property.id}
-                                            className={`border rounded-xl overflow-hidden transition-all cursor-pointer ${
-                                                selectedProperty?.id === property.id
-                                                    ? "border-primary ring-2 ring-primary/20 bg-primary/5"
-                                                    : "border-gray-200 hover:border-gray-300 hover:shadow-sm"
+                                            className={`border rounded-xl overflow-hidden transition-all ${
+                                                isSelected
+                                                    ? "border-green-300 ring-2 ring-green-200 bg-white"
+                                                    : "border-gray-200 hover:border-gray-300"
                                             }`}
-                                            onClick={() => handleSelectProperty(property)}
                                         >
-                                            <div className="flex p-3 gap-3">
-                                                {/* Property Image */}
-                                                <div className="w-20 h-20 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden">
-                                                    <img
-                                                        src={property.image}
-                                                        alt={property.name}
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                </div>
-                                                
-                                                {/* Property Info */}
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center justify-between mb-1">
-                                                        <span className="font-mono text-xs font-semibold text-gray-500">
-                                                            {property.propertyId}
-                                                        </span>
-                                                        <Badge
-                                                            variant="outline"
-                                                            color={property.category === "boarding" ? "blue" : "red"}
-                                                            icon={property.category === "boarding" ? Bed : Home}
-                                                            size="sm"
-                                                        >
-                                                            {property.category === "boarding" ? "Boarding" : "Apartment"}
-                                                        </Badge>
+                                            {/* Property Card */}
+                                            <div className="p-4">
+                                                <div className="flex gap-4">
+                                                    {/* Property Image */}
+                                                    <div className="w-24 h-24 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden">
+                                                        <img
+                                                            src={property.image}
+                                                            alt={property.name}
+                                                            className="w-full h-full object-cover"
+                                                        />
                                                     </div>
-                                                    <p className="font-semibold text-gray-800 text-sm truncate">
-                                                        {property.name}
-                                                    </p>
-                                                    <p className="text-xs text-gray-500 truncate">
-                                                        {property.address}
-                                                    </p>
-                                                    <div className="flex items-center justify-between mt-2">
-                                                        <span className="font-semibold text-primary text-sm">
-                                                            ₱{property.price.toLocaleString()}/month
-                                                        </span>
-                                                        {property.category === "boarding" && property.sex && (
-                                                            <div className="flex items-center gap-1">
-                                                                <img 
-                                                                    src={property.sex === "male" ? MaleIcon : FemaleIcon} 
-                                                                    alt={property.sex} 
-                                                                    className="w-3.5 h-3.5" 
-                                                                />
-                                                                <span className="text-xs text-gray-600">
-                                                                    {property.sex === "male" ? "Male Only" : "Female Only"}
-                                                                </span>
+
+                                                    {/* Property Info */}
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
+                                                            <span className="font-mono text-xs font-semibold text-gray-500">
+                                                                {
+                                                                    property.propertyId
+                                                                }
+                                                            </span>
+                                                            <div className="flex items-center gap-2">
+                                                                <Badge
+                                                                    variant="outline"
+                                                                    color={
+                                                                        property.category ===
+                                                                        "boarding"
+                                                                            ? "blue"
+                                                                            : "red"
+                                                                    }
+                                                                    icon={
+                                                                        property.category ===
+                                                                        "boarding"
+                                                                            ? Bed
+                                                                            : Home
+                                                                    }
+                                                                    size="sm"
+                                                                >
+                                                                    {property.category ===
+                                                                    "boarding"
+                                                                        ? "Boarding"
+                                                                        : "Apartment"}
+                                                                </Badge>
+                                                                {hasRooms && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() =>
+                                                                            toggleExpand(
+                                                                                property.id
+                                                                            )
+                                                                        }
+                                                                        className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                                                                    >
+                                                                        {isExpanded ? (
+                                                                            <ChevronUp className="w-4 h-4" />
+                                                                        ) : (
+                                                                            <ChevronDown className="w-4 h-4" />
+                                                                        )}
+                                                                    </button>
+                                                                )}
                                                             </div>
+                                                        </div>
+                                                        <p className="font-semibold text-gray-800">
+                                                            {property.name}
+                                                        </p>
+                                                        <p className="text-sm text-gray-500 truncate">
+                                                            {property.address}
+                                                        </p>
+                                                        <div className="flex items-center justify-between mt-2">
+                                                            <div className="flex items-center gap-3">
+                                                                <span className="font-semibold text-gray-800">
+                                                                    ₱
+                                                                    {property.price.toLocaleString()}
+                                                                    /month
+                                                                </span>
+                                                                {genderInfo && (
+                                                                    <div className="flex items-center gap-1">
+                                                                        <img
+                                                                            src={
+                                                                                genderInfo.icon
+                                                                            }
+                                                                            alt={
+                                                                                genderInfo.label
+                                                                            }
+                                                                            className="w-3.5 h-3.5"
+                                                                        />
+                                                                        <span className="text-xs text-gray-600">
+                                                                            {
+                                                                                genderInfo.label
+                                                                            }
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <Button
+                                                                type="button"
+                                                                variant={buttonConfig.variant}
+                                                                size="sm"
+                                                                icon={buttonConfig.icon}
+                                                                onClick={() =>
+                                                                    handleSelectProperty(
+                                                                        property
+                                                                    )
+                                                                }
+                                                                className={`px-4 py-1.5 text-sm ${buttonConfig.className}`}
+                                                            >
+                                                                {isSelected
+                                                                    ? "Selected"
+                                                                    : "Select"}
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Expandable Rooms Section (for boarding houses) */}
+                                            {isExpanded && hasRooms && (
+                                                <div className="border-t border-gray-100 bg-gray-50/50 p-4">
+                                                    <h4 className="text-sm font-medium text-gray-700 mb-3">
+                                                        Available Rooms
+                                                    </h4>
+                                                    <div className="space-y-2">
+                                                        {property.bedrooms.map(
+                                                            room => {
+                                                                const {
+                                                                    icon: StatusIcon,
+                                                                    label: statusLabel,
+                                                                    color: statusColor
+                                                                } = getRoomStatusBadge(
+                                                                    room.status
+                                                                );
+                                                                const roomGenderIcon =
+                                                                    getRoomGenderIcon(
+                                                                        room.gender
+                                                                    );
+                                                                const isRoomSelected =
+                                                                    selectedRoom?.id ===
+                                                                        room.id &&
+                                                                    selectedProperty?.id ===
+                                                                        property.id;
+
+                                                                return (
+                                                                    <div
+                                                                        key={
+                                                                            room.id
+                                                                        }
+                                                                        className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
+                                                                            isRoomSelected
+                                                                                ? "border-green-300 bg-green-50"
+                                                                                : room.status ===
+                                                                                    "full"
+                                                                                  ? "border-gray-200 bg-gray-100 opacity-60"
+                                                                                  : "border-gray-200 bg-white hover:border-gray-300"
+                                                                        }`}
+                                                                    >
+                                                                        <div className="flex-1">
+                                                                            <div className="flex items-center gap-3 mb-1">
+                                                                                <span className="font-medium text-gray-800">
+                                                                                    {
+                                                                                        room.name
+                                                                                    }
+                                                                                </span>
+                                                                                <Badge
+                                                                                    variant="soft"
+                                                                                    color={
+                                                                                        statusColor
+                                                                                    }
+                                                                                    icon={
+                                                                                        StatusIcon
+                                                                                    }
+                                                                                    size="sm"
+                                                                                >
+                                                                                    {
+                                                                                        statusLabel
+                                                                                    }
+                                                                                    {room.status ===
+                                                                                        "partial" &&
+                                                                                        ` (${room.currentOccupancy}/${room.capacity})`}
+                                                                                </Badge>
+                                                                            </div>
+                                                                            <div className="flex items-center gap-4 text-xs text-gray-500">
+                                                                                <div className="flex items-center gap-1">
+                                                                                    <Users className="w-3 h-3" />
+                                                                                    <span>
+                                                                                        Capacity:{" "}
+                                                                                        {
+                                                                                            room.capacity
+                                                                                        }{" "}
+                                                                                        persons
+                                                                                    </span>
+                                                                                </div>
+                                                                                {roomGenderIcon && (
+                                                                                    <div className="flex items-center gap-1">
+                                                                                        <img
+                                                                                            src={
+                                                                                                roomGenderIcon
+                                                                                            }
+                                                                                            alt={
+                                                                                                room.gender
+                                                                                            }
+                                                                                            className="w-3 h-3"
+                                                                                        />
+                                                                                        <span>
+                                                                                            {room.gender ===
+                                                                                            "male"
+                                                                                                ? "Male Only"
+                                                                                                : "Female Only"}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                )}
+                                                                                {room.status ===
+                                                                                    "partial" && (
+                                                                                    <span className="text-orange-600">
+                                                                                        {room.capacity -
+                                                                                            room.currentOccupancy}{" "}
+                                                                                        slot(s)
+                                                                                        available
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
+                                                                        <Button
+                                                                            type="button"
+                                                                            variant={
+                                                                                isRoomSelected
+                                                                                    ? "ghost"
+                                                                                    : "outline"
+                                                                            }
+                                                                            size="sm"
+                                                                            onClick={() =>
+                                                                                handleSelectRoom(
+                                                                                    room
+                                                                                )
+                                                                            }
+                                                                            disabled={
+                                                                                room.status ===
+                                                                                "full"
+                                                                            }
+                                                                            className="px-3 py-1 text-xs ml-3"
+                                                                        >
+                                                                            {isRoomSelected
+                                                                                ? "Selected"
+                                                                                : "Select Room"}
+                                                                        </Button>
+                                                                    </div>
+                                                                );
+                                                            }
                                                         )}
                                                     </div>
                                                 </div>
-                                            </div>
-                                            <div className="px-3 pb-3">
-                                                <button
-                                                    type="button"
-                                                    className={`w-full py-1.5 text-sm font-medium rounded-lg transition-colors ${
-                                                        selectedProperty?.id === property.id
-                                                            ? "bg-primary text-gray-900"
-                                                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                                                    }`}
-                                                >
-                                                    {selectedProperty?.id === property.id ? "Selected" : "Select Property"}
-                                                </button>
-                                            </div>
+                                            )}
                                         </div>
-                                    ))}
-                                </div>
-                            ) : searchTerm && filteredProperties.length === 0 ? (
-                                <div className="text-center py-8 text-gray-500">
-                                    <Building2 className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                                    <p>No properties found matching "{searchTerm}"</p>
-                                </div>
-                            ) : (
+                                    );
+                                })}
+                            </div>
+
+                            {!selectedProperty && filteredProperties.length === 0 && searchTerm && (
                                 <div className="text-center py-8 text-gray-500">
                                     <Search className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                                    <p>
+                                        No properties found matching "
+                                        {searchTerm}"
+                                    </p>
+                                </div>
+                            )}
+
+                            {!selectedProperty && filteredProperties.length === 0 && !searchTerm && (
+                                <div className="text-center py-8 text-gray-500">
+                                    <Home className="w-12 h-12 mx-auto mb-2 text-gray-300" />
                                     <p>Start typing to search for properties</p>
-                                </div>
-                            )}
-
-                            {/* Selected Property Display (when no search) */}
-                            {selectedProperty && !searchTerm && (
-                                <div className="mt-4">
-                                    <h4 className="text-sm font-medium text-gray-700 mb-2">Selected Property</h4>
-                                    <div className="border border-primary rounded-xl overflow-hidden bg-primary/5">
-                                        <div className="flex p-3 gap-3">
-                                            <div className="w-20 h-20 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden">
-                                                <img
-                                                    src={selectedProperty.image}
-                                                    alt={selectedProperty.name}
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            </div>
-                                            <div className="flex-1">
-                                                <div className="flex items-center justify-between mb-1">
-                                                    <span className="font-mono text-xs font-semibold text-gray-500">
-                                                        {selectedProperty.propertyId}
-                                                    </span>
-                                                    <Badge
-                                                        variant="outline"
-                                                        color={selectedProperty.category === "boarding" ? "blue" : "red"}
-                                                        icon={selectedProperty.category === "boarding" ? Bed : Home}
-                                                        size="sm"
-                                                    >
-                                                        {selectedProperty.category === "boarding" ? "Boarding" : "Apartment"}
-                                                    </Badge>
-                                                </div>
-                                                <p className="font-semibold text-gray-800 text-sm">
-                                                    {selectedProperty.name}
-                                                </p>
-                                                <p className="text-xs text-gray-500">
-                                                    {selectedProperty.address}
-                                                </p>
-                                                <div className="flex items-center justify-between mt-2">
-                                                    <span className="font-semibold text-primary text-sm">
-                                                        ₱{selectedProperty.price.toLocaleString()}/month
-                                                    </span>
-                                                    {selectedProperty.category === "boarding" && selectedProperty.sex && (
-                                                        <div className="flex items-center gap-1">
-                                                            <img 
-                                                                src={selectedProperty.sex === "male" ? MaleIcon : FemaleIcon} 
-                                                                alt={selectedProperty.sex} 
-                                                                className="w-3.5 h-3.5" 
-                                                            />
-                                                            <span className="text-xs text-gray-600">
-                                                                {selectedProperty.sex === "male" ? "Male Only" : "Female Only"}
-                                                            </span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Room Selection for Boarding Houses */}
-                            {showRoomSelection && selectedProperty && selectedProperty.category === "boarding" && (
-                                <div className="mt-6">
-                                    <h4 className="text-sm font-medium text-gray-700 mb-3">
-                                        Select Room for {selectedProperty.name}
-                                    </h4>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        {selectedProperty.bedrooms?.map(room => {
-                                            const { icon: StatusIcon, label: statusLabel, color: statusColor } = getRoomStatusBadge(room.status);
-                                            return (
-                                                <div
-                                                    key={room.id}
-                                                    className={`border rounded-lg p-3 transition-all cursor-pointer ${
-                                                        selectedRoom?.id === room.id
-                                                            ? "border-primary ring-2 ring-primary/20 bg-primary/5"
-                                                            : "border-gray-200 hover:border-gray-300"
-                                                    } ${room.status === "full" ? "opacity-60 cursor-not-allowed" : ""}`}
-                                                    onClick={() => room.status !== "full" && handleSelectRoom(room)}
-                                                >
-                                                    <div className="flex items-center justify-between mb-2">
-                                                        <span className="font-medium text-gray-800">{room.name}</span>
-                                                        <Badge variant="soft" color={statusColor} icon={StatusIcon} size="sm">
-                                                            {statusLabel}
-                                                            {room.status === "partial" && ` (${room.currentOccupancy}/${room.capacity})`}
-                                                        </Badge>
-                                                    </div>
-                                                    <div className="flex items-center gap-4 text-xs text-gray-500">
-                                                        <div className="flex items-center gap-1">
-                                                            <Users className="w-3 h-3" />
-                                                            <span>Capacity: {room.capacity} persons</span>
-                                                        </div>
-                                                        {room.gender && (
-                                                            <div className="flex items-center gap-1">
-                                                                <img 
-                                                                    src={room.gender === "male" ? MaleIcon : FemaleIcon} 
-                                                                    alt={room.gender} 
-                                                                    className="w-3 h-3" 
-                                                                />
-                                                                <span>{room.gender === "male" ? "Male" : "Female"} Only</span>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    {room.status === "partial" && (
-                                                        <p className="text-xs text-orange-600 mt-2">
-                                                            {room.capacity - room.currentOccupancy} slot(s) available
-                                                        </p>
-                                                    )}
-                                                    {room.status === "full" && (
-                                                        <p className="text-xs text-red-500 mt-2">
-                                                            Room is fully occupied
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
                                 </div>
                             )}
                         </div>
@@ -781,7 +945,9 @@ const NewTenant = () => {
                                 icon={Plus}
                                 className="w-full sm:flex-1"
                             >
-                                {isSubmitting ? "Adding Tenant..." : "Add Tenant"}
+                                {isSubmitting
+                                    ? "Adding Tenant..."
+                                    : "Add Tenant"}
                             </Button>
                         </div>
                     </form>
@@ -816,7 +982,9 @@ const NewTenant = () => {
                     <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-xl z-50 animate-in slide-in-from-bottom duration-300 max-h-[80vh] overflow-y-auto">
                         <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
                             <button
-                                onClick={() => setIsInstructionsDrawerOpen(false)}
+                                onClick={() =>
+                                    setIsInstructionsDrawerOpen(false)
+                                }
                                 className="p-1 hover:bg-gray-100 rounded-lg"
                             >
                                 <X className="w-5 h-5 text-gray-500" />

@@ -60,7 +60,6 @@ function App() {
                     <Route path="new-apartment" element={<NewApartment />} />
                     <Route path="/tenants" element={<Tenants />} />
                     <Route path="new-tenant" element={<NewTenant />} />
-
                 </Route>
             </Routes>
         </BrowserRouter>
