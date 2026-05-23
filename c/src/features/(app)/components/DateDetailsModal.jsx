@@ -109,7 +109,7 @@ const DateDetailsModal = ({ selectedDate, events, onClose, isOpen }) => {
                                     >
                                         <div className="flex items-center justify-end gap-3 mb-3">
                                             <Badge
-                                                variant="outline"
+                                                variant="solid"
                                                 color={cfg.color}
                                                 icon={EventIcon}
                                             >

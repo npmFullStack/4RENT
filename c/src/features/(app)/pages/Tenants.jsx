@@ -15,8 +15,9 @@ import Table from "@/shared/components/Table";
 import Button from "@/shared/components/Button";
 import Badge from "@/shared/components/Badge";
 import Toast from "@/shared/components/Toast";
-import ConfirmModal from "@/shared/components/ConfirmModal"; // Changed from WarningModal
+import ConfirmModal from "@/shared/components/ConfirmModal"; // Still used for Remove Tenant
 import Select from "@/shared/components/Select";
+import RecordPaymentModal from "../components/RecordPaymentModal"; // NEW: Import the new modal
 
 // Import property images
 import property1 from "@/assets/images/property1.png";
@@ -57,7 +58,8 @@ const mockTenants = [
         status: "paid",
         paymentDueDate: "2026-05-22",
         rentDueDate: "2026-06-01",
-        sex: "female"
+        sex: "female",
+        balance: 0 // NEW: track remaining balance
     },
     {
         id: 2,
@@ -74,7 +76,8 @@ const mockTenants = [
         status: "unpaid",
         paymentDueDate: "2026-05-22",
         rentDueDate: "2026-06-01",
-        sex: "male"
+        sex: "male",
+        balance: 12500 // NEW: track remaining balance
     },
     {
         id: 3,
@@ -91,7 +94,8 @@ const mockTenants = [
         status: "paid",
         paymentDueDate: "2026-05-22",
         rentDueDate: "2026-06-01",
-        sex: "female"
+        sex: "female",
+        balance: 0
     },
     {
         id: 4,
@@ -108,7 +112,8 @@ const mockTenants = [
         status: "overdue",
         paymentDueDate: "2026-04-15",
         rentDueDate: "2026-05-01",
-        sex: "male"
+        sex: "male",
+        balance: 18500
     },
     {
         id: 5,
@@ -125,7 +130,8 @@ const mockTenants = [
         status: "paid",
         paymentDueDate: "2026-05-22",
         rentDueDate: "2026-06-01",
-        sex: "female"
+        sex: "female",
+        balance: 0
     },
     {
         id: 6,
@@ -142,7 +148,8 @@ const mockTenants = [
         status: "paid",
         paymentDueDate: "2026-05-22",
         rentDueDate: "2026-06-01",
-        sex: "male"
+        sex: "male",
+        balance: 0
     },
     {
         id: 7,
@@ -159,7 +166,8 @@ const mockTenants = [
         status: "unpaid",
         paymentDueDate: "2026-05-22",
         rentDueDate: "2026-06-01",
-        sex: "female"
+        sex: "female",
+        balance: 3500
     },
     {
         id: 8,
@@ -176,7 +184,8 @@ const mockTenants = [
         status: "paid",
         paymentDueDate: "2026-05-22",
         rentDueDate: "2026-06-01",
-        sex: "male"
+        sex: "male",
+        balance: 0
     },
     {
         id: 9,
@@ -193,7 +202,8 @@ const mockTenants = [
         status: "overdue",
         paymentDueDate: "2026-04-10",
         rentDueDate: "2026-05-01",
-        sex: "female"
+        sex: "female",
+        balance: 4200
     },
     {
         id: 10,
@@ -210,7 +220,8 @@ const mockTenants = [
         status: "paid",
         paymentDueDate: "2026-05-22",
         rentDueDate: "2026-06-01",
-        sex: "female"
+        sex: "female",
+        balance: 0
     }
 ];
 
@@ -229,16 +240,17 @@ const Tenants = () => {
     const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
     const [tenants, setTenants] = useState(tenantsWithIds);
     const [selectedTenant, setSelectedTenant] = useState(null);
-    const [isMarkPaidModalOpen, setIsMarkPaidModalOpen] = useState(false);
+    const [isRecordPaymentModalOpen, setIsRecordPaymentModalOpen] = useState(false); // CHANGED: renamed
+    const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false); // NEW: separate modal for remove
     const [isProcessing, setIsProcessing] = useState(false);
     const [actionValues, setActionValues] = useState({});
 
     // Action options for the Select dropdown
     const actionOptions = [
         {
-            value: "markPaid",
-            label: "Mark as Paid",
-            icon: <CheckCircle className="w-3 h-3" />,
+            value: "recordPayment",
+            label: "Record Payment",
+            icon: <CreditCard className="w-3 h-3" />,
             className: "text-gray-800"
         },
         {
@@ -250,11 +262,13 @@ const Tenants = () => {
         }
     ];
 
-    // Get status badge props
+    // Get status badge props - UPDATED to include "partial" status
     const getStatusBadgeProps = status => {
         switch (status) {
             case "paid":
                 return { icon: CheckCircle, label: "Paid", color: "green" };
+            case "partial": // NEW: partial payment status
+                return { icon: AlertCircle, label: "Partial", color: "yellow" };
             case "unpaid":
                 return { icon: XCircle, label: "Unpaid", color: "orange" };
             case "overdue":
@@ -264,19 +278,16 @@ const Tenants = () => {
         }
     };
 
-    // Handle mark as paid
-    const handleMarkAsPaid = tenant => {
+    // Handle record payment - CHANGED function name
+    const handleRecordPayment = tenant => {
         setSelectedTenant(tenant);
-        setIsMarkPaidModalOpen(true);
+        setIsRecordPaymentModalOpen(true);
     };
 
     // Handle remove tenant
     const handleRemoveTenant = tenant => {
-        console.log("Remove tenant:", tenant);
-        Toast.info(
-            "Remove Tenant",
-            `Removing ${tenant.firstName} ${tenant.lastName}`
-        );
+        setSelectedTenant(tenant);
+        setIsRemoveModalOpen(true);
     };
 
     // Handle action change from dropdown
@@ -284,8 +295,8 @@ const Tenants = () => {
         if (!actionValue) return;
 
         switch (actionValue) {
-            case "markPaid":
-                handleMarkAsPaid(tenant);
+            case "recordPayment": // CHANGED: from markPaid to recordPayment
+                handleRecordPayment(tenant);
                 break;
             case "remove":
                 handleRemoveTenant(tenant);
@@ -300,7 +311,8 @@ const Tenants = () => {
         }));
     };
 
-    const confirmMarkAsPaid = async () => {
+    // NEW: Handle payment confirmation from RecordPaymentModal
+    const confirmRecordPayment = async (paymentData) => {
         setIsProcessing(true);
 
         try {
@@ -308,27 +320,78 @@ const Tenants = () => {
 
             setTenants(prev =>
                 prev.map(tenant =>
-                    tenant.id === selectedTenant.id
+                    tenant.id === paymentData.tenantId
                         ? {
                               ...tenant,
-                              status: "paid"
+                              status: paymentData.status,
+                              balance: paymentData.remainingBalance,
+                              lastPaymentDate: paymentData.paymentDate,
+                              lastPaymentAmount: paymentData.amountPaid,
+                              lastPaymentMode: paymentData.modeOfPayment
                           }
                         : tenant
                 )
             );
 
-            Toast.success(
-                "Payment Recorded",
-                `${selectedTenant.firstName} ${selectedTenant.lastName}'s rent has been marked as paid.`
-            );
+            // Show success message based on payment type
+            if (paymentData.paymentType === "full") {
+                Toast.success(
+                    "Payment Recorded",
+                    `${paymentData.tenantName} has paid in full via ${getModeOfPaymentLabel(paymentData.modeOfPayment)}.`
+                );
+            } else {
+                Toast.success(
+                    "Payment Recorded",
+                    `${paymentData.tenantName} paid ₱${paymentData.amountPaid.toLocaleString()} via ${getModeOfPaymentLabel(paymentData.modeOfPayment)}. Remaining balance: ₱${paymentData.remainingBalance.toLocaleString()}`
+                );
+            }
 
-            setIsMarkPaidModalOpen(false);
+            setIsRecordPaymentModalOpen(false);
             setSelectedTenant(null);
         } catch (error) {
-            console.error("Error marking as paid:", error);
+            console.error("Error recording payment:", error);
             Toast.error(
                 "Action Failed",
-                "There was an error processing this action."
+                "There was an error processing this payment."
+            );
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    // Helper function for mode of payment labels
+    const getModeOfPaymentLabel = (mode) => {
+        const modes = {
+            in_person: "In Person (Cash)",
+            gcash: "GCash",
+            bank_transfer: "Bank Transfer"
+        };
+        return modes[mode] || mode;
+    };
+
+    // Handle confirm remove tenant
+    const confirmRemoveTenant = async () => {
+        setIsProcessing(true);
+
+        try {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            setTenants(prev =>
+                prev.filter(tenant => tenant.id !== selectedTenant.id)
+            );
+
+            Toast.success(
+                "Tenant Removed",
+                `${selectedTenant.firstName} ${selectedTenant.lastName} has been removed.`
+            );
+
+            setIsRemoveModalOpen(false);
+            setSelectedTenant(null);
+        } catch (error) {
+            console.error("Error removing tenant:", error);
+            Toast.error(
+                "Action Failed",
+                "There was an error removing this tenant."
             );
         } finally {
             setIsProcessing(false);
@@ -375,7 +438,7 @@ const Tenants = () => {
         });
     };
 
-    // Table columns configuration
+    // Table columns configuration - UPDATED to show balance if partial
     const columns = [
         {
             key: "tenantId",
@@ -447,6 +510,16 @@ const Tenants = () => {
             }
         },
         {
+            key: "balance", // NEW: show balance column
+            header: "Balance",
+            sortable: true,
+            render: row => (
+                <span className={`text-xs font-semibold ${row.balance > 0 ? "text-amber-600" : "text-green-600"}`}>
+                    {row.balance > 0 ? `₱${row.balance.toLocaleString()}` : "—"}
+                </span>
+            )
+        },
+        {
             key: "moveInDate",
             header: "Move In Date",
             sortable: true,
@@ -508,7 +581,7 @@ const Tenants = () => {
         {
             title: "Payment Management",
             description:
-                "Track monthly rent payments. Mark payments as paid, view unpaid tenants, and manage overdue payments."
+                "Track monthly rent payments. Record payments as Full Payment or Downpayment. Partial payments will show remaining balance."
         },
         {
             title: "Add New Tenant",
@@ -518,7 +591,7 @@ const Tenants = () => {
         {
             title: "Tenant Actions",
             description:
-                "Each tenant has a 'More' dropdown with options to Mark as Paid or Remove Tenant."
+                "Each tenant has a 'More' dropdown with options to Record Payment or Remove Tenant."
         },
         {
             title: "Search & Filter",
@@ -588,15 +661,30 @@ const Tenants = () => {
                 />
             </div>
 
-            {/* Mark as Paid Confirmation Modal - Using info variant for payment confirmation */}
+            {/* Record Payment Modal - NEW */}
+            <RecordPaymentModal
+                isOpen={isRecordPaymentModalOpen}
+                onClose={() => {
+                    setIsRecordPaymentModalOpen(false);
+                    setSelectedTenant(null);
+                }}
+                onConfirm={confirmRecordPayment}
+                tenant={selectedTenant}
+                isLoading={isProcessing}
+            />
+
+            {/* Remove Tenant Confirmation Modal - UPDATED to use danger variant */}
             <ConfirmModal
-                isOpen={isMarkPaidModalOpen}
-                onClose={() => setIsMarkPaidModalOpen(false)}
-                onConfirm={confirmMarkAsPaid}
-                title="Mark as Paid"
-                message={`Mark ${selectedTenant?.firstName} ${selectedTenant?.lastName}'s rent payment as paid for this month?`}
-                variant="info"
-                confirmText="Mark as Paid"
+                isOpen={isRemoveModalOpen}
+                onClose={() => {
+                    setIsRemoveModalOpen(false);
+                    setSelectedTenant(null);
+                }}
+                onConfirm={confirmRemoveTenant}
+                title="Remove Tenant"
+                message={`Are you sure you want to remove ${selectedTenant?.firstName} ${selectedTenant?.lastName}? This action cannot be undone.`}
+                variant="danger"
+                confirmText="Remove"
                 cancelText="Cancel"
                 isLoading={isProcessing}
             />
