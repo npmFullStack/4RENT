@@ -10,7 +10,7 @@ import HelpPageModal from "@/shared/components/HelpPageModal";
 import WelcomeHeroBox from "@/shared/components/WelcomeHeroBox";
 import Calendar from "@/features/(app)/components/Calendar";
 import DateDetailsModal from "@/features/(app)/components/DateDetailsModal";
-import welcomeHeroImage from "@/assets/images/welcome-hero-box.png";
+import calendarImage from "@/assets/images/calendarImage.png";
 
 const mockEvents = [
     {
@@ -21,8 +21,7 @@ const mockEvents = [
         description: "Rent payment for Sunset Boarding House",
         tenant: "Maria Santos",
         property: "Sunset Boarding House",
-        amount: 4850,
-        
+        amount: 4850
     },
     {
         id: 2,
@@ -32,8 +31,7 @@ const mockEvents = [
         description: "Monthly rent payment received",
         tenant: "John Reyes",
         property: "Downtown Luxury Apartment",
-        amount: 12500,
-        
+        amount: 12500
     },
     {
         id: 3,
@@ -42,8 +40,7 @@ const mockEvents = [
         title: "New Tenant Move In",
         description: "Sofia Mendoza moving into Cozy Studio Boarding",
         tenant: "Sofia Mendoza",
-        property: "Cozy Studio Boarding",
-        
+        property: "Cozy Studio Boarding"
     },
     {
         id: 4,
@@ -51,8 +48,7 @@ const mockEvents = [
         type: "damage_fixed",
         title: "Plumbing Repair Completed",
         description: "Fixed leaking pipe in bathroom unit 204",
-        property: "Metro Central Tower",
-        
+        property: "Metro Central Tower"
     },
     {
         id: 5,
@@ -62,8 +58,7 @@ const mockEvents = [
         description: "Monthly rent payment deadline",
         tenant: "All Tenants",
         property: "Multiple Properties",
-        amount: "Various",
-        
+        amount: "Various"
     },
     {
         id: 6,
@@ -71,8 +66,7 @@ const mockEvents = [
         type: "maintenance",
         title: "AC Maintenance Scheduled",
         description: "Annual AC cleaning and maintenance",
-        property: "Skyline Apartments",
-        
+        property: "Skyline Apartments"
     },
     {
         id: 7,
@@ -81,27 +75,26 @@ const mockEvents = [
         title: "Tenant Move Out",
         description: "Carmen Villanueva moving out",
         tenant: "Carmen Villanueva",
-        property: "Villa Maria Boarding House",
-        
+        property: "Villa Maria Boarding House"
     },
     {
         id: 8,
         date: "2026-06-15",
-        type: "inspection",
-        title: "Quarterly Property Inspection",
-        description: "Routine property inspection for all units",
-        property: "All Properties",
-        
+        type: "rent_due",
+        title: "June Rent Due",
+        description: "Monthly rent payment deadline",
+        tenant: "All Tenants",
+        property: "Multiple Properties",
+        amount: "Various"
     },
     {
         id: 9,
-        date: "2026-06-20",
-        type: "lease_renewal",
-        title: "Lease Renewal Deadline",
-        description: "Last day to renew lease for March move-ins",
-        tenant: "Multiple Tenants",
-        property: "Various Properties",
-        
+        date: "2026-05-01",
+        type: "maintenance",
+        title: "Oten Repair",
+        description: "Oten ko Malaki",
+        tenant: "Norway Mangorangca",
+        property: "Villa Norway"
     },
     {
         id: 10,
@@ -111,8 +104,7 @@ const mockEvents = [
         description: "Early payment for next month",
         tenant: "Ana Cruz",
         property: "Garden View Boarding House",
-        amount: 3750,
-        
+        amount: 3750
     },
     {
         id: 11,
@@ -121,8 +113,7 @@ const mockEvents = [
         title: "Electrical Repair",
         description: "Faulty wiring in kitchen",
         tenant: "David Garcia",
-        property: "Ocean View Apartment",
-        
+        property: "Ocean View Apartment"
     },
     {
         id: 12,
@@ -130,8 +121,7 @@ const mockEvents = [
         type: "damage_fixed",
         title: "Window Replacement",
         description: "Replaced broken window in living room",
-        property: "Harbor View Apartment",
-        
+        property: "Harbor View Apartment"
     }
 ];
 
@@ -151,28 +141,28 @@ const CalendarPage = () => {
 
     const helpFeatures = [
         {
-            title: "📅 Click on Any Date",
+            title: "Click on Any Date",
             description:
                 "Click any date on the calendar to view detailed information about events scheduled for that day."
         },
         {
-            title: "🏷️ Event Badges",
+            title: "Event Badges",
             description:
                 "Color-coded badges on dates indicate different event types (Rent Due, Move In, Maintenance, etc.)."
         },
         {
-            title: "🔍 Filter Events",
+            title: "Filter Events",
             description:
                 "Use the filter dropdown to focus on specific event types like rent payments or maintenance schedules."
         },
         {
-            title: "📊 Property Management",
+            title: "Property Management",
             description:
                 "Track tenant move-ins/outs, rent collections, and property maintenance all in one place."
         },
         {
-            title: "🔄 Month/Year Navigation",
-            title: "📅 Month/Year Navigation",
+            title: "Month/Year Navigation",
+            title: "Month/Year Navigation",
             description:
                 "Click on the month or year to quickly jump to any date, or use the arrow buttons to browse."
         }
@@ -185,9 +175,7 @@ const CalendarPage = () => {
         { value: "move_in", label: "Move In" },
         { value: "move_out", label: "Move Out" },
         { value: "maintenance", label: "Maintenance" },
-        { value: "damage_fixed", label: "Damage Fixed" },
-        { value: "lease_renewal", label: "Lease Renewal" },
-        { value: "inspection", label: "Inspection" }
+        { value: "damage_fixed", label: "Damage Fixed" }
     ];
 
     const getFilterLabel = () => {
@@ -277,7 +265,7 @@ const CalendarPage = () => {
             {/* Welcome Hero Box with Instructions */}
             <div className="mb-8">
                 <WelcomeHeroBox
-                    image={welcomeHeroImage}
+                    image={calendarImage}
                     title="Property Management Calendar"
                     message="Click any date for event details. Color badges show rent, move-ins, or maintenance. Use filter to focus. Track everything in one place."
                     imagePosition="left"
