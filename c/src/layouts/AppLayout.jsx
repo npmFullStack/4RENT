@@ -77,7 +77,7 @@ const AppLayout = () => {
         { icon: Home, label: "Properties", path: "/my-properties" },
         { icon: Users, label: "Tenants", path: "/tenants" },
         { icon: Calendar, label: "Calendar", path: "/calendar" },
-        { icon: HandCoins, label: "Payments", path: "/payments" },
+        { icon: HandCoins, label: "Payment Logs", path: "/payment-logs" },
         { icon: Wrench, label: "Repairs", path: "/repairs" },
         { icon: FileText, label: "Reports", path: "/reports" },
         { icon: Settings, label: "Settings", path: "/settings" }
@@ -210,7 +210,6 @@ const AppLayout = () => {
                                     {link.label}
                                 </span>
                             )}
-
                         </Link>
                     );
                 })}

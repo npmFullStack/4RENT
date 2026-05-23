@@ -108,13 +108,15 @@ const DateDetailsModal = ({ selectedDate, events, onClose, isOpen }) => {
                                         className="p-2 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors"
                                     >
                                         <div className="flex items-center justify-end gap-3 mb-3">
-                                            <Badge
-                                                variant="solid"
-                                                color={cfg.color}
-                                                icon={EventIcon}
-                                            >
-                                                {cfg.label}
-                                            </Badge>
+<Badge
+    variant="solid"
+    color={cfg.color}
+    icon={EventIcon}
+    size="md"
+    className="max-w-full"
+>
+    <span className="truncate block max-w-[200px]">{cfg.label}</span>
+</Badge>
                                         </div>
 
                                         <h4 className="font-semibold text-gray-900 text-base mb-2">

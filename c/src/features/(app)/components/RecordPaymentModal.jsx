@@ -43,13 +43,48 @@ const RecordPaymentModal = ({
     if (!isOpen || !tenant) return null;
 
     const monthlyRent = tenant.monthlyRent;
-    const remainingBalance =
-        paymentType === PAYMENT_TYPES.DOWNPAYMENT
-            ? Math.max(0, monthlyRent - (parseFloat(downpaymentAmount) || 0))
-            : 0;
+    
+    // Validate and get downpayment amount
+    const getValidatedDownpaymentAmount = () => {
+        const amount = parseFloat(downpaymentAmount) || 0;
+        return Math.min(amount, monthlyRent);
+    };
+    
+    const validatedAmount = getValidatedDownpaymentAmount();
+    const remainingBalance = paymentType === PAYMENT_TYPES.DOWNPAYMENT
+        ? Math.max(0, monthlyRent - validatedAmount)
+        : 0;
 
-    const hasBalance =
-        paymentType === PAYMENT_TYPES.DOWNPAYMENT && remainingBalance > 0;
+    const hasBalance = paymentType === PAYMENT_TYPES.DOWNPAYMENT && remainingBalance > 0;
+    const isDownpaymentExceeding = paymentType === PAYMENT_TYPES.DOWNPAYMENT && 
+        downpaymentAmount && parseFloat(downpaymentAmount) > monthlyRent;
+
+    const handleDownpaymentChange = (e) => {
+        let value = e.target.value;
+        
+        // Allow empty string
+        if (value === "") {
+            setDownpaymentAmount("");
+            return;
+        }
+        
+        // Parse the numeric value
+        let numValue = parseFloat(value);
+        
+        // Check if it's a valid number
+        if (isNaN(numValue)) {
+            setDownpaymentAmount("");
+            return;
+        }
+        
+        // Enforce maximum value (monthly rent)
+        if (numValue > monthlyRent) {
+            numValue = monthlyRent;
+            setDownpaymentAmount(numValue.toString());
+        } else {
+            setDownpaymentAmount(value);
+        }
+    };
 
     const handleConfirm = () => {
         const paymentData = {
@@ -57,10 +92,9 @@ const RecordPaymentModal = ({
             tenantName: `${tenant.firstName} ${tenant.lastName}`,
             paymentType,
             modeOfPayment,
-            amountPaid:
-                paymentType === PAYMENT_TYPES.FULL
-                    ? monthlyRent
-                    : parseFloat(downpaymentAmount) || 0,
+            amountPaid: paymentType === PAYMENT_TYPES.FULL
+                ? monthlyRent
+                : validatedAmount,
             remainingBalance: hasBalance ? remainingBalance : 0,
             status: hasBalance ? "partial" : "paid",
             paymentDate: new Date().toISOString()
@@ -151,7 +185,10 @@ const RecordPaymentModal = ({
                         <div className="grid grid-cols-2 gap-2">
                             <Button
                                 variant={paymentType === PAYMENT_TYPES.FULL ? "primary" : "ghost"}
-                                onClick={() => setPaymentType(PAYMENT_TYPES.FULL)}
+                                onClick={() => {
+                                    setPaymentType(PAYMENT_TYPES.FULL);
+                                    setDownpaymentAmount("");
+                                }}
                                 disabled={isLoading}
                                 className={`flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium transition-all !rounded-lg ${
                                     paymentType === PAYMENT_TYPES.FULL
@@ -191,33 +228,50 @@ const RecordPaymentModal = ({
                                 <input
                                     type="number"
                                     value={downpaymentAmount}
-                                    onChange={e =>
-                                        setDownpaymentAmount(e.target.value)
-                                    }
-                                    placeholder="Enter amount"
-                                    className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-600 focus:border-transparent"
+                                    onChange={handleDownpaymentChange}
+                                    placeholder={`Enter amount (max ₱${monthlyRent.toLocaleString()})`}
+                                    className={`w-full pl-8 pr-3 py-1.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-600 focus:border-transparent ${
+                                        isDownpaymentExceeding 
+                                            ? "border-red-500 bg-red-50" 
+                                            : "border-gray-300"
+                                    }`}
                                     min="0"
                                     max={monthlyRent}
                                     step="100"
                                 />
                             </div>
-                            {downpaymentAmount &&
-                                parseFloat(downpaymentAmount) > 0 && (
-                                    <div className="mt-2 text-sm">
-                                        {parseFloat(downpaymentAmount) >=
-                                        monthlyRent ? (
-                                            <p className="text-blue-600">
-                                                This covers the full rent
-                                                amount!
-                                            </p>
-                                        ) : (
-                                            <p className="text-amber-600">
-                                                Remaining balance: ₱
-                                                {remainingBalance.toLocaleString()}
-                                            </p>
-                                        )}
-                                    </div>
-                                )}
+                            
+                            {/* Validation Messages */}
+                            {downpaymentAmount && parseFloat(downpaymentAmount) > 0 && (
+                                <div className="mt-2 text-sm space-y-1">
+                                    {isDownpaymentExceeding ? (
+                                        <p className="text-red-600 flex items-center gap-1">
+                                            <AlertCircle className="w-3 h-3" />
+                                            Amount cannot exceed ₱{monthlyRent.toLocaleString()}
+                                        </p>
+                                    ) : validatedAmount >= monthlyRent ? (
+                                        <p className="text-blue-600 flex items-center gap-1">
+                                            <CheckCircle className="w-3 h-3" />
+                                            This covers the full rent amount!
+                                        </p>
+                                    ) : (
+                                        <p className="text-amber-600">
+                                            Remaining balance: ₱{remainingBalance.toLocaleString()}
+                                        </p>
+                                    )}
+                                    
+                                    {/* Max amount hint */}
+                                    <p className="text-xs text-gray-500">
+                                        Maximum allowed: ₱{monthlyRent.toLocaleString()}
+                                    </p>
+                                </div>
+                            )}
+                            
+                            {!downpaymentAmount && (
+                                <p className="mt-2 text-xs text-gray-500">
+                                    Enter an amount between ₱0 and ₱{monthlyRent.toLocaleString()}
+                                </p>
+                            )}
                         </div>
                     )}
 
@@ -278,9 +332,7 @@ const RecordPaymentModal = ({
                                 ₱
                                 {paymentType === PAYMENT_TYPES.FULL
                                     ? monthlyRent.toLocaleString()
-                                    : (
-                                          parseFloat(downpaymentAmount) || 0
-                                      ).toLocaleString()}
+                                    : validatedAmount.toLocaleString()}
                             </span>
                         </div>
                         {hasBalance && (
@@ -312,8 +364,9 @@ const RecordPaymentModal = ({
                         disabled={
                             isLoading ||
                             (paymentType === PAYMENT_TYPES.DOWNPAYMENT &&
-                                (!downpaymentAmount ||
-                                    parseFloat(downpaymentAmount) <= 0))
+                                (!downpaymentAmount || 
+                                 parseFloat(downpaymentAmount) <= 0 ||
+                                 parseFloat(downpaymentAmount) > monthlyRent))
                         }
                         className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         icon={isLoading ? Loader2 : CheckCircle}

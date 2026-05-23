@@ -79,17 +79,17 @@ const MonthPicker = ({ current, onChange, onClose }) => (
 
 const YearPicker = ({ current, onChange, onClose }) => {
     const [startYear, setStartYear] = useState(current - (current % 12));
-    
+
     const years = Array.from({ length: 12 }, (_, i) => startYear + i);
-    
+
     const goToPreviousDecade = () => {
         setStartYear(prev => prev - 12);
     };
-    
+
     const goToNextDecade = () => {
         setStartYear(prev => prev + 12);
     };
-    
+
     return (
         <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-30 p-3 w-52">
             {/* Navigation header */}
@@ -110,7 +110,7 @@ const YearPicker = ({ current, onChange, onClose }) => {
                     <ChevronRight className="w-4 h-4" />
                 </button>
             </div>
-            
+
             {/* Years grid */}
             <div className="grid grid-cols-3 gap-1">
                 {years.map(y => (
@@ -140,6 +140,17 @@ const Calendar = ({ onDateSelect, selectedDate, events }) => {
     const [showMonthPicker, setShowMonthPicker] = useState(false);
     const [showYearPicker, setShowYearPicker] = useState(false);
     const [localSelectedDate, setLocalSelectedDate] = useState(selectedDate);
+    const [isMobile, setIsMobile] = useState(false);
+
+    // Check if mobile screen
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 640);
+        };
+        checkMobile();
+        window.addEventListener("resize", checkMobile);
+        return () => window.removeEventListener("resize", checkMobile);
+    }, []);
 
     // Sync local selected date with prop
     useEffect(() => {
@@ -215,17 +226,17 @@ const Calendar = ({ onDateSelect, selectedDate, events }) => {
         <>
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
                 {/* ── Header with centered month/year and side arrows ── */}
-                <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200">
+                <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-5 border-b border-gray-200">
                     {/* Previous button - left side */}
                     <button
                         onClick={prevMonth}
-                        className="p-2 hover:bg-primary/10 rounded-lg transition-colors text-gray-500 hover:text-primary"
+                        className="p-1.5 sm:p-2 hover:bg-primary/10 rounded-lg transition-colors text-gray-500 hover:text-primary"
                     >
-                        <ChevronLeft className="w-5 h-5" />
+                        <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
 
                     {/* Month and Year - center */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3">
                         {/* Month button */}
                         <div className="relative">
                             <button
@@ -233,7 +244,7 @@ const Calendar = ({ onDateSelect, selectedDate, events }) => {
                                     setShowMonthPicker(p => !p);
                                     setShowYearPicker(false);
                                 }}
-                                className="text-xl font-bold text-gray-800 hover:text-primary transition-colors"
+                                className="text-base sm:text-xl font-bold text-gray-800 hover:text-primary transition-colors"
                             >
                                 {MONTH_NAMES[viewMonth]}
                             </button>
@@ -253,7 +264,7 @@ const Calendar = ({ onDateSelect, selectedDate, events }) => {
                                     setShowYearPicker(p => !p);
                                     setShowMonthPicker(false);
                                 }}
-                                className="text-sm font-semibold text-gray-500 hover:text-primary transition-colors"
+                                className="text-xs sm:text-sm font-semibold text-gray-500 hover:text-primary transition-colors"
                             >
                                 {viewYear}
                             </button>
@@ -270,9 +281,9 @@ const Calendar = ({ onDateSelect, selectedDate, events }) => {
                     {/* Next button - right side */}
                     <button
                         onClick={nextMonth}
-                        className="p-2 hover:bg-primary/10 rounded-lg transition-colors text-gray-500 hover:text-primary"
+                        className="p-1.5 sm:p-2 hover:bg-primary/10 rounded-lg transition-colors text-gray-500 hover:text-primary"
                     >
-                        <ChevronRight className="w-5 h-5" />
+                        <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
                 </div>
 
@@ -281,7 +292,7 @@ const Calendar = ({ onDateSelect, selectedDate, events }) => {
                     {DAY_LABELS.map((d, i) => (
                         <div
                             key={i}
-                            className={`py-2.5 text-center text-xs font-semibold uppercase tracking-wide ${
+                            className={`py-1.5 sm:py-2.5 text-center text-[10px] sm:text-xs font-semibold uppercase tracking-wide ${
                                 i === 0 ? "text-red-500" : "text-gray-400"
                             }`}
                         >
@@ -306,10 +317,10 @@ const Calendar = ({ onDateSelect, selectedDate, events }) => {
                             return (
                                 <div
                                     key={idx}
-                                    className="border-b border-r border-gray-200 min-h-[120px] p-1 relative bg-gray-50/30"
+                                    className="border-b border-r border-gray-200 min-h-[60px] sm:min-h-[120px] p-0.5 sm:p-1 relative bg-gray-50/30"
                                 >
                                     <span
-                                        className={`text-xs absolute bottom-1.5 left-1.5 ${isNonCurrentSunday ? "text-red-300" : "text-gray-300"}`}
+                                        className={`text-[10px] sm:text-xs absolute bottom-0.5 sm:bottom-1.5 left-0.5 sm:left-1.5 ${isNonCurrentSunday ? "text-red-300" : "text-gray-300"}`}
                                     >
                                         {cell.day}
                                     </span>
@@ -330,54 +341,73 @@ const Calendar = ({ onDateSelect, selectedDate, events }) => {
                                 key={idx}
                                 onClick={() => handleCellClick(cell.day)}
                                 className={`
-                                    relative border-b border-r border-gray-200 min-h-[120px] p-1.5 text-left
+                                    relative border-b border-r border-gray-200 min-h-[60px] sm:min-h-[120px] p-0.5 sm:p-1.5 text-left
                                     transition-colors duration-150 group
                                     ${selected_ ? "bg-primary hover:bg-primary" : "bg-white hover:bg-primary/5"}
                                 `}
                             >
                                 {/* Badges top-right */}
                                 {uniqueTypes.length > 0 && (
-                                    <div className="absolute top-1.5 right-1.5 flex flex-wrap gap-0.5 justify-end max-w-[80%]">
+                                    <div className="absolute top-0.5 sm:top-1.5 right-0.5 sm:right-1.5 flex flex-wrap gap-0.5 justify-end max-w-[90%] sm:max-w-[80%]">
                                         {uniqueTypes
-                                            .slice(0, 2)
+                                            .slice(0, isMobile ? 3 : 2)
                                             .map((type, i) => {
                                                 const cfg = EVENT_CONFIG[type];
                                                 if (!cfg) return null;
-                                                return (
+                                                const IconComponent = cfg.icon;
+                                                return isMobile ? (
+                                                    // Mobile: icon-only badge
                                                     <Badge
                                                         key={i}
                                                         variant="solid"
                                                         color={cfg.color}
                                                         size="xs"
                                                         icon={cfg.icon}
-                                                        className="text-[9px] px-1 py-0 [&>svg]:w-2.5 [&>svg]:h-2.5"
+                                                        className="!px-1 !py-0.5 [&>svg]:w-3 [&>svg]:h-3"
                                                     >
-                                                        {cfg.label}
+                                                        {/* No text on mobile */}
+                                                    </Badge>
+                                                ) : (
+                                                    // Desktop: badge with text
+                                                    <Badge
+                                                        key={i}
+                                                        variant="solid"
+                                                        color={cfg.color}
+                                                        size="xs"
+                                                        icon={cfg.icon}
+                                                        className="text-[12px] px-1.5 py-0.5 max-w-[100px] [&>svg]:w-3 [&>svg]:h-3 [&>span]:truncate"
+                                                    >
+                                                        <span className="truncate block max-w-[80px]">
+                                                            {cfg.label}
+                                                        </span>
                                                     </Badge>
                                                 );
                                             })}
-                                        {uniqueTypes.length > 2 && (
+                                        {uniqueTypes.length >
+                                            (isMobile ? 3 : 2) && (
                                             <Badge
                                                 variant="solid"
                                                 color="gray"
                                                 size="xs"
-                                                className="text-[9px] px-1 py-0"
+                                                className="text-[10px] sm:text-[11px] px-1 sm:px-1.5 py-0.5"
                                             >
-                                                +{uniqueTypes.length - 2}
+                                                +
+                                                {uniqueTypes.length -
+                                                    (isMobile ? 3 : 2)}
                                             </Badge>
                                         )}
                                     </div>
                                 )}
 
                                 {/* Day number */}
-                                <div className="absolute bottom-1.5 left-1.5">
+                                <div className="absolute bottom-0.5 sm:bottom-1.5 left-0.5 sm:left-1.5">
                                     {today_ ? (
-                                        <div className="w-6 h-6 flex items-center justify-center rounded-full bg-yellow-500 text-white text-xs font-semibold">
+                                        <div className="w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center rounded-full bg-yellow-500 text-white text-[10px] sm:text-xs font-semibold">
                                             {cell.day}
                                         </div>
                                     ) : (
                                         <span
-                                            className={`text-xs font-semibold ${
+                                            className={`text-[10px] sm:text-xs font-semibold ${
                                                 selected_
                                                     ? "text-white"
                                                     : isSunday
