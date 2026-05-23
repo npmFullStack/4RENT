@@ -40,7 +40,7 @@ const EVENT_CONFIG = {
     rent_paid: { color: "green", label: "Rent Paid", icon: CheckCircle },
     move_in: { color: "blue", label: "Move In", icon: UserPlus },
     move_out: { color: "purple", label: "Move Out", icon: UserMinus },
-    maintenance: { color: "yellow", label: "Maintenance", icon: Wrench },
+    maintenance: { color: "gray", label: "Maintenance", icon: Wrench },
     damage_fixed: { color: "teal", label: "Damage Fixed", icon: Bug },
     lease_renewal: { color: "gray", label: "Lease Renewal", icon: RefreshCw },
     inspection: { color: "orange", label: "Inspection", icon: ClipboardList }
@@ -75,13 +75,43 @@ const MonthPicker = ({ current, onChange, onClose }) => (
     </div>
 );
 
-// ── YearPicker overlay ─────────────────────────────────────────────────────────
+// ── YearPicker overlay with navigation ─────────────────────────────────────────
 
 const YearPicker = ({ current, onChange, onClose }) => {
-    const base = current - (current % 12);
-    const years = Array.from({ length: 12 }, (_, i) => base + i);
+    const [startYear, setStartYear] = useState(current - (current % 12));
+    
+    const years = Array.from({ length: 12 }, (_, i) => startYear + i);
+    
+    const goToPreviousDecade = () => {
+        setStartYear(prev => prev - 12);
+    };
+    
+    const goToNextDecade = () => {
+        setStartYear(prev => prev + 12);
+    };
+    
     return (
-        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-30 p-3 w-44">
+        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-30 p-3 w-52">
+            {/* Navigation header */}
+            <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-100">
+                <button
+                    onClick={goToPreviousDecade}
+                    className="p-1 hover:bg-primary/10 rounded-lg transition-colors text-gray-500 hover:text-primary"
+                >
+                    <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="text-xs font-semibold text-gray-500">
+                    {startYear} - {startYear + 11}
+                </span>
+                <button
+                    onClick={goToNextDecade}
+                    className="p-1 hover:bg-primary/10 rounded-lg transition-colors text-gray-500 hover:text-primary"
+                >
+                    <ChevronRight className="w-4 h-4" />
+                </button>
+            </div>
+            
+            {/* Years grid */}
             <div className="grid grid-cols-3 gap-1">
                 {years.map(y => (
                     <button
@@ -276,7 +306,7 @@ const Calendar = ({ onDateSelect, selectedDate, events }) => {
                             return (
                                 <div
                                     key={idx}
-                                    className="border-b border-r border-gray-200 min-h-[88px] p-1 relative bg-gray-50/30"
+                                    className="border-b border-r border-gray-200 min-h-[120px] p-1 relative bg-gray-50/30"
                                 >
                                     <span
                                         className={`text-xs absolute bottom-1.5 left-1.5 ${isNonCurrentSunday ? "text-red-300" : "text-gray-300"}`}
@@ -295,24 +325,14 @@ const Calendar = ({ onDateSelect, selectedDate, events }) => {
                         const selected_ = isSelected(cell.day);
                         const isSunday = getDayOfWeek(cell.day) === 0;
 
-                        // Determine background color
-                        let bgColor = "";
-                        if (selected_) {
-                            bgColor = "bg-primary";
-                        } else if (today_ && !selected_) {
-                            bgColor = "bg-white";
-                        } else {
-                            bgColor = "bg-white";
-                        }
-
                         return (
                             <button
                                 key={idx}
                                 onClick={() => handleCellClick(cell.day)}
                                 className={`
-                                    relative border-b border-r border-gray-200 min-h-[88px] p-1.5 text-left
-                                    transition-all duration-150 group hover:bg-primary/5
-                                    ${bgColor}
+                                    relative border-b border-r border-gray-200 min-h-[120px] p-1.5 text-left
+                                    transition-colors duration-150 group
+                                    ${selected_ ? "bg-primary hover:bg-primary" : "bg-white hover:bg-primary/5"}
                                 `}
                             >
                                 {/* Badges top-right */}
@@ -326,9 +346,11 @@ const Calendar = ({ onDateSelect, selectedDate, events }) => {
                                                 return (
                                                     <Badge
                                                         key={i}
-                                                        variant="soft"
+                                                        variant="solid"
                                                         color={cfg.color}
                                                         size="xs"
+                                                        icon={cfg.icon}
+                                                        className="text-[9px] px-1 py-0 [&>svg]:w-2.5 [&>svg]:h-2.5"
                                                     >
                                                         {cfg.label}
                                                     </Badge>
@@ -336,9 +358,10 @@ const Calendar = ({ onDateSelect, selectedDate, events }) => {
                                             })}
                                         {uniqueTypes.length > 2 && (
                                             <Badge
-                                                variant="soft"
+                                                variant="solid"
                                                 color="gray"
                                                 size="xs"
+                                                className="text-[9px] px-1 py-0"
                                             >
                                                 +{uniqueTypes.length - 2}
                                             </Badge>

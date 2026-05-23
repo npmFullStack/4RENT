@@ -20,7 +20,7 @@ import NewBoarding from "@/features/(app)/pages/NewBoarding";
 import NewApartment from "@/features/(app)/pages/NewApartment";
 import Tenants from "@/features/(app)/pages/Tenants";
 import NewTenant from "@/features/(app)/pages/NewTenant";
-import CalendarPage from "@/features/(app)/pages/Calendar";
+import CalendarPage from "@/features/(app)/pages/CalendarPage";
 
 function App() {
     return (

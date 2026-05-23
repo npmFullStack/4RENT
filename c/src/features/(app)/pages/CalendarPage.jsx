@@ -1,4 +1,4 @@
-// src/features/(app)/pages/Calendar.jsx
+// src/features/(app)/pages/CalendarPage.jsx
 import React, { useState } from "react";
 import {
     HelpCircle,
@@ -9,10 +9,9 @@ import {
 import HelpPageModal from "@/shared/components/HelpPageModal";
 import WelcomeHeroBox from "@/shared/components/WelcomeHeroBox";
 import Calendar from "@/features/(app)/components/Calendar";
-import DateDetails from "@/features/(app)/components/DateDetails";
+import DateDetailsModal from "@/features/(app)/components/DateDetailsModal";
 import welcomeHeroImage from "@/assets/images/welcome-hero-box.png";
 
-// Mock events data
 const mockEvents = [
     {
         id: 1,
@@ -23,7 +22,7 @@ const mockEvents = [
         tenant: "Maria Santos",
         property: "Sunset Boarding House",
         amount: 4850,
-        time: "All day"
+        
     },
     {
         id: 2,
@@ -34,7 +33,7 @@ const mockEvents = [
         tenant: "John Reyes",
         property: "Downtown Luxury Apartment",
         amount: 12500,
-        time: "2:30 PM"
+        
     },
     {
         id: 3,
@@ -44,7 +43,7 @@ const mockEvents = [
         description: "Sofia Mendoza moving into Cozy Studio Boarding",
         tenant: "Sofia Mendoza",
         property: "Cozy Studio Boarding",
-        time: "10:00 AM"
+        
     },
     {
         id: 4,
@@ -53,7 +52,7 @@ const mockEvents = [
         title: "Plumbing Repair Completed",
         description: "Fixed leaking pipe in bathroom unit 204",
         property: "Metro Central Tower",
-        time: "3:00 PM"
+        
     },
     {
         id: 5,
@@ -64,7 +63,7 @@ const mockEvents = [
         tenant: "All Tenants",
         property: "Multiple Properties",
         amount: "Various",
-        time: "All day"
+        
     },
     {
         id: 6,
@@ -73,7 +72,7 @@ const mockEvents = [
         title: "AC Maintenance Scheduled",
         description: "Annual AC cleaning and maintenance",
         property: "Skyline Apartments",
-        time: "9:00 AM - 12:00 PM"
+        
     },
     {
         id: 7,
@@ -83,7 +82,7 @@ const mockEvents = [
         description: "Carmen Villanueva moving out",
         tenant: "Carmen Villanueva",
         property: "Villa Maria Boarding House",
-        time: "11:00 AM"
+        
     },
     {
         id: 8,
@@ -92,7 +91,7 @@ const mockEvents = [
         title: "Quarterly Property Inspection",
         description: "Routine property inspection for all units",
         property: "All Properties",
-        time: "9:00 AM - 5:00 PM"
+        
     },
     {
         id: 9,
@@ -102,7 +101,7 @@ const mockEvents = [
         description: "Last day to renew lease for March move-ins",
         tenant: "Multiple Tenants",
         property: "Various Properties",
-        time: "5:00 PM"
+        
     },
     {
         id: 10,
@@ -113,7 +112,7 @@ const mockEvents = [
         tenant: "Ana Cruz",
         property: "Garden View Boarding House",
         amount: 3750,
-        time: "10:15 AM"
+        
     },
     {
         id: 11,
@@ -123,7 +122,7 @@ const mockEvents = [
         description: "Faulty wiring in kitchen",
         tenant: "David Garcia",
         property: "Ocean View Apartment",
-        time: "1:00 PM"
+        
     },
     {
         id: 12,
@@ -132,17 +131,17 @@ const mockEvents = [
         title: "Window Replacement",
         description: "Replaced broken window in living room",
         property: "Harbor View Apartment",
-        time: "2:00 PM"
+        
     }
 ];
 
 const CalendarPage = () => {
     const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
     const [selectedDate, setSelectedDate] = useState(null);
+    const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
     const [filterType, setFilterType] = useState("all");
     const [showFilters, setShowFilters] = useState(false);
 
-    // Filter events based on selected filter type
     const getFilteredEvents = () => {
         if (filterType === "all") return mockEvents;
         return mockEvents.filter(event => event.type === filterType);
@@ -150,36 +149,35 @@ const CalendarPage = () => {
 
     const filteredEvents = getFilteredEvents();
 
-    // Help features
     const helpFeatures = [
         {
-            title: "Calendar Overview",
+            title: "📅 Click on Any Date",
             description:
-                "View all important dates including rent due dates, move-ins, maintenance schedules, and more."
+                "Click any date on the calendar to view detailed information about events scheduled for that day."
         },
         {
-            title: "Event Badges",
+            title: "🏷️ Event Badges",
             description:
-                "Small colored dots on dates indicate different event types. Hover to see event count."
+                "Color-coded badges on dates indicate different event types (Rent Due, Move In, Maintenance, etc.)."
         },
         {
-            title: "Date Details",
+            title: "🔍 Filter Events",
             description:
-                "Click any date to view detailed information about events scheduled for that day."
+                "Use the filter dropdown to focus on specific event types like rent payments or maintenance schedules."
         },
         {
-            title: "Filter Events",
-            description:
-                "Use the filter dropdown to focus on specific event types like rent payments or maintenance."
-        },
-        {
-            title: "Property Management",
+            title: "📊 Property Management",
             description:
                 "Track tenant move-ins/outs, rent collections, and property maintenance all in one place."
+        },
+        {
+            title: "🔄 Month/Year Navigation",
+            title: "📅 Month/Year Navigation",
+            description:
+                "Click on the month or year to quickly jump to any date, or use the arrow buttons to browse."
         }
     ];
 
-    // Filter options for dropdown
     const filterOptions = [
         { value: "all", label: "All Events" },
         { value: "rent_due", label: "Rent Due" },
@@ -197,6 +195,11 @@ const CalendarPage = () => {
         return option ? option.label : "All Events";
     };
 
+    const handleDateSelect = date => {
+        setSelectedDate(date);
+        setIsDetailsModalOpen(true);
+    };
+
     return (
         <div className="p-4 md:p-6 bg-neutral-50 min-h-screen">
             {/* Header Section */}
@@ -211,7 +214,7 @@ const CalendarPage = () => {
                     </button>
                     <div>
                         <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
-                            Calendar
+                            Property Calendar
                         </h1>
                         <p className="text-gray-600 mt-1">
                             Track important dates, events, and property
@@ -221,7 +224,6 @@ const CalendarPage = () => {
                 </div>
 
                 <div className="flex items-center justify-end gap-3">
-                    {/* Help Button (Desktop) */}
                     <button
                         onClick={() => setIsHelpModalOpen(true)}
                         className="hidden sm:flex px-3 py-2 text-gray-500 bg-transparent hover:bg-gray-100 rounded-lg transition-colors items-center gap-2"
@@ -230,7 +232,6 @@ const CalendarPage = () => {
                         <span className="font-medium">Help</span>
                     </button>
 
-                    {/* Filter Dropdown */}
                     <div className="relative">
                         <button
                             onClick={() => setShowFilters(!showFilters)}
@@ -273,36 +274,32 @@ const CalendarPage = () => {
                 </div>
             </div>
 
-            {/* Welcome Hero Box - Image on LEFT, message on RIGHT */}
+            {/* Welcome Hero Box with Instructions */}
             <div className="mb-8">
                 <WelcomeHeroBox
                     image={welcomeHeroImage}
                     title="Property Management Calendar"
-                    message="Stay on top of all your property events including rent due dates, tenant move-ins, maintenance schedules, and more. Click any date to view detailed information."
+                    message="Click any date for event details. Color badges show rent, move-ins, or maintenance. Use filter to focus. Track everything in one place."
                     imagePosition="left"
                 />
             </div>
 
-            {/* Calendar and Details Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Calendar Component - takes 2/3 on large screens */}
-                <div className="lg:col-span-2">
-                    <Calendar
-                        onDateSelect={setSelectedDate}
-                        selectedDate={selectedDate}
-                        events={filteredEvents}
-                    />
-                </div>
-
-                {/* Date Details Component - takes 1/3 on large screens */}
-                <div className="lg:col-span-1">
-                    <DateDetails
-                        selectedDate={selectedDate}
-                        events={filteredEvents}
-                        onClose={() => setSelectedDate(null)}
-                    />
-                </div>
+            {/* Calendar Section */}
+            <div className="grid grid-cols-1 gap-6">
+                <Calendar
+                    onDateSelect={handleDateSelect}
+                    selectedDate={selectedDate}
+                    events={filteredEvents}
+                />
             </div>
+
+            {/* Date Details Modal */}
+            <DateDetailsModal
+                isOpen={isDetailsModalOpen}
+                selectedDate={selectedDate}
+                events={filteredEvents}
+                onClose={() => setIsDetailsModalOpen(false)}
+            />
 
             {/* Help Modal */}
             <HelpPageModal
