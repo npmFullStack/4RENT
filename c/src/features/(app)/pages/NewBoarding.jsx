@@ -60,12 +60,12 @@ const NewBoarding = () => {
     const getBoardingHouseSexOptions = () => [
         {
             value: "male",
-            label: "Male Only",
+            label: "Male",
             icon: <img src={MaleIcon} alt="male" className="w-5 h-5" />
         },
         {
             value: "female",
-            label: "Female Only",
+            label: "Female",
             icon: <img src={FemaleIcon} alt="female" className="w-5 h-5" />
         },
         {
@@ -90,7 +90,7 @@ const NewBoarding = () => {
         {
             title: "Boarding House Type",
             description:
-                "Select Male Only, Female Only, or Mixed. This determines bedroom configuration."
+                "Select Male, Female, or Mixed. This determines bedroom configuration."
         },
         {
             title: "Bedrooms Configuration",
@@ -313,7 +313,7 @@ const NewBoarding = () => {
         },
         {
             title: "Boarding House Type",
-            description: "Select Male Only, Female Only, or Mixed.",
+            description: "Select Male, Female, or Mixed.",
             icon: "Users"
         },
         {
@@ -837,8 +837,8 @@ const NewBoarding = () => {
                                                             )}
                                                             {formData.boardingHouseSex ===
                                                             "male"
-                                                                ? "Male Only"
-                                                                : "Female Only"}
+                                                                ? "Male"
+                                                                : "Female"}
                                                         </span>
                                                     </div>
                                                 </div>

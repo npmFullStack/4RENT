@@ -1,5 +1,5 @@
 // src/features/(app)/pages/NewApartment.jsx
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     HelpCircle,
@@ -20,7 +20,11 @@ import Instructions from "../components/Instructions";
 import HelpPageModal from "@/shared/components/HelpPageModal";
 import Button from "@/shared/components/Button";
 import Badge from "@/shared/components/Badge";
-import Toast from "@/shared/components/Toast"; // Add Toast import
+import Toast from "@/shared/components/Toast";
+import Select from "@/shared/components/Select";
+
+const BASE = "https://psgc.gitlab.io/api";
+const sort = arr => [...arr].sort((a, b) => a.name.localeCompare(b.name));
 
 const NewApartment = () => {
     const navigate = useNavigate();
@@ -28,10 +32,24 @@ const NewApartment = () => {
     const [isInstructionsDrawerOpen, setIsInstructionsDrawerOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // Address data states
+    const [provinces, setProvinces] = useState([]);
+    const [independentCities, setIndependentCities] = useState([]);
+    const [cities, setCities] = useState([]);
+    const [barangays, setBarangays] = useState([]);
+    
+    // Loading states
+    const [loadingProvinces, setLoadingProvinces] = useState(false);
+    const [loadingCities, setLoadingCities] = useState(false);
+    const [loadingBarangays, setLoadingBarangays] = useState(false);
+
     // Form state
     const [formData, setFormData] = useState({
         name: "",
-        address: "",
+        street: "",
+        province: null,
+        city: null,
+        barangay: null,
         numberOfBedrooms: "",
         numberOfCR: "",
         pricePerMonth: "",
@@ -63,10 +81,160 @@ const NewApartment = () => {
         }
     ];
 
+    // Derived: check if selected province is actually an independent city
+    const isIndependentCity = formData.province && 
+        independentCities.some(c => c.code === formData.province);
+
+    // Fetch provinces and independent cities on component mount
+    useEffect(() => {
+        setLoadingProvinces(true);
+        Promise.all([
+            fetch(`${BASE}/provinces/`).then(r => r.json()),
+            fetch(`${BASE}/cities-municipalities/`).then(r => r.json()),
+        ])
+            .then(([provData, cityData]) => {
+                setProvinces(sort(provData));
+                // Independent cities = those without a provinceCode
+                const indep = cityData.filter(
+                    c => !c.provinceCode && c.provinceCode !== 0
+                );
+                setIndependentCities(sort(indep));
+            })
+            .catch(() => {
+                Toast.error("Failed to load location data");
+            })
+            .finally(() => setLoadingProvinces(false));
+    }, []);
+
+    // Fetch cities when a regular province is selected
+    useEffect(() => {
+        if (!formData.province || isIndependentCity) {
+            setCities([]);
+            return;
+        }
+
+        setLoadingCities(true);
+        fetch(`${BASE}/provinces/${formData.province}/cities-municipalities/`)
+            .then(r => r.json())
+            .then(data => {
+                setCities(sort(data));
+            })
+            .catch(() => {
+                Toast.error("Failed to load cities");
+                setCities([]);
+            })
+            .finally(() => setLoadingCities(false));
+    }, [formData.province, isIndependentCity]);
+
+    // Fetch barangays when a city is selected (or independent city is selected as province)
+    const cityCodeForBarangay = isIndependentCity ? formData.province : formData.city;
+
+    useEffect(() => {
+        if (!cityCodeForBarangay) {
+            setBarangays([]);
+            return;
+        }
+
+        setLoadingBarangays(true);
+        fetch(`${BASE}/cities-municipalities/${cityCodeForBarangay}/barangays/`)
+            .then(r => r.json())
+            .then(data => {
+                setBarangays(sort(data));
+            })
+            .catch(() => {
+                Toast.error("Failed to load barangays");
+                setBarangays([]);
+            })
+            .finally(() => setLoadingBarangays(false));
+    }, [cityCodeForBarangay]);
+
+    // Build grouped options for province/city select
+    const provinceOptions = [
+        {
+            label: "Provinces",
+            options: provinces.map(p => ({
+                value: p.code,
+                label: p.name,
+            })),
+        },
+        {
+            label: "Independent Cities",
+            options: independentCities.map(c => ({
+                value: c.code,
+                label: c.name,
+            })),
+        },
+    ];
+
+    // City options
+    const cityOptions = cities.map(c => ({
+        value: c.code,
+        label: c.name,
+    }));
+
+    // Barangay options
+    const barangayOptions = barangays.map(b => ({
+        value: b.code,
+        label: b.name,
+    }));
+
     // Handle input changes
     const handleChange = e => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    // Handle province selection
+    const handleProvinceChange = (value) => {
+        setFormData(prev => ({
+            ...prev,
+            province: value,
+            city: null, // Reset city
+            barangay: null, // Reset barangay
+        }));
+    };
+
+    // Handle city selection
+    const handleCityChange = (value) => {
+        setFormData(prev => ({
+            ...prev,
+            city: value,
+            barangay: null, // Reset barangay
+        }));
+    };
+
+    // Handle barangay selection
+    const handleBarangayChange = (value) => {
+        setFormData(prev => ({ ...prev, barangay: value }));
+    };
+
+    // Build full address for display/submission
+    const getFullAddress = () => {
+        const parts = [];
+        
+        if (formData.street) parts.push(formData.street);
+        
+        if (formData.barangay) {
+            const barangay = barangays.find(b => b.code === formData.barangay);
+            if (barangay) parts.push(barangay.name);
+        }
+        
+        if (isIndependentCity && formData.province) {
+            const city = independentCities.find(c => c.code === formData.province);
+            if (city) parts.push(city.name);
+        } else {
+            if (formData.city) {
+                const city = cities.find(c => c.code === formData.city);
+                if (city) parts.push(city.name);
+            }
+            if (formData.province && !isIndependentCity) {
+                const province = provinces.find(p => p.code === formData.province);
+                if (province) parts.push(province.name);
+            }
+        }
+        
+        parts.push("Philippines");
+        return parts.join(", ");
     };
 
     // Handle image upload
@@ -126,19 +294,46 @@ const NewApartment = () => {
         Toast.info("Cover Photo Changed", "This will be displayed as the cover image.");
     };
 
-    // Handle form submission - No validation
+    // Handle form submission
     const handleSubmit = async e => {
         e.preventDefault();
+        
+        // Basic validation
+        if (!formData.name) {
+            Toast.error("Missing Information", "Please enter a property name.");
+            return;
+        }
+        
+        if (!formData.province) {
+            Toast.error("Missing Information", "Please select a province or city.");
+            return;
+        }
         
         setIsSubmitting(true);
 
         try {
+            const fullAddress = getFullAddress();
+            const submissionData = {
+                ...formData,
+                fullAddress,
+                provinceDetails: !isIndependentCity && formData.province 
+                    ? provinces.find(p => p.code === formData.province)
+                    : null,
+                cityDetails: isIndependentCity 
+                    ? independentCities.find(c => c.code === formData.province)
+                    : (formData.city ? cities.find(c => c.code === formData.city) : null),
+                barangayDetails: formData.barangay 
+                    ? barangays.find(b => b.code === formData.barangay)
+                    : null,
+                isIndependentCity
+            };
+            
             await new Promise(resolve => setTimeout(resolve, 1500));
-            console.log("Form submitted:", formData);
+            console.log("Form submitted:", submissionData);
             
             Toast.success(
                 "Apartment Created!", 
-                `${formData.name || "New Apartment"} has been successfully listed.`
+                `${formData.name} has been successfully listed.`
             );
             
             setTimeout(() => {
@@ -187,10 +382,10 @@ const NewApartment = () => {
         <div className="p-4 md:p-6 bg-neutral-50 min-h-screen">
             {/* Breadcrumbs */}
             <div className="mb-4">
-<BreadCrumbs items={[
-    { label: "My Properties", path: "/my-properties" },
-    { label: "New Apartment", path: "/new-apartment" }
-]} />
+                <BreadCrumbs items={[
+                    { label: "My Properties", path: "/my-properties" },
+                    { label: "New Apartment", path: "/new-apartment" }
+                ]} />
             </div>
 
             {/* Header */}
@@ -360,22 +555,85 @@ const NewApartment = () => {
                             />
                         </div>
 
-                        {/* Address */}
+                        {/* Address Section */}
                         <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Address
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Property Address
                             </label>
-                            <div className="relative">
-                                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            
+                            {/* Street Address */}
+                            <div className="mb-3">
+                                <label className="block text-xs text-gray-500 mb-1">
+                                    Street / Building / Unit No.
+                                </label>
                                 <input
                                     type="text"
-                                    name="address"
-                                    value={formData.address}
+                                    name="street"
+                                    value={formData.street}
                                     onChange={handleChange}
-                                    placeholder="Street, Barangay, City, Province"
-                                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                    placeholder="e.g., 123 Rizal St., Unit 4B"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
                                 />
                             </div>
+
+                            {/* Province / City (Provinces + Independent Cities) */}
+                            <div className="mb-3">
+                                <label className="block text-xs text-gray-500 mb-1">
+                                    Province / City
+                                </label>
+                                <Select
+                                    options={provinceOptions}
+                                    value={formData.province}
+                                    onChange={handleProvinceChange}
+                                    placeholder={loadingProvinces ? "Loading..." : "Select province or city"}
+                                    isSearchable
+                                    isLoading={loadingProvinces}
+                                />
+                            </div>
+
+                            {/* Municipality / City - only for regular provinces */}
+                            {formData.province && !isIndependentCity && (
+                                <div className="mb-3">
+                                    <label className="block text-xs text-gray-500 mb-1">
+                                        Municipality / City
+                                    </label>
+                                    <Select
+                                        options={cityOptions}
+                                        value={formData.city}
+                                        onChange={handleCityChange}
+                                        placeholder={loadingCities ? "Loading..." : "Select city or municipality"}
+                                        isSearchable
+                                        isLoading={loadingCities}
+                                    />
+                                </div>
+                            )}
+
+                            {/* Barangay - shown once a city is resolved */}
+                            {cityCodeForBarangay && (
+                                <div className="mb-3">
+                                    <label className="block text-xs text-gray-500 mb-1">
+                                        Barangay
+                                    </label>
+                                    <Select
+                                        options={barangayOptions}
+                                        value={formData.barangay}
+                                        onChange={handleBarangayChange}
+                                        placeholder={loadingBarangays ? "Loading..." : "Select barangay"}
+                                        isSearchable
+                                        isLoading={loadingBarangays}
+                                    />
+                                </div>
+                            )}
+
+                            {/* Address Preview */}
+                            {(formData.street || formData.province) && (
+                                <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                    <p className="text-xs text-gray-500 mb-1">Full Address Preview:</p>
+                                    <p className="text-sm text-gray-700">
+                                        {getFullAddress()}
+                                    </p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Bedrooms and CR */}

@@ -1,61 +1,207 @@
 // src/features/(landing)/components/SetAddressManuallyModal.jsx
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import ModalPortal from "@/shared/components/ModalPortal";
 import Select from "@/shared/components/Select";
 import Button from "@/shared/components/Button";
 import { MapPin, X, CheckCircle } from "lucide-react";
-import { toast } from "sonner"; // or your toast lib: react-hot-toast / react-toastify
+import { toast } from "sonner";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// The PSGC API returns cities/municipalities with an optional `provinceCode`.
-// Cities that have NO provinceCode are "independent cities" (e.g. Manila,
-// Davao City, Cebu City) and are NOT nested under any province.
+// PSGC API  →  Province / City / Barangay  (no key needed)
+// Photon API →  Street autocomplete         (no key needed, CORS-friendly, free)
 //
-// Strategy (no region selector):
-//   1. On open → fetch ALL provinces + ALL cities in parallel.
-//   2. Build province dropdown  = provinces (sorted).
-//   3. Build "independent cities" = cities where provinceCode is absent/null.
-//   4. Province Select uses grouped options:
-//        group "Provinces"           → regular provinces
-//        group "Independent Cities"  → province-less cities
-//   5. When user picks a regular province → fetch its cities.
-//   6. When user picks an independent city → skip city step, go straight to barangay.
+// Photon is built by Komoot on top of OpenStreetMap data.
+// Public endpoint: https://photon.komoot.io
+// No signup, no API key, works directly from the browser.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const BASE = "https://psgc.gitlab.io/api";
+const BASE   = "https://psgc.gitlab.io/api";
+const PHOTON = "https://photon.komoot.io/api";
 
 const sort = arr => [...arr].sort((a, b) => a.name.localeCompare(b.name));
 
+// ── StreetAutocomplete — powered by Photon (Komoot / OpenStreetMap) ───────────
+const StreetAutocomplete = ({ value, onChange, cityHint, disabled }) => {
+    const [query,       setQuery]       = useState(value ?? "");
+    const [suggestions, setSuggestions] = useState([]);
+    const [open,        setOpen]        = useState(false);
+    const [loading,     setLoading]     = useState(false);
+    const debounceRef  = useRef(null);
+    const abortRef     = useRef(null);
+    const containerRef = useRef(null);
+
+    // Sync when parent clears value
+    useEffect(() => { if (!value) setQuery(""); }, [value]);
+
+    // Close dropdown on outside click
+    useEffect(() => {
+        const handler = e => {
+            if (containerRef.current && !containerRef.current.contains(e.target))
+                setOpen(false);
+        };
+        document.addEventListener("mousedown", handler);
+        return () => document.removeEventListener("mousedown", handler);
+    }, []);
+
+    const fetchSuggestions = useCallback(async (input) => {
+        if (!input.trim() || input.length < 2) {
+            setSuggestions([]);
+            setOpen(false);
+            return;
+        }
+
+        // Cancel any previous in-flight request
+        abortRef.current?.abort();
+        abortRef.current = new AbortController();
+
+        setLoading(true);
+
+        try {
+            // Append city hint so Photon returns locally relevant results
+            const q = cityHint ? `${input}, ${cityHint}, Philippines` : `${input}, Philippines`;
+
+            const params = new URLSearchParams({
+                q,
+                limit: "6",
+                lang:  "en",
+                // Bias results to Philippines bounding box
+                // so "Rizal" doesn't return results from Spain
+                bbox: "116.87,4.59,126.60,21.12",
+            });
+
+            const res = await fetch(`${PHOTON}?${params}`, {
+                signal: abortRef.current.signal,
+            });
+
+            const data = await res.json();
+            const features = data?.features ?? [];
+
+            // Build clean label from Photon's structured address properties
+            const items = features.map(f => {
+                const p = f.properties ?? {};
+                // Main: house number + street name
+                const street = [p.housenumber, p.street || p.name]
+                    .filter(Boolean).join(" ");
+                // Secondary: district / city / state
+                const secondary = [p.district || p.suburb, p.city || p.town || p.village]
+                    .filter(Boolean).join(", ");
+                return {
+                    id:        `${f.properties?.osm_id}-${f.properties?.osm_type}`,
+                    main:      street || p.name || "",
+                    secondary: secondary || p.state || "",
+                };
+            }).filter(i => i.main); // drop results with no street name
+
+            // De-duplicate by main label
+            const seen  = new Set();
+            const unique = items.filter(i => {
+                if (seen.has(i.main)) return false;
+                seen.add(i.main);
+                return true;
+            });
+
+            setSuggestions(unique);
+            setOpen(unique.length > 0);
+        } catch (err) {
+            if (err.name !== "AbortError") {
+                setSuggestions([]);
+                setOpen(false);
+            }
+        } finally {
+            setLoading(false);
+        }
+    }, [cityHint]);
+
+    const handleInputChange = e => {
+        const val = e.target.value;
+        setQuery(val);
+        onChange(val);
+
+        clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => fetchSuggestions(val), 400);
+    };
+
+    const handleSelect = item => {
+        setQuery(item.main);
+        onChange(item.main);
+        setSuggestions([]);
+        setOpen(false);
+    };
+
+    const handleKeyDown = e => {
+        if (e.key === "Escape") setOpen(false);
+    };
+
+    return (
+        <div ref={containerRef} className="relative">
+            <input
+                type="text"
+                value={query}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
+                onFocus={() => suggestions.length > 0 && setOpen(true)}
+                disabled={disabled}
+                placeholder={loading ? "Searching…" : "e.g. Rizal Street, 123 Mabini St"}
+                className={[
+                    "w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5",
+                    "text-sm text-gray-800 placeholder-gray-400",
+                    "focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent",
+                    "transition-shadow",
+                    disabled ? "opacity-50 cursor-not-allowed bg-gray-50" : "",
+                ].join(" ")}
+            />
+
+            {/* Suggestions dropdown */}
+            {open && suggestions.length > 0 && (
+                <ul className="absolute z-50 mt-1 w-full rounded-xl border border-gray-100 bg-white shadow-lg overflow-hidden">
+                    {suggestions.map(s => (
+                        <li
+                            key={s.id}
+                            onMouseDown={() => handleSelect(s)}
+                            className="flex flex-col px-4 py-2.5 cursor-pointer hover:bg-green-50 transition-colors"
+                        >
+                            <span className="text-sm font-medium text-gray-800">{s.main}</span>
+                            {s.secondary && (
+                                <span className="text-xs text-gray-400 mt-0.5">{s.secondary}</span>
+                            )}
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </div>
+    );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
     // ── Raw data ───────────────────────────────────────────────────────────
-    const [provinces,        setProvinces]        = useState([]);
-    const [independentCities, setIndependentCities] = useState([]);
-    const [cities,           setCities]           = useState([]);
-    const [barangays,        setBarangays]         = useState([]);
+    const [provinces,         setProvinces]         = useState([]);
+    const [independentCities, setIndependentCities]  = useState([]);
+    const [cities,            setCities]             = useState([]);
+    const [barangays,         setBarangays]          = useState([]);
 
     // ── Selections ─────────────────────────────────────────────────────────
-    // provinceOrCity holds either a province code OR an independent-city code.
-    // isIndependentCity is DERIVED by checking if the code exists in independentCities
-    // — never rely on option._type from the Select callback.
-    const [provinceOrCity,  setProvinceOrCity]  = useState(null);
-    const [selectedCity,    setSelectedCity]    = useState(null);
-    const [selectedBarangay,setSelectedBarangay]= useState(null);
+    const [provinceOrCity,   setProvinceOrCity]   = useState(null);
+    const [selectedCity,     setSelectedCity]     = useState(null);
+    const [selectedBarangay, setSelectedBarangay] = useState(null);
+    const [streetText,       setStreetText]       = useState("");
 
     // ── Loading flags ──────────────────────────────────────────────────────
-    const [loadingInit,     setLoadingInit]     = useState(false);
-    const [loadingCities,   setLoadingCities]   = useState(false);
-    const [loadingBarangays,setLoadingBarangays]= useState(false);
+    const [loadingInit,      setLoadingInit]      = useState(false);
+    const [loadingCities,    setLoadingCities]    = useState(false);
+    const [loadingBarangays, setLoadingBarangays] = useState(false);
 
-    // ── Derived — look up the selected code in independentCities array ────
-    // Reliable regardless of whether Select passes back option._type.
+    // ── Derived ────────────────────────────────────────────────────────────
     const isIndependentCity = !!provinceOrCity &&
         independentCities.some(c => c.code === provinceOrCity);
 
-    // ── Reset all state ────────────────────────────────────────────────────
+    // ── Reset ──────────────────────────────────────────────────────────────
     const resetAll = useCallback(() => {
         setProvinceOrCity(null);
         setSelectedCity(null);
         setSelectedBarangay(null);
+        setStreetText("");
         setCities([]);
         setBarangays([]);
     }, []);
@@ -72,79 +218,53 @@ const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
         ])
             .then(([provData, cityData]) => {
                 setProvinces(sort(provData));
-
-                // Independent cities = those without a provinceCode
-                const indep = cityData.filter(
-                    c => !c.provinceCode && c.provinceCode !== 0
-                );
+                const indep = cityData.filter(c => !c.provinceCode && c.provinceCode !== 0);
                 setIndependentCities(sort(indep));
             })
-            .catch(() => {
-                toast.error("Failed to load location data. Please try again.");
-            })
+            .catch(() => toast.error("Failed to load location data. Please try again."))
             .finally(() => setLoadingInit(false));
     }, [isOpen, resetAll]);
 
-    // ── Build grouped options for the Province / City select ──────────────
+    // ── Grouped province/city options ──────────────────────────────────────
     const provinceOptions = [
         {
             label: "Provinces",
-            options: provinces.map(p => ({
-                value:  p.code,
-                label:  p.name,
-                _type:  "province",
-            })),
+            options: provinces.map(p => ({ value: p.code, label: p.name, _type: "province" })),
         },
         {
             label: "Independent Cities",
-            options: independentCities.map(c => ({
-                value:  c.code,
-                label:  c.name,
-                _type:  "independent_city",
-            })),
+            options: independentCities.map(c => ({ value: c.code, label: c.name, _type: "independent_city" })),
         },
     ];
 
-    // ── Handle province-or-city selection ─────────────────────────────────
-    const handleProvinceOrCityChange = (val, option) => {
-        // Reset downstream
+    // ── Handle province/city change ────────────────────────────────────────
+    const handleProvinceOrCityChange = (val) => {
         setSelectedCity(null);
         setSelectedBarangay(null);
+        setStreetText("");
         setCities([]);
         setBarangays([]);
 
-        if (!val) {
-            setProvinceOrCity(null);
-            return;
-        }
-
+        if (!val) { setProvinceOrCity(null); return; }
         setProvinceOrCity(val);
 
-        // Determine type by checking if val exists in independentCities
         const isIndep = independentCities.some(c => c.code === val);
-
         if (!isIndep) {
-            // Fetch cities under this province
             setLoadingCities(true);
             fetch(`${BASE}/provinces/${val}/cities-municipalities/`)
                 .then(r => r.json())
-                .then(data => {
-                    setCities(sort(data).map(c => ({ value: c.code, label: c.name })));
-                })
-                .catch(() => {
-                    toast.error("Failed to load cities. Please try again.");
-                    setCities([]);
-                })
+                .then(data => setCities(sort(data).map(c => ({ value: c.code, label: c.name }))))
+                .catch(() => { toast.error("Failed to load cities. Please try again."); setCities([]); })
                 .finally(() => setLoadingCities(false));
         }
-        // For independent city: no city fetch needed; go straight to barangay
     };
 
-    // ── Fetch barangays when city (or independent city) is chosen ─────────
+    // ── Fetch barangays ────────────────────────────────────────────────────
     const cityCodeForBarangay = isIndependentCity ? provinceOrCity : selectedCity;
 
     useEffect(() => {
         setSelectedBarangay(null);
+        setStreetText("");
         setBarangays([]);
 
         if (!cityCodeForBarangay) return;
@@ -152,22 +272,18 @@ const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
         setLoadingBarangays(true);
         fetch(`${BASE}/cities-municipalities/${cityCodeForBarangay}/barangays/`)
             .then(r => r.json())
-            .then(data => {
-                setBarangays(sort(data).map(b => ({ value: b.code, label: b.name })));
-            })
-            .catch(() => {
-                toast.error("Failed to load barangays. Please try again.");
-                setBarangays([]);
-            })
+            .then(data => setBarangays(sort(data).map(b => ({ value: b.code, label: b.name }))))
+            .catch(() => { toast.error("Failed to load barangays. Please try again."); setBarangays([]); })
             .finally(() => setLoadingBarangays(false));
     }, [cityCodeForBarangay]);
 
-    // ── Completeness: need at least a province or independent city ─────────
+    // ── Build address ──────────────────────────────────────────────────────
     const isComplete = !!provinceOrCity;
 
-    // ── Build address parts (most → least specific) ────────────────────────
     const buildAddressParts = () => {
         const parts = [];
+
+        if (streetText.trim()) parts.push(streetText.trim());
 
         if (selectedBarangay) {
             const b = barangays.find(x => x.value === selectedBarangay);
@@ -175,7 +291,6 @@ const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
         }
 
         if (isIndependentCity) {
-            // provinceOrCity IS the city
             const ic = independentCities.find(x => x.code === provinceOrCity);
             if (ic) parts.push(ic.name);
         } else {
@@ -195,25 +310,24 @@ const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
 
     // ── Confirm ────────────────────────────────────────────────────────────
     const handleConfirm = () => {
-        const parts     = buildAddressParts();
+        const parts       = buildAddressParts();
         const fullAddress = parts.join(", ");
 
         const provinceObj = !isIndependentCity
-            ? (provinces.find(x => x.code === provinceOrCity) ?? null)
-            : null;
+            ? (provinces.find(x => x.code === provinceOrCity) ?? null) : null;
 
         const cityObj = isIndependentCity
             ? (independentCities.find(x => x.code === provinceOrCity) ?? null)
             : (cities.find(x => x.value === selectedCity) ?? null);
 
         const barangayObj = selectedBarangay
-            ? (barangays.find(x => x.value === selectedBarangay) ?? null)
-            : null;
+            ? (barangays.find(x => x.value === selectedBarangay) ?? null) : null;
 
         onConfirm?.({
-            province:     provinceObj  ? { value: provinceObj.code,   label: provinceObj.name   } : null,
-            city:         cityObj      ? { value: cityObj.code,        label: cityObj.name       } : null,
-            barangay:     barangayObj  ? { value: barangayObj.value,   label: barangayObj.label  } : null,
+            street:           streetText.trim() || null,
+            province:         provinceObj  ? { value: provinceObj.code,  label: provinceObj.name  } : null,
+            city:             cityObj      ? { value: cityObj.code,       label: cityObj.name      } : null,
+            barangay:         barangayObj  ? { value: barangayObj.value,  label: barangayObj.label } : null,
             isIndependentCity,
             fullAddress,
             geocodeParts: parts,
@@ -224,14 +338,14 @@ const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
     };
 
     // ── Close ──────────────────────────────────────────────────────────────
-    const handleClose = () => {
-        resetAll();
-        onClose();
-    };
+    const handleClose = () => { resetAll(); onClose(); };
 
-    // ── Current value for the province/city select ─────────────────────────
-    // We need to pass the flat value; the Select component resolves via grouped options
     const provinceOrCityValue = provinceOrCity ?? null;
+
+    // City name hint passed to Photon to bias street results locally
+    const cityHint = isIndependentCity
+        ? independentCities.find(x => x.code === provinceOrCity)?.name
+        : cities.find(x => x.value === selectedCity)?.label;
 
     return (
         <ModalPortal isOpen={isOpen} onClose={handleClose}>
@@ -239,9 +353,7 @@ const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
                 {/* Header */}
                 <div className="flex items-center gap-3 px-6 pt-6 pb-4 border-b border-gray-100">
                     <div className="flex-1 min-w-0">
-                        <h2 className="text-lg font-bold text-gray-800">
-                            Set Address Manually
-                        </h2>
+                        <h2 className="text-lg font-bold text-gray-800">Set Address Manually</h2>
                         <p className="text-xs text-gray-400 mt-0.5">
                             Find properties near a specific address
                         </p>
@@ -265,7 +377,7 @@ const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
                         <Select
                             options={provinceOptions}
                             value={provinceOrCityValue}
-                            onChange={(val, option) => handleProvinceOrCityChange(val, option)}
+                            onChange={val => handleProvinceOrCityChange(val)}
                             placeholder={loadingInit ? "Loading…" : "Select province or city"}
                             isSearchable
                             isLoading={loadingInit}
@@ -273,7 +385,7 @@ const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
                         />
                     </div>
 
-                    {/* Municipality / City — only for regular provinces */}
+                    {/* Municipality / City */}
                     {provinceOrCity && !isIndependentCity && (
                         <div>
                             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
@@ -292,7 +404,7 @@ const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
                         </div>
                     )}
 
-                    {/* Barangay — shown once a city/municipality is resolved */}
+                    {/* Barangay */}
                     {cityCodeForBarangay && (
                         <div>
                             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
@@ -311,27 +423,34 @@ const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
                         </div>
                     )}
 
+                    {/* Street — Photon autocomplete, no API key needed */}
+                    {cityCodeForBarangay && (
+                        <div>
+                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+                                Street
+                                <span className="ml-1 text-gray-400 normal-case font-normal">(optional)</span>
+                            </label>
+                            <StreetAutocomplete
+                                value={streetText}
+                                onChange={setStreetText}
+                                cityHint={cityHint}
+                                disabled={false}
+                            />
+                        </div>
+                    )}
+
                     {/* Address preview */}
                     {previewAddress && (
                         <div className="flex items-start gap-2.5 px-4 py-3 bg-green-50 rounded-xl border border-green-100">
                             <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
-                            <p className="text-xs text-green-700 leading-relaxed">
-                                {previewAddress}
-                            </p>
+                            <p className="text-xs text-green-700 leading-relaxed">{previewAddress}</p>
                         </div>
                     )}
                 </div>
 
-                {/* Actions
-                    Mobile  : primary first (top), cancel below
-                    Desktop : cancel left, primary right
-                */}
+                {/* Actions */}
                 <div className="flex flex-col-reverse sm:flex-row gap-3 px-6 pb-6">
-                    <Button
-                        variant="ghost"
-                        onClick={handleClose}
-                        className="flex-1 w-full sm:w-auto"
-                    >
+                    <Button variant="ghost" onClick={handleClose} className="flex-1 w-full sm:w-auto">
                         Cancel
                     </Button>
                     <Button
