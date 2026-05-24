@@ -162,7 +162,7 @@ const CalendarPage = () => {
         },
         {
             title: "Month/Year Navigation",
-            title: "Month/Year Navigation",
+            
             description:
                 "Click on the month or year to quickly jump to any date, or use the arrow buttons to browse."
         }

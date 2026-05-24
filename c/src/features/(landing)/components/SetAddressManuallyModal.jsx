@@ -1,173 +1,237 @@
 // src/features/(landing)/components/SetAddressManuallyModal.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import ModalPortal from "@/shared/components/ModalPortal";
 import Select from "@/shared/components/Select";
 import Button from "@/shared/components/Button";
 import { MapPin, X, CheckCircle } from "lucide-react";
+import { toast } from "sonner"; // or your toast lib: react-hot-toast / react-toastify
+
+// ─────────────────────────────────────────────────────────────────────────────
+// The PSGC API returns cities/municipalities with an optional `provinceCode`.
+// Cities that have NO provinceCode are "independent cities" (e.g. Manila,
+// Davao City, Cebu City) and are NOT nested under any province.
+//
+// Strategy (no region selector):
+//   1. On open → fetch ALL provinces + ALL cities in parallel.
+//   2. Build province dropdown  = provinces (sorted).
+//   3. Build "independent cities" = cities where provinceCode is absent/null.
+//   4. Province Select uses grouped options:
+//        group "Provinces"           → regular provinces
+//        group "Independent Cities"  → province-less cities
+//   5. When user picks a regular province → fetch its cities.
+//   6. When user picks an independent city → skip city step, go straight to barangay.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const BASE = "https://psgc.gitlab.io/api";
+
+const sort = arr => [...arr].sort((a, b) => a.name.localeCompare(b.name));
 
 const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
-    const [regions, setRegions] = useState([]);
-    const [provinces, setProvinces] = useState([]);
-    const [cities, setCities] = useState([]);
-    const [barangays, setBarangays] = useState([]);
+    // ── Raw data ───────────────────────────────────────────────────────────
+    const [provinces,        setProvinces]        = useState([]);
+    const [independentCities, setIndependentCities] = useState([]);
+    const [cities,           setCities]           = useState([]);
+    const [barangays,        setBarangays]         = useState([]);
 
-    const [selectedRegion, setSelectedRegion] = useState(null);
-    const [selectedProvince, setSelectedProvince] = useState(null);
-    const [selectedCity, setSelectedCity] = useState(null);
-    const [selectedBarangay, setSelectedBarangay] = useState(null);
+    // ── Selections ─────────────────────────────────────────────────────────
+    // provinceOrCity holds either a province code OR an independent-city code.
+    // isIndependentCity is DERIVED by checking if the code exists in independentCities
+    // — never rely on option._type from the Select callback.
+    const [provinceOrCity,  setProvinceOrCity]  = useState(null);
+    const [selectedCity,    setSelectedCity]    = useState(null);
+    const [selectedBarangay,setSelectedBarangay]= useState(null);
 
-    const [loadingRegions, setLoadingRegions] = useState(false);
-    const [loadingProvinces, setLoadingProvinces] = useState(false);
-    const [loadingCities, setLoadingCities] = useState(false);
-    const [loadingBarangays, setLoadingBarangays] = useState(false);
+    // ── Loading flags ──────────────────────────────────────────────────────
+    const [loadingInit,     setLoadingInit]     = useState(false);
+    const [loadingCities,   setLoadingCities]   = useState(false);
+    const [loadingBarangays,setLoadingBarangays]= useState(false);
 
-    const isNCR = selectedRegion === "130000000";
+    // ── Derived — look up the selected code in independentCities array ────
+    // Reliable regardless of whether Select passes back option._type.
+    const isIndependentCity = !!provinceOrCity &&
+        independentCities.some(c => c.code === provinceOrCity);
 
-    // ── Fetch regions on open ──────────────────────────────────────────────
+    // ── Reset all state ────────────────────────────────────────────────────
+    const resetAll = useCallback(() => {
+        setProvinceOrCity(null);
+        setSelectedCity(null);
+        setSelectedBarangay(null);
+        setCities([]);
+        setBarangays([]);
+    }, []);
+
+    // ── Fetch provinces + all cities on open ───────────────────────────────
     useEffect(() => {
         if (!isOpen) return;
-        setLoadingRegions(true);
-        fetch("https://psgc.gitlab.io/api/regions/")
-            .then(r => r.json())
-            .then(data => {
-                const sorted = [...data].sort((a, b) => a.name.localeCompare(b.name));
-                setRegions(sorted.map(r => ({ value: r.code, label: r.name })));
-            })
-            .catch(() => setRegions([]))
-            .finally(() => setLoadingRegions(false));
-    }, [isOpen]);
+        resetAll();
+        setLoadingInit(true);
 
-    // ── Reset cascades when region changes ────────────────────────────────
-    useEffect(() => {
-        setSelectedProvince(null);
+        Promise.all([
+            fetch(`${BASE}/provinces/`).then(r => r.json()),
+            fetch(`${BASE}/cities-municipalities/`).then(r => r.json()),
+        ])
+            .then(([provData, cityData]) => {
+                setProvinces(sort(provData));
+
+                // Independent cities = those without a provinceCode
+                const indep = cityData.filter(
+                    c => !c.provinceCode && c.provinceCode !== 0
+                );
+                setIndependentCities(sort(indep));
+            })
+            .catch(() => {
+                toast.error("Failed to load location data. Please try again.");
+            })
+            .finally(() => setLoadingInit(false));
+    }, [isOpen, resetAll]);
+
+    // ── Build grouped options for the Province / City select ──────────────
+    const provinceOptions = [
+        {
+            label: "Provinces",
+            options: provinces.map(p => ({
+                value:  p.code,
+                label:  p.name,
+                _type:  "province",
+            })),
+        },
+        {
+            label: "Independent Cities",
+            options: independentCities.map(c => ({
+                value:  c.code,
+                label:  c.name,
+                _type:  "independent_city",
+            })),
+        },
+    ];
+
+    // ── Handle province-or-city selection ─────────────────────────────────
+    const handleProvinceOrCityChange = (val, option) => {
+        // Reset downstream
         setSelectedCity(null);
         setSelectedBarangay(null);
-        setProvinces([]);
         setCities([]);
         setBarangays([]);
 
-        if (!selectedRegion) return;
-
-        if (isNCR) {
-            // NCR has no provinces — load cities directly
-            setLoadingCities(true);
-            fetch(`https://psgc.gitlab.io/api/regions/${selectedRegion}/cities-municipalities/`)
-                .then(r => r.json())
-                .then(data => {
-                    const sorted = [...data].sort((a, b) => a.name.localeCompare(b.name));
-                    setCities(sorted.map(c => ({ value: c.code, label: c.name })));
-                })
-                .catch(() => setCities([]))
-                .finally(() => setLoadingCities(false));
-        } else {
-            setLoadingProvinces(true);
-            fetch(`https://psgc.gitlab.io/api/regions/${selectedRegion}/provinces/`)
-                .then(r => r.json())
-                .then(data => {
-                    const sorted = [...data].sort((a, b) => a.name.localeCompare(b.name));
-                    setProvinces(sorted.map(p => ({ value: p.code, label: p.name })));
-                })
-                .catch(() => setProvinces([]))
-                .finally(() => setLoadingProvinces(false));
+        if (!val) {
+            setProvinceOrCity(null);
+            return;
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedRegion]);
 
-    // ── Fetch cities when province changes (non-NCR) ──────────────────────
+        setProvinceOrCity(val);
+
+        // Determine type by checking if val exists in independentCities
+        const isIndep = independentCities.some(c => c.code === val);
+
+        if (!isIndep) {
+            // Fetch cities under this province
+            setLoadingCities(true);
+            fetch(`${BASE}/provinces/${val}/cities-municipalities/`)
+                .then(r => r.json())
+                .then(data => {
+                    setCities(sort(data).map(c => ({ value: c.code, label: c.name })));
+                })
+                .catch(() => {
+                    toast.error("Failed to load cities. Please try again.");
+                    setCities([]);
+                })
+                .finally(() => setLoadingCities(false));
+        }
+        // For independent city: no city fetch needed; go straight to barangay
+    };
+
+    // ── Fetch barangays when city (or independent city) is chosen ─────────
+    const cityCodeForBarangay = isIndependentCity ? provinceOrCity : selectedCity;
+
     useEffect(() => {
-        if (isNCR) return; // cities already loaded for NCR above
-        setSelectedCity(null);
         setSelectedBarangay(null);
-        setCities([]);
         setBarangays([]);
 
-        if (!selectedProvince) return;
-
-        setLoadingCities(true);
-        fetch(`https://psgc.gitlab.io/api/provinces/${selectedProvince}/cities-municipalities/`)
-            .then(r => r.json())
-            .then(data => {
-                const sorted = [...data].sort((a, b) => a.name.localeCompare(b.name));
-                setCities(sorted.map(c => ({ value: c.code, label: c.name })));
-            })
-            .catch(() => setCities([]))
-            .finally(() => setLoadingCities(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedProvince]);
-
-    // ── Fetch barangays when city changes ─────────────────────────────────
-    useEffect(() => {
-        setSelectedBarangay(null);
-        setBarangays([]);
-
-        if (!selectedCity) return;
+        if (!cityCodeForBarangay) return;
 
         setLoadingBarangays(true);
-        fetch(`https://psgc.gitlab.io/api/cities-municipalities/${selectedCity}/barangays/`)
+        fetch(`${BASE}/cities-municipalities/${cityCodeForBarangay}/barangays/`)
             .then(r => r.json())
             .then(data => {
-                const sorted = [...data].sort((a, b) => a.name.localeCompare(b.name));
-                setBarangays(sorted.map(b => ({ value: b.code, label: b.name })));
+                setBarangays(sort(data).map(b => ({ value: b.code, label: b.name })));
             })
-            .catch(() => setBarangays([]))
+            .catch(() => {
+                toast.error("Failed to load barangays. Please try again.");
+                setBarangays([]);
+            })
             .finally(() => setLoadingBarangays(false));
-    }, [selectedCity]);
+    }, [cityCodeForBarangay]);
 
-    // ── Address is "complete enough" to pin if at least a region is chosen.
-    //    NCR needs a city (no province). Other regions need at least a province.
-    const isComplete = selectedRegion &&
-        (isNCR ? true : selectedProvince !== null);
+    // ── Completeness: need at least a province or independent city ─────────
+    const isComplete = !!provinceOrCity;
 
-    // ── Build geocodable address parts from most-specific to least ────────
+    // ── Build address parts (most → least specific) ────────────────────────
     const buildAddressParts = () => {
         const parts = [];
+
         if (selectedBarangay) {
             const b = barangays.find(x => x.value === selectedBarangay);
             if (b) parts.push(b.label);
         }
-        if (selectedCity) {
-            const c = cities.find(x => x.value === selectedCity);
-            if (c) parts.push(c.label);
+
+        if (isIndependentCity) {
+            // provinceOrCity IS the city
+            const ic = independentCities.find(x => x.code === provinceOrCity);
+            if (ic) parts.push(ic.name);
+        } else {
+            if (selectedCity) {
+                const c = cities.find(x => x.value === selectedCity);
+                if (c) parts.push(c.label);
+            }
+            const p = provinces.find(x => x.code === provinceOrCity);
+            if (p) parts.push(p.name);
         }
-        if (selectedProvince) {
-            const p = provinces.find(x => x.value === selectedProvince);
-            if (p) parts.push(p.label);
-        } else if (isNCR) {
-            parts.push("Metro Manila");
-        }
-        if (selectedRegion) {
-            const r = regions.find(x => x.value === selectedRegion);
-            if (r) parts.push(r.label);
-        }
+
         parts.push("Philippines");
         return parts;
     };
 
     const previewAddress = isComplete ? buildAddressParts().join(", ") : null;
 
+    // ── Confirm ────────────────────────────────────────────────────────────
     const handleConfirm = () => {
-        const parts = buildAddressParts();
+        const parts     = buildAddressParts();
         const fullAddress = parts.join(", ");
 
+        const provinceObj = !isIndependentCity
+            ? (provinces.find(x => x.code === provinceOrCity) ?? null)
+            : null;
+
+        const cityObj = isIndependentCity
+            ? (independentCities.find(x => x.code === provinceOrCity) ?? null)
+            : (cities.find(x => x.value === selectedCity) ?? null);
+
+        const barangayObj = selectedBarangay
+            ? (barangays.find(x => x.value === selectedBarangay) ?? null)
+            : null;
+
         onConfirm?.({
-            region:    selectedRegion   ? regions.find(x => x.value === selectedRegion)   : null,
-            province:  selectedProvince ? provinces.find(x => x.value === selectedProvince) : null,
-            city:      selectedCity     ? cities.find(x => x.value === selectedCity)       : null,
-            barangay:  selectedBarangay ? barangays.find(x => x.value === selectedBarangay): null,
+            province:     provinceObj  ? { value: provinceObj.code,   label: provinceObj.name   } : null,
+            city:         cityObj      ? { value: cityObj.code,        label: cityObj.name       } : null,
+            barangay:     barangayObj  ? { value: barangayObj.value,   label: barangayObj.label  } : null,
+            isIndependentCity,
             fullAddress,
-            // Structured parts for accurate geocoding (most → least specific)
-            geocodeParts: parts
+            geocodeParts: parts,
         });
+
+        toast.success("Location set successfully!");
         handleClose();
     };
 
+    // ── Close ──────────────────────────────────────────────────────────────
     const handleClose = () => {
-        setSelectedRegion(null);
-        setSelectedProvince(null);
-        setSelectedCity(null);
-        setSelectedBarangay(null);
+        resetAll();
         onClose();
     };
+
+    // ── Current value for the province/city select ─────────────────────────
+    // We need to pass the flat value; the Select component resolves via grouped options
+    const provinceOrCityValue = provinceOrCity ?? null;
 
     return (
         <ModalPortal isOpen={isOpen} onClose={handleClose}>
@@ -192,41 +256,25 @@ const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
 
                 {/* Fields */}
                 <div className="px-6 py-5 flex flex-col gap-4">
-                    {/* Region */}
+
+                    {/* Province / Independent City */}
                     <div>
                         <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
-                            Region
+                            Province / City
                         </label>
                         <Select
-                            options={regions}
-                            value={selectedRegion}
-                            onChange={val => setSelectedRegion(val)}
-                            placeholder="Select region"
+                            options={provinceOptions}
+                            value={provinceOrCityValue}
+                            onChange={(val, option) => handleProvinceOrCityChange(val, option)}
+                            placeholder={loadingInit ? "Loading…" : "Select province or city"}
                             isSearchable
-                            isLoading={loadingRegions}
+                            isLoading={loadingInit}
+                            isDisabled={loadingInit}
                         />
                     </div>
 
-                    {/* Province — hidden for NCR */}
-                    {selectedRegion && !isNCR && (
-                        <div>
-                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
-                                Province
-                            </label>
-                            <Select
-                                options={provinces}
-                                value={selectedProvince}
-                                onChange={val => setSelectedProvince(val)}
-                                placeholder={loadingProvinces ? "Loading…" : "Select province"}
-                                isSearchable
-                                isLoading={loadingProvinces}
-                                isDisabled={!selectedRegion || loadingProvinces}
-                            />
-                        </div>
-                    )}
-
-                    {/* Municipality / City — always shown once region (+ province for non-NCR) chosen */}
-                    {(isNCR || selectedProvince) && (
+                    {/* Municipality / City — only for regular provinces */}
+                    {provinceOrCity && !isIndependentCity && (
                         <div>
                             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
                                 Municipality / City
@@ -244,8 +292,8 @@ const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
                         </div>
                     )}
 
-                    {/* Barangay — shown once city chosen */}
-                    {selectedCity && (
+                    {/* Barangay — shown once a city/municipality is resolved */}
+                    {cityCodeForBarangay && (
                         <div>
                             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
                                 Barangay
@@ -274,12 +322,15 @@ const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
                     )}
                 </div>
 
-                {/* Actions */}
-                <div className="flex flex-col sm:flex-row gap-3 px-6 pb-6">
+                {/* Actions
+                    Mobile  : primary first (top), cancel below
+                    Desktop : cancel left, primary right
+                */}
+                <div className="flex flex-col-reverse sm:flex-row gap-3 px-6 pb-6">
                     <Button
                         variant="ghost"
                         onClick={handleClose}
-                        className="flex-1 w-full sm:w-auto !bg-gray-300 !text-gray-100"
+                        className="flex-1 w-full sm:w-auto"
                     >
                         Cancel
                     </Button>
@@ -288,7 +339,7 @@ const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
                         icon={MapPin}
                         onClick={handleConfirm}
                         disabled={!isComplete}
-                        className={`flex-1 w-full truncate sm:w-auto ${!isComplete ? "opacity-50 cursor-not-allowed" : ""}`}
+                        className={`flex-1 w-full sm:w-auto ${!isComplete ? "opacity-50 cursor-not-allowed" : ""}`}
                     >
                         Set Location
                     </Button>
