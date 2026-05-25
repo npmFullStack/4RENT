@@ -3,8 +3,8 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import ModalPortal from "@/shared/components/ModalPortal";
 import Select from "@/shared/components/Select";
 import Button from "@/shared/components/Button";
+import Toast from "@/shared/components/Toast";
 import { MapPin, X, CheckCircle } from "lucide-react";
-import { toast } from "sonner";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PSGC API  →  Province / City / Barangay  (no key needed)
@@ -21,7 +21,7 @@ const PHOTON = "https://photon.komoot.io/api";
 const sort = arr => [...arr].sort((a, b) => a.name.localeCompare(b.name));
 
 // ── StreetAutocomplete — powered by Photon (Komoot / OpenStreetMap) ───────────
-const StreetAutocomplete = ({ value, onChange, cityHint, disabled }) => {
+const StreetAutocomplete = ({ value, onChange, cityHint, barangayHint, disabled }) => {
     const [query,       setQuery]       = useState(value ?? "");
     const [suggestions, setSuggestions] = useState([]);
     const [open,        setOpen]        = useState(false);
@@ -44,7 +44,7 @@ const StreetAutocomplete = ({ value, onChange, cityHint, disabled }) => {
     }, []);
 
     const fetchSuggestions = useCallback(async (input) => {
-        if (!input.trim() || input.length < 2) {
+        if (!input.trim() || input.length < 1) {
             setSuggestions([]);
             setOpen(false);
             return;
@@ -57,8 +57,13 @@ const StreetAutocomplete = ({ value, onChange, cityHint, disabled }) => {
         setLoading(true);
 
         try {
-            // Append city hint so Photon returns locally relevant results
-            const q = cityHint ? `${input}, ${cityHint}, Philippines` : `${input}, Philippines`;
+            // Append barangay > city hint so Photon returns barangay-scoped results
+            const locationHint = barangayHint
+                ? `${barangayHint}, ${cityHint ?? ""}, Philippines`
+                : cityHint
+                ? `${cityHint}, Philippines`
+                : "Philippines";
+            const q = `${input}, ${locationHint}`;
 
             const params = new URLSearchParams({
                 q,
@@ -110,7 +115,7 @@ const StreetAutocomplete = ({ value, onChange, cityHint, disabled }) => {
         } finally {
             setLoading(false);
         }
-    }, [cityHint]);
+    }, [cityHint, barangayHint]);
 
     const handleInputChange = e => {
         const val = e.target.value;
@@ -145,7 +150,7 @@ const StreetAutocomplete = ({ value, onChange, cityHint, disabled }) => {
                 className={[
                     "w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5",
                     "text-sm text-gray-800 placeholder-gray-400",
-                    "focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent",
+                    "focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent",
                     "transition-shadow",
                     disabled ? "opacity-50 cursor-not-allowed bg-gray-50" : "",
                 ].join(" ")}
@@ -221,7 +226,7 @@ const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
                 const indep = cityData.filter(c => !c.provinceCode && c.provinceCode !== 0);
                 setIndependentCities(sort(indep));
             })
-            .catch(() => toast.error("Failed to load location data. Please try again."))
+            .catch(() => Toast.error("Failed to load location data. Please try again."))
             .finally(() => setLoadingInit(false));
     }, [isOpen, resetAll]);
 
@@ -254,7 +259,7 @@ const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
             fetch(`${BASE}/provinces/${val}/cities-municipalities/`)
                 .then(r => r.json())
                 .then(data => setCities(sort(data).map(c => ({ value: c.code, label: c.name }))))
-                .catch(() => { toast.error("Failed to load cities. Please try again."); setCities([]); })
+                .catch(() => { Toast.error("Failed to load cities. Please try again."); setCities([]); })
                 .finally(() => setLoadingCities(false));
         }
     };
@@ -273,7 +278,7 @@ const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
         fetch(`${BASE}/cities-municipalities/${cityCodeForBarangay}/barangays/`)
             .then(r => r.json())
             .then(data => setBarangays(sort(data).map(b => ({ value: b.code, label: b.name }))))
-            .catch(() => { toast.error("Failed to load barangays. Please try again."); setBarangays([]); })
+            .catch(() => { Toast.error("Failed to load barangays. Please try again."); setBarangays([]); })
             .finally(() => setLoadingBarangays(false));
     }, [cityCodeForBarangay]);
 
@@ -333,7 +338,7 @@ const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
             geocodeParts: parts,
         });
 
-        toast.success("Location set successfully!");
+        Toast.success("Location set successfully!");
         handleClose();
     };
 
@@ -346,6 +351,11 @@ const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
     const cityHint = isIndependentCity
         ? independentCities.find(x => x.code === provinceOrCity)?.name
         : cities.find(x => x.value === selectedCity)?.label;
+
+    // Barangay name hint to scope street results within the barangay
+    const barangayHint = selectedBarangay
+        ? barangays.find(x => x.value === selectedBarangay)?.label
+        : null;
 
     return (
         <ModalPortal isOpen={isOpen} onClose={handleClose}>
@@ -434,6 +444,7 @@ const SetAddressManuallyModal = ({ isOpen, onClose, onConfirm }) => {
                                 value={streetText}
                                 onChange={setStreetText}
                                 cityHint={cityHint}
+                                barangayHint={barangayHint}
                                 disabled={false}
                             />
                         </div>

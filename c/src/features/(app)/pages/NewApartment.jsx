@@ -13,35 +13,26 @@ import {
     Trash2,
     Plus,
     Image as ImageIcon,
-    ChevronUp
+    Navigation,
+    Loader2,
+    Info
 } from "lucide-react";
 import BreadCrumbs from "../components/BreadCrumbs";
 import Instructions from "../components/Instructions";
 import HelpPageModal from "@/shared/components/HelpPageModal";
 import Button from "@/shared/components/Button";
-import Badge from "@/shared/components/Badge";
 import Toast from "@/shared/components/Toast";
-import Select from "@/shared/components/Select";
-
-const BASE = "https://psgc.gitlab.io/api";
-const sort = arr => [...arr].sort((a, b) => a.name.localeCompare(b.name));
+import SetAddressManuallyModal from "@/features/(landing)/components/SetAddressManuallyModal";
 
 const NewApartment = () => {
     const navigate = useNavigate();
     const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
-    const [isInstructionsDrawerOpen, setIsInstructionsDrawerOpen] = useState(false);
+    const [isInstructionsDrawerOpen, setIsInstructionsDrawerOpen] =
+        useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-
-    // Address data states
-    const [provinces, setProvinces] = useState([]);
-    const [independentCities, setIndependentCities] = useState([]);
-    const [cities, setCities] = useState([]);
-    const [barangays, setBarangays] = useState([]);
-    
-    // Loading states
-    const [loadingProvinces, setLoadingProvinces] = useState(false);
-    const [loadingCities, setLoadingCities] = useState(false);
-    const [loadingBarangays, setLoadingBarangays] = useState(false);
+    const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+    const [isGettingCurrentLocation, setIsGettingCurrentLocation] =
+        useState(false);
 
     // Form state
     const [formData, setFormData] = useState({
@@ -54,22 +45,34 @@ const NewApartment = () => {
         numberOfCR: "",
         pricePerMonth: "",
         selectedImage: "",
-        images: []
+        images: [],
+        fullAddress: "",
+        isIndependentCity: false,
+        // Store the geocoded address parts for display
+        addressParts: {
+            street: "",
+            barangay: "",
+            city: "",
+            province: ""
+        }
     });
 
     // Instructions items
     const instructionItems = [
         {
             title: "Property Name",
-            description: "Give your apartment a descriptive name that will attract tenants."
+            description:
+                "Give your apartment a descriptive name that will attract tenants."
         },
         {
             title: "Address Details",
-            description: "Provide the complete address for accurate location."
+            description:
+                "Click 'Set Address' to manually enter your address or use your current location."
         },
         {
             title: "Apartment Features",
-            description: "Specify the number of bedrooms and bathrooms to help tenants find what they need."
+            description:
+                "Specify the number of bedrooms and bathrooms to help tenants find what they need."
         },
         {
             title: "Upload Photos",
@@ -77,106 +80,10 @@ const NewApartment = () => {
         },
         {
             title: "Set Price",
-            description: "Set a competitive monthly rent price based on location and amenities."
+            description:
+                "Set a competitive monthly rent price based on location and amenities."
         }
     ];
-
-    // Derived: check if selected province is actually an independent city
-    const isIndependentCity = formData.province && 
-        independentCities.some(c => c.code === formData.province);
-
-    // Fetch provinces and independent cities on component mount
-    useEffect(() => {
-        setLoadingProvinces(true);
-        Promise.all([
-            fetch(`${BASE}/provinces/`).then(r => r.json()),
-            fetch(`${BASE}/cities-municipalities/`).then(r => r.json()),
-        ])
-            .then(([provData, cityData]) => {
-                setProvinces(sort(provData));
-                // Independent cities = those without a provinceCode
-                const indep = cityData.filter(
-                    c => !c.provinceCode && c.provinceCode !== 0
-                );
-                setIndependentCities(sort(indep));
-            })
-            .catch(() => {
-                Toast.error("Failed to load location data");
-            })
-            .finally(() => setLoadingProvinces(false));
-    }, []);
-
-    // Fetch cities when a regular province is selected
-    useEffect(() => {
-        if (!formData.province || isIndependentCity) {
-            setCities([]);
-            return;
-        }
-
-        setLoadingCities(true);
-        fetch(`${BASE}/provinces/${formData.province}/cities-municipalities/`)
-            .then(r => r.json())
-            .then(data => {
-                setCities(sort(data));
-            })
-            .catch(() => {
-                Toast.error("Failed to load cities");
-                setCities([]);
-            })
-            .finally(() => setLoadingCities(false));
-    }, [formData.province, isIndependentCity]);
-
-    // Fetch barangays when a city is selected (or independent city is selected as province)
-    const cityCodeForBarangay = isIndependentCity ? formData.province : formData.city;
-
-    useEffect(() => {
-        if (!cityCodeForBarangay) {
-            setBarangays([]);
-            return;
-        }
-
-        setLoadingBarangays(true);
-        fetch(`${BASE}/cities-municipalities/${cityCodeForBarangay}/barangays/`)
-            .then(r => r.json())
-            .then(data => {
-                setBarangays(sort(data));
-            })
-            .catch(() => {
-                Toast.error("Failed to load barangays");
-                setBarangays([]);
-            })
-            .finally(() => setLoadingBarangays(false));
-    }, [cityCodeForBarangay]);
-
-    // Build grouped options for province/city select
-    const provinceOptions = [
-        {
-            label: "Provinces",
-            options: provinces.map(p => ({
-                value: p.code,
-                label: p.name,
-            })),
-        },
-        {
-            label: "Independent Cities",
-            options: independentCities.map(c => ({
-                value: c.code,
-                label: c.name,
-            })),
-        },
-    ];
-
-    // City options
-    const cityOptions = cities.map(c => ({
-        value: c.code,
-        label: c.name,
-    }));
-
-    // Barangay options
-    const barangayOptions = barangays.map(b => ({
-        value: b.code,
-        label: b.name,
-    }));
 
     // Handle input changes
     const handleChange = e => {
@@ -184,57 +91,199 @@ const NewApartment = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    // Handle province selection
-    const handleProvinceChange = (value) => {
+    // Handle address confirmation from the modal
+    const handleAddressConfirm = useCallback(addressData => {
         setFormData(prev => ({
             ...prev,
-            province: value,
-            city: null, // Reset city
-            barangay: null, // Reset barangay
+            street: addressData.street || "",
+            province: addressData.province,
+            city: addressData.city,
+            barangay: addressData.barangay,
+            fullAddress: addressData.fullAddress,
+            isIndependentCity: addressData.isIndependentCity,
+            addressParts: {
+                street: addressData.street || "",
+                barangay: addressData.barangay?.label || "",
+                city: addressData.city?.label || "",
+                province: addressData.province?.label || ""
+            }
         }));
-    };
 
-    // Handle city selection
-    const handleCityChange = (value) => {
-        setFormData(prev => ({
-            ...prev,
-            city: value,
-            barangay: null, // Reset barangay
-        }));
-    };
+        Toast.success("Address set successfully!");
+    }, []);
 
-    // Handle barangay selection
-    const handleBarangayChange = (value) => {
-        setFormData(prev => ({ ...prev, barangay: value }));
-    };
+    // Get current location using browser geolocation
+    const getCurrentLocation = useCallback(() => {
+        if (!navigator.geolocation) {
+            Toast.error(
+                "Geolocation not supported",
+                "Your browser doesn't support geolocation."
+            );
+            return;
+        }
 
-    // Build full address for display/submission
-    const getFullAddress = () => {
+        setIsGettingCurrentLocation(true);
+
+        navigator.geolocation.getCurrentPosition(
+            async position => {
+                const { latitude, longitude } = position.coords;
+
+                try {
+                    // Reverse geocode using OpenStreetMap's Nominatim API (free, no key)
+                    const response = await fetch(
+                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1&countrycodes=PH`
+                    );
+                    const data = await response.json();
+
+                    if (data && data.address) {
+                        const address = data.address;
+
+                        // Extract Philippine address components
+                        const street = [
+                            address.house_number,
+                            address.road || address.footway || address.street
+                        ]
+                            .filter(Boolean)
+                            .join(" ");
+
+                        const barangay =
+                            address.suburb ||
+                            address.village ||
+                            address.neighbourhood;
+                        const city =
+                            address.city ||
+                            address.town ||
+                            address.municipality;
+                        const province = address.state || address.province;
+
+                        // For independent cities like Manila, Cebu, etc., we need to handle specially
+                        // Check if it's an independent city (Manila, Quezon City, etc.)
+                        const independentCities = [
+                            "Manila",
+                            "Quezon City",
+                            "Caloocan",
+                            "Las Piñas",
+                            "Makati",
+                            "Malabon",
+                            "Mandaluyong",
+                            "Marikina",
+                            "Muntinlupa",
+                            "Navotas",
+                            "Parañaque",
+                            "Pasay",
+                            "Pasig",
+                            "Pateros",
+                            "San Juan",
+                            "Taguig",
+                            "Valenzuela",
+                            "Baguio",
+                            "Cebu City",
+                            "Lapu-Lapu City",
+                            "Mandaue",
+                            "Davao City",
+                            "Zamboanga City",
+                            "Iloilo City",
+                            "Angeles City"
+                        ];
+
+                        const isIndependentCity = independentCities.some(
+                            cityName =>
+                                city
+                                    ?.toLowerCase()
+                                    .includes(cityName.toLowerCase())
+                        );
+
+                        // Create formatted address parts for the modal's expected format
+                        const addressData = {
+                            street: street || null,
+                            province: province
+                                ? { value: province, label: province }
+                                : null,
+                            city: city ? { value: city, label: city } : null,
+                            barangay: barangay
+                                ? { value: barangay, label: barangay }
+                                : null,
+                            isIndependentCity,
+                            fullAddress: data.display_name,
+                            geocodeParts: [
+                                street,
+                                barangay,
+                                city,
+                                province,
+                                "Philippines"
+                            ].filter(Boolean)
+                        };
+
+                        handleAddressConfirm(addressData);
+                    } else {
+                        Toast.error(
+                            "Location not found",
+                            "Could not find address for your current location."
+                        );
+                    }
+                } catch (error) {
+                    console.error("Reverse geocoding error:", error);
+                    Toast.error(
+                        "Geocoding failed",
+                        "Could not convert location to address. Please try again or set address manually."
+                    );
+                } finally {
+                    setIsGettingCurrentLocation(false);
+                }
+            },
+            error => {
+                setIsGettingCurrentLocation(false);
+                switch (error.code) {
+                    case error.PERMISSION_DENIED:
+                        Toast.error(
+                            "Location permission denied",
+                            "Please allow location access to use this feature."
+                        );
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        Toast.error(
+                            "Location unavailable",
+                            "Could not get your current location. Please try again."
+                        );
+                        break;
+                    case error.TIMEOUT:
+                        Toast.error(
+                            "Location timeout",
+                            "Location request timed out. Please try again."
+                        );
+                        break;
+                    default:
+                        Toast.error(
+                            "Location error",
+                            "Failed to get your current location."
+                        );
+                }
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
+    }, [handleAddressConfirm]);
+
+    // Build full address for display
+    const getFullAddressDisplay = () => {
+        if (formData.fullAddress) {
+            return formData.fullAddress;
+        }
+
         const parts = [];
-        
-        if (formData.street) parts.push(formData.street);
-        
-        if (formData.barangay) {
-            const barangay = barangays.find(b => b.code === formData.barangay);
-            if (barangay) parts.push(barangay.name);
-        }
-        
-        if (isIndependentCity && formData.province) {
-            const city = independentCities.find(c => c.code === formData.province);
-            if (city) parts.push(city.name);
-        } else {
-            if (formData.city) {
-                const city = cities.find(c => c.code === formData.city);
-                if (city) parts.push(city.name);
-            }
-            if (formData.province && !isIndependentCity) {
-                const province = provinces.find(p => p.code === formData.province);
-                if (province) parts.push(province.name);
-            }
-        }
-        
-        parts.push("Philippines");
-        return parts.join(", ");
+        if (formData.addressParts.street)
+            parts.push(formData.addressParts.street);
+        if (formData.addressParts.barangay)
+            parts.push(formData.addressParts.barangay);
+        if (formData.addressParts.city) parts.push(formData.addressParts.city);
+        if (formData.addressParts.province)
+            parts.push(formData.addressParts.province);
+        if (parts.length > 0) parts.push("Philippines");
+
+        return parts.length > 1 ? parts.join(", ") : "No address set";
     };
 
     // Handle image upload
@@ -242,7 +291,10 @@ const NewApartment = () => {
         const files = Array.from(e.target.files);
 
         if (formData.images.length + files.length > 4) {
-            Toast.warning("Maximum Photos Reached", "You can only upload up to 4 photos.");
+            Toast.warning(
+                "Maximum Photos Reached",
+                "You can only upload up to 4 photos."
+            );
             return;
         }
 
@@ -264,7 +316,10 @@ const NewApartment = () => {
             }));
         }
 
-        Toast.success("Photos Added", `${newImages.length} photo(s) uploaded successfully.`);
+        Toast.success(
+            "Photos Added",
+            `${newImages.length} photo(s) uploaded successfully.`
+        );
     };
 
     // Remove an image
@@ -291,58 +346,85 @@ const NewApartment = () => {
     // Set selected image
     const setSelectedImage = imagePreview => {
         setFormData(prev => ({ ...prev, selectedImage: imagePreview }));
-        Toast.info("Cover Photo Changed", "This will be displayed as the cover image.");
+        Toast.info(
+            "Cover Photo Changed",
+            "This will be displayed as the cover image."
+        );
     };
 
     // Handle form submission
     const handleSubmit = async e => {
         e.preventDefault();
-        
+
         // Basic validation
         if (!formData.name) {
             Toast.error("Missing Information", "Please enter a property name.");
             return;
         }
-        
-        if (!formData.province) {
-            Toast.error("Missing Information", "Please select a province or city.");
+
+        if (!formData.province && !formData.addressParts.province) {
+            Toast.error(
+                "Missing Information",
+                "Please set an address for your property."
+            );
             return;
         }
-        
+
         setIsSubmitting(true);
 
         try {
-            const fullAddress = getFullAddress();
             const submissionData = {
-                ...formData,
-                fullAddress,
-                provinceDetails: !isIndependentCity && formData.province 
-                    ? provinces.find(p => p.code === formData.province)
-                    : null,
-                cityDetails: isIndependentCity 
-                    ? independentCities.find(c => c.code === formData.province)
-                    : (formData.city ? cities.find(c => c.code === formData.city) : null),
-                barangayDetails: formData.barangay 
-                    ? barangays.find(b => b.code === formData.barangay)
-                    : null,
-                isIndependentCity
+                name: formData.name,
+                street: formData.street || formData.addressParts.street,
+                province:
+                    formData.province ||
+                    (formData.addressParts.province
+                        ? {
+                              value: formData.addressParts.province,
+                              label: formData.addressParts.province
+                          }
+                        : null),
+                city:
+                    formData.city ||
+                    (formData.addressParts.city
+                        ? {
+                              value: formData.addressParts.city,
+                              label: formData.addressParts.city
+                          }
+                        : null),
+                barangay:
+                    formData.barangay ||
+                    (formData.addressParts.barangay
+                        ? {
+                              value: formData.addressParts.barangay,
+                              label: formData.addressParts.barangay
+                          }
+                        : null),
+                isIndependentCity: formData.isIndependentCity,
+                fullAddress: getFullAddressDisplay(),
+                numberOfBedrooms: parseInt(formData.numberOfBedrooms) || 0,
+                numberOfCR: parseInt(formData.numberOfCR) || 0,
+                pricePerMonth: parseInt(formData.pricePerMonth) || 0,
+                images: formData.images.map(img => img.file),
+                selectedImage: formData.selectedImage
             };
-            
+
+            // Simulate API call
             await new Promise(resolve => setTimeout(resolve, 1500));
             console.log("Form submitted:", submissionData);
-            
+
             Toast.success(
-                "Apartment Created!", 
+                "Apartment Created!",
                 `${formData.name} has been successfully listed.`
             );
-            
+
             setTimeout(() => {
                 navigate("/my-properties");
             }, 1500);
         } catch (error) {
             console.error("Error submitting form:", error);
             Toast.error(
-                "Submission Failed", 
+                "Submission Failed",
                 "There was an error creating your apartment. Please try again."
             );
         } finally {
@@ -359,17 +441,20 @@ const NewApartment = () => {
         },
         {
             title: "Uploading Photos",
-            description: "You can upload up to 4 photos. Click on any photo to change the cover.",
+            description:
+                "You can upload up to 4 photos. Click on any photo to change the cover.",
             icon: "ImageIcon"
         },
         {
             title: "Property Details",
-            description: "Provide accurate details about bedrooms, bathrooms, and location.",
+            description:
+                "Provide accurate details about bedrooms, bathrooms, and location.",
             icon: "Home"
         },
         {
             title: "Pricing Your Apartment",
-            description: "Set a competitive monthly rent based on your apartment's features.",
+            description:
+                "Set a competitive monthly rent based on your apartment's features.",
             icon: "PhilippinePeso"
         }
     ];
@@ -378,14 +463,26 @@ const NewApartment = () => {
         img => img.preview !== formData.selectedImage
     );
 
+    const hasAddressSet =
+        formData.fullAddress || formData.addressParts.province;
+
     return (
         <div className="p-4 md:p-6 bg-neutral-50 min-h-screen">
+            {/* Address Modal */}
+            <SetAddressManuallyModal
+                isOpen={isAddressModalOpen}
+                onClose={() => setIsAddressModalOpen(false)}
+                onConfirm={handleAddressConfirm}
+            />
+
             {/* Breadcrumbs */}
             <div className="mb-4">
-                <BreadCrumbs items={[
-                    { label: "My Properties", path: "/my-properties" },
-                    { label: "New Apartment", path: "/new-apartment" }
-                ]} />
+                <BreadCrumbs
+                    items={[
+                        { label: "My Properties", path: "/my-properties" },
+                        { label: "New Apartment", path: "/new-apartment" }
+                    ]}
+                />
             </div>
 
             {/* Header */}
@@ -422,7 +519,10 @@ const NewApartment = () => {
             <div className="flex flex-col lg:flex-row gap-6">
                 {/* Form Section */}
                 <div className="flex-1">
-                    <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-200 p-4 md:p-6">
+                    <form
+                        onSubmit={handleSubmit}
+                        className="bg-white rounded-xl border border-gray-200 p-4 md:p-6"
+                    >
                         <h2 className="text-lg font-semibold text-gray-800 mb-6">
                             Apartment Information
                         </h2>
@@ -454,7 +554,8 @@ const NewApartment = () => {
                                                     Cover Image
                                                 </span>
                                                 <span className="text-white text-xs font-medium block">
-                                                    Click any thumbnail to change
+                                                    Click any thumbnail to
+                                                    change
                                                 </span>
                                             </div>
                                         </div>
@@ -467,11 +568,16 @@ const NewApartment = () => {
                                                 <div
                                                     key={image.id}
                                                     className={`relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 transition-all ${
-                                                        formData.selectedImage === image.preview
+                                                        formData.selectedImage ===
+                                                        image.preview
                                                             ? "border-primary ring-2 ring-primary/20"
                                                             : "border-gray-200 hover:border-gray-300"
                                                     }`}
-                                                    onClick={() => setSelectedImage(image.preview)}
+                                                    onClick={() =>
+                                                        setSelectedImage(
+                                                            image.preview
+                                                        )
+                                                    }
                                                 >
                                                     <img
                                                         src={image.preview}
@@ -482,7 +588,9 @@ const NewApartment = () => {
                                                         type="button"
                                                         onClick={e => {
                                                             e.stopPropagation();
-                                                            removeImage(image.id);
+                                                            removeImage(
+                                                                image.id
+                                                            );
                                                         }}
                                                         className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-md hover:bg-red-600"
                                                     >
@@ -520,18 +628,22 @@ const NewApartment = () => {
                                         className="hidden"
                                         disabled={formData.images.length >= 4}
                                     />
-                                    <div className={`px-4 py-2 border-2 border-dashed rounded-lg transition-colors flex items-center gap-2 ${
-                                        formData.images.length >= 4
-                                            ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                                            : "border-gray-300 hover:border-primary text-gray-600 hover:text-primary cursor-pointer"
-                                    }`}>
+                                    <div
+                                        className={`px-4 py-2 border-2 border-dashed rounded-lg transition-colors flex items-center gap-2 ${
+                                            formData.images.length >= 4
+                                                ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                                                : "border-gray-300 hover:border-primary text-gray-600 hover:text-primary cursor-pointer"
+                                        }`}
+                                    >
                                         <Upload className="w-4 h-4" />
                                         <span className="text-sm">
                                             {formData.images.length >= 4
                                                 ? "Maximum 4 images reached"
                                                 : "Upload Photos"}
                                         </span>
-                                        {formData.images.length < 4 && <Plus className="w-3 h-3" />}
+                                        {formData.images.length < 4 && (
+                                            <Plus className="w-3 h-3" />
+                                        )}
                                     </div>
                                 </label>
                                 <span className="text-xs text-gray-500">
@@ -560,77 +672,113 @@ const NewApartment = () => {
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Property Address
                             </label>
-                            
-                            {/* Street Address */}
-                            <div className="mb-3">
-                                <label className="block text-xs text-gray-500 mb-1">
-                                    Street / Building / Unit No.
-                                </label>
-                                <input
-                                    type="text"
-                                    name="street"
-                                    value={formData.street}
-                                    onChange={handleChange}
-                                    placeholder="e.g., 123 Rizal St., Unit 4B"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                />
+
+                            {/* Address Buttons */}
+                            <div className="flex flex-col sm:flex-row gap-3 mb-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsAddressModalOpen(true)}
+                                    className="flex-1 px-4 py-2.5 border-2 border-gray-300 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors flex items-center justify-center gap-2 text-gray-700 hover:text-primary"
+                                >
+                                    <MapPin className="w-4 h-4" />
+                                    <span className="font-medium">
+                                        Set Address Manually
+                                    </span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={getCurrentLocation}
+                                    disabled={isGettingCurrentLocation}
+                                    className="flex-1 px-4 py-2.5 border-2 border-gray-300 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors flex items-center justify-center gap-2 text-gray-700 hover:text-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isGettingCurrentLocation ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                            <span className="font-medium">
+                                                Getting Location...
+                                            </span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Navigation className="w-4 h-4" />
+                                            <span className="font-medium">
+                                                Use Current Location
+                                            </span>
+                                        </>
+                                    )}
+                                </button>
                             </div>
 
-                            {/* Province / City (Provinces + Independent Cities) */}
-                            <div className="mb-3">
-                                <label className="block text-xs text-gray-500 mb-1">
-                                    Province / City
-                                </label>
-                                <Select
-                                    options={provinceOptions}
-                                    value={formData.province}
-                                    onChange={handleProvinceChange}
-                                    placeholder={loadingProvinces ? "Loading..." : "Select province or city"}
-                                    isSearchable
-                                    isLoading={loadingProvinces}
-                                />
-                            </div>
-
-                            {/* Municipality / City - only for regular provinces */}
-                            {formData.province && !isIndependentCity && (
-                                <div className="mb-3">
-                                    <label className="block text-xs text-gray-500 mb-1">
-                                        Municipality / City
-                                    </label>
-                                    <Select
-                                        options={cityOptions}
-                                        value={formData.city}
-                                        onChange={handleCityChange}
-                                        placeholder={loadingCities ? "Loading..." : "Select city or municipality"}
-                                        isSearchable
-                                        isLoading={loadingCities}
-                                    />
+                            {/* Address Display */}
+                            {hasAddressSet ? (
+                                <div className="mt-3 p-4 bg-green-50 rounded-lg border border-green-200">
+                                    <div className="flex items-start gap-2">
+                                        <MapPin className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                                        <div className="flex-1">
+                                            <p className="text-xs font-medium text-green-700 mb-1">
+                                                Selected Address:
+                                            </p>
+                                            <p className="text-sm text-green-800">
+                                                {getFullAddressDisplay()}
+                                            </p>
+                                            {formData.street && (
+                                                <p className="text-xs text-green-600 mt-2">
+                                                    <span className="font-medium">
+                                                        Street:
+                                                    </span>{" "}
+                                                    {formData.street}
+                                                </p>
+                                            )}
+                                            {formData.addressParts.barangay && (
+                                                <p className="text-xs text-green-600 mt-1">
+                                                    <span className="font-medium">
+                                                        Barangay:
+                                                    </span>{" "}
+                                                    {
+                                                        formData.addressParts
+                                                            .barangay
+                                                    }
+                                                </p>
+                                            )}
+                                            {formData.addressParts.city && (
+                                                <p className="text-xs text-green-600 mt-1">
+                                                    <span className="font-medium">
+                                                        City:
+                                                    </span>{" "}
+                                                    {formData.addressParts.city}
+                                                </p>
+                                            )}
+                                            {formData.addressParts.province && (
+                                                <p className="text-xs text-green-600 mt-1">
+                                                    <span className="font-medium">
+                                                        Province:
+                                                    </span>{" "}
+                                                    {
+                                                        formData.addressParts
+                                                            .province
+                                                    }
+                                                </p>
+                                            )}
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setIsAddressModalOpen(true)
+                                            }
+                                            className="text-xs text-green-600 hover:text-green-700 underline"
+                                        >
+                                            Change
+                                        </button>
+                                    </div>
                                 </div>
-                            )}
-
-                            {/* Barangay - shown once a city is resolved */}
-                            {cityCodeForBarangay && (
-                                <div className="mb-3">
-                                    <label className="block text-xs text-gray-500 mb-1">
-                                        Barangay
-                                    </label>
-                                    <Select
-                                        options={barangayOptions}
-                                        value={formData.barangay}
-                                        onChange={handleBarangayChange}
-                                        placeholder={loadingBarangays ? "Loading..." : "Select barangay"}
-                                        isSearchable
-                                        isLoading={loadingBarangays}
-                                    />
-                                </div>
-                            )}
-
-                            {/* Address Preview */}
-                            {(formData.street || formData.province) && (
-                                <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                    <p className="text-xs text-gray-500 mb-1">Full Address Preview:</p>
-                                    <p className="text-sm text-gray-700">
-                                        {getFullAddress()}
+                            ) : (
+                                <div className="mt-3">
+                                    <p className="text-sm text-gray-800 flex items-center gap-2">
+                                        <Info className="w-4 h-4 text-gray-800" />
+                                        No address set yet. Click one of the
+                                        buttons above to add your property's
+                                        address.
                                     </p>
                                 </div>
                             )}
@@ -709,11 +857,13 @@ const NewApartment = () => {
                             <Button
                                 type="submit"
                                 variant="primary"
-                                disabled={isSubmitting}
+                                disabled={isSubmitting || !hasAddressSet}
                                 icon={Plus}
                                 className="w-full sm:flex-1"
                             >
-                                {isSubmitting ? "Creating..." : "Create Apartment"}
+                                {isSubmitting
+                                    ? "Creating..."
+                                    : "Create Apartment"}
                             </Button>
                         </div>
                     </form>
@@ -748,7 +898,9 @@ const NewApartment = () => {
                     <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-xl z-50 animate-in slide-in-from-bottom duration-300 max-h-[80vh] overflow-y-auto">
                         <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
                             <button
-                                onClick={() => setIsInstructionsDrawerOpen(false)}
+                                onClick={() =>
+                                    setIsInstructionsDrawerOpen(false)
+                                }
                                 className="p-1 hover:bg-gray-100 rounded-lg"
                             >
                                 <X className="w-5 h-5 text-gray-500" />
