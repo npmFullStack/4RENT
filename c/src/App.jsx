@@ -21,6 +21,7 @@ import NewApartment from "@/features/(app)/pages/NewApartment";
 import Tenants from "@/features/(app)/pages/Tenants";
 import NewTenant from "@/features/(app)/pages/NewTenant";
 import CalendarPage from "@/features/(app)/pages/CalendarPage";
+import PaymentLogs from "@/features/(app)/pages/PaymentLogs";
 
 function App() {
     return (
@@ -62,7 +63,9 @@ function App() {
                     <Route path="/tenants" element={<Tenants />} />
                     <Route path="new-tenant" element={<NewTenant />} />
                     <Route path="calendar" element={<CalendarPage />} />
-                </Route>
+                                    <Route path="payment-logs" element={<PaymentLogs />} />
+
+</Route>
             </Routes>
         </BrowserRouter>
     );

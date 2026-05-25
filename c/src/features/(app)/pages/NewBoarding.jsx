@@ -1,5 +1,5 @@
 // src/features/(app)/pages/NewBoarding.jsx
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     HelpCircle,
@@ -12,13 +12,17 @@ import {
     Users,
     Trash2,
     Plus,
-    Image as ImageIcon
+    Image as ImageIcon,
+    Navigation,
+    Loader2,
+    Info
 } from "lucide-react";
 import BreadCrumbs from "../components/BreadCrumbs";
 import Instructions from "../components/Instructions";
 import HelpPageModal from "@/shared/components/HelpPageModal";
 import Button from "@/shared/components/Button";
 import Toast from "@/shared/components/Toast";
+import SetAddressManuallyModal from "@/features/(landing)/components/SetAddressManuallyModal";
 
 import FemaleIcon from "@/assets/icons/female.svg";
 import MaleIcon from "@/assets/icons/male.svg";
@@ -30,11 +34,12 @@ const NewBoarding = () => {
     const [isInstructionsDrawerOpen, setIsInstructionsDrawerOpen] =
         useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+    const [isGettingCurrentLocation, setIsGettingCurrentLocation] = useState(false);
 
     // Form state
     const [formData, setFormData] = useState({
         name: "",
-        address: "",
         numberOfCR: "",
         selectedImage: "",
         images: [],
@@ -53,7 +58,20 @@ const NewBoarding = () => {
                 text: ""
             }
         ],
-        pricePerMonth: ""
+        pricePerMonth: "",
+        // Address fields
+        street: "",
+        province: null,
+        city: null,
+        barangay: null,
+        fullAddress: "",
+        isIndependentCity: false,
+        addressParts: {
+            street: "",
+            barangay: "",
+            city: "",
+            province: ""
+        }
     });
 
     // Gender options
@@ -85,7 +103,7 @@ const NewBoarding = () => {
         {
             title: "Address Details",
             description:
-                "Provide the complete address including street, barangay, city, and province."
+                "Click 'Set Address' to manually enter your address or use your current location."
         },
         {
             title: "Boarding House Type",
@@ -117,6 +135,200 @@ const NewBoarding = () => {
     const handleChange = e => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    // Handle address confirmation from the modal
+    const handleAddressConfirm = useCallback(addressData => {
+        setFormData(prev => ({
+            ...prev,
+            street: addressData.street || "",
+            province: addressData.province,
+            city: addressData.city,
+            barangay: addressData.barangay,
+            fullAddress: addressData.fullAddress,
+            isIndependentCity: addressData.isIndependentCity,
+            addressParts: {
+                street: addressData.street || "",
+                barangay: addressData.barangay?.label || "",
+                city: addressData.city?.label || "",
+                province: addressData.province?.label || ""
+            }
+        }));
+
+        Toast.success("Address set successfully!");
+    }, []);
+
+    // Get current location using browser geolocation
+    const getCurrentLocation = useCallback(() => {
+        if (!navigator.geolocation) {
+            Toast.error(
+                "Geolocation not supported",
+                "Your browser doesn't support geolocation."
+            );
+            return;
+        }
+
+        setIsGettingCurrentLocation(true);
+
+        navigator.geolocation.getCurrentPosition(
+            async position => {
+                const { latitude, longitude } = position.coords;
+
+                try {
+                    // Reverse geocode using OpenStreetMap's Nominatim API (free, no key)
+                    const response = await fetch(
+                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1&countrycodes=PH`
+                    );
+                    const data = await response.json();
+
+                    if (data && data.address) {
+                        const address = data.address;
+
+                        // Extract Philippine address components
+                        const street = [
+                            address.house_number,
+                            address.road || address.footway || address.street
+                        ]
+                            .filter(Boolean)
+                            .join(" ");
+
+                        const barangay =
+                            address.suburb ||
+                            address.village ||
+                            address.neighbourhood;
+                        const city =
+                            address.city ||
+                            address.town ||
+                            address.municipality;
+                        const province = address.state || address.province;
+
+                        // For independent cities like Manila, Cebu, etc., we need to handle specially
+                        const independentCities = [
+                            "Manila",
+                            "Quezon City",
+                            "Caloocan",
+                            "Las Piñas",
+                            "Makati",
+                            "Malabon",
+                            "Mandaluyong",
+                            "Marikina",
+                            "Muntinlupa",
+                            "Navotas",
+                            "Parañaque",
+                            "Pasay",
+                            "Pasig",
+                            "Pateros",
+                            "San Juan",
+                            "Taguig",
+                            "Valenzuela",
+                            "Baguio",
+                            "Cebu City",
+                            "Lapu-Lapu City",
+                            "Mandaue",
+                            "Davao City",
+                            "Zamboanga City",
+                            "Iloilo City",
+                            "Angeles City"
+                        ];
+
+                        const isIndependentCity = independentCities.some(
+                            cityName =>
+                                city
+                                    ?.toLowerCase()
+                                    .includes(cityName.toLowerCase())
+                        );
+
+                        // Create formatted address parts for the modal's expected format
+                        const addressData = {
+                            street: street || null,
+                            province: province
+                                ? { value: province, label: province }
+                                : null,
+                            city: city ? { value: city, label: city } : null,
+                            barangay: barangay
+                                ? { value: barangay, label: barangay }
+                                : null,
+                            isIndependentCity,
+                            fullAddress: data.display_name,
+                            geocodeParts: [
+                                street,
+                                barangay,
+                                city,
+                                province,
+                                "Philippines"
+                            ].filter(Boolean)
+                        };
+
+                        handleAddressConfirm(addressData);
+                    } else {
+                        Toast.error(
+                            "Location not found",
+                            "Could not find address for your current location."
+                        );
+                    }
+                } catch (error) {
+                    console.error("Reverse geocoding error:", error);
+                    Toast.error(
+                        "Geocoding failed",
+                        "Could not convert location to address. Please try again or set address manually."
+                    );
+                } finally {
+                    setIsGettingCurrentLocation(false);
+                }
+            },
+            error => {
+                setIsGettingCurrentLocation(false);
+                switch (error.code) {
+                    case error.PERMISSION_DENIED:
+                        Toast.error(
+                            "Location permission denied",
+                            "Please allow location access to use this feature."
+                        );
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        Toast.error(
+                            "Location unavailable",
+                            "Could not get your current location. Please try again."
+                        );
+                        break;
+                    case error.TIMEOUT:
+                        Toast.error(
+                            "Location timeout",
+                            "Location request timed out. Please try again."
+                        );
+                        break;
+                    default:
+                        Toast.error(
+                            "Location error",
+                            "Failed to get your current location."
+                        );
+                }
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
+    }, [handleAddressConfirm]);
+
+    // Build full address for display
+    const getFullAddressDisplay = () => {
+        if (formData.fullAddress) {
+            return formData.fullAddress;
+        }
+
+        const parts = [];
+        if (formData.addressParts.street)
+            parts.push(formData.addressParts.street);
+        if (formData.addressParts.barangay)
+            parts.push(formData.addressParts.barangay);
+        if (formData.addressParts.city) parts.push(formData.addressParts.city);
+        if (formData.addressParts.province)
+            parts.push(formData.addressParts.province);
+        if (parts.length > 0) parts.push("Philippines");
+
+        return parts.length > 1 ? parts.join(", ") : "No address set";
     };
 
     // Handle boarding house sex change
@@ -264,9 +476,26 @@ const NewBoarding = () => {
         img => img.preview !== formData.selectedImage
     );
 
+    const hasAddressSet =
+        formData.fullAddress || formData.addressParts.province;
+
     // Handle form submission
     const handleSubmit = async e => {
         e.preventDefault();
+
+        // Basic validation
+        if (!formData.name) {
+            Toast.error("Missing Information", "Please enter a property name.");
+            return;
+        }
+
+        if (!hasAddressSet) {
+            Toast.error(
+                "Missing Information",
+                "Please set an address for your property."
+            );
+            return;
+        }
 
         setIsSubmitting(true);
 
@@ -278,7 +507,17 @@ const NewBoarding = () => {
         const submitData = {
             ...formData,
             totalCapacity,
-            numberOfBedrooms: formData.bedrooms.length
+            numberOfBedrooms: formData.bedrooms.length,
+            street: formData.street || formData.addressParts.street,
+            province: formData.province || (formData.addressParts.province
+                ? { value: formData.addressParts.province, label: formData.addressParts.province }
+                : null),
+            city: formData.city || (formData.addressParts.city
+                ? { value: formData.addressParts.city, label: formData.addressParts.city }
+                : null),
+            barangay: formData.barangay || (formData.addressParts.barangay
+                ? { value: formData.addressParts.barangay, label: formData.addressParts.barangay }
+                : null),
         };
 
         try {
@@ -358,6 +597,13 @@ const NewBoarding = () => {
 
     return (
         <div className="p-4 md:p-6 bg-neutral-50 min-h-screen">
+            {/* Address Modal */}
+            <SetAddressManuallyModal
+                isOpen={isAddressModalOpen}
+                onClose={() => setIsAddressModalOpen(false)}
+                onConfirm={handleAddressConfirm}
+            />
+
             {/* Breadcrumbs */}
             <div className="mb-4">
                 <BreadCrumbs
@@ -550,22 +796,121 @@ const NewBoarding = () => {
                             />
                         </div>
 
-                        {/* Address */}
+                        {/* Address Section */}
                         <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Address
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Property Address
                             </label>
-                            <div className="relative">
-                                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                <input
-                                    type="text"
-                                    name="address"
-                                    value={formData.address}
-                                    onChange={handleChange}
-                                    placeholder="Street, Barangay, City, Province"
-                                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                />
+
+                            {/* Address Buttons */}
+                            <div className="flex flex-col sm:flex-row gap-3 mb-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsAddressModalOpen(true)}
+                                    className="flex-1 px-4 py-2.5 border-2 border-gray-300 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors flex items-center justify-center gap-2 text-gray-700 hover:text-primary"
+                                >
+                                    <MapPin className="w-4 h-4" />
+                                    <span className="font-medium">
+                                        Set Address Manually
+                                    </span>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={getCurrentLocation}
+                                    disabled={isGettingCurrentLocation}
+                                    className="flex-1 px-4 py-2.5 border-2 border-gray-300 rounded-lg hover:border-primary hover:bg-primary/5 transition-colors flex items-center justify-center gap-2 text-gray-700 hover:text-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isGettingCurrentLocation ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                            <span className="font-medium">
+                                                Getting Location...
+                                            </span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Navigation className="w-4 h-4" />
+                                            <span className="font-medium">
+                                                Use Current Location
+                                            </span>
+                                        </>
+                                    )}
+                                </button>
                             </div>
+
+                            {/* Address Display */}
+                            {hasAddressSet ? (
+                                <div className="mt-3 p-4 bg-green-50 rounded-lg border border-green-200">
+                                    <div className="flex items-start gap-2">
+                                        <MapPin className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                                        <div className="flex-1">
+                                            <p className="text-xs font-medium text-green-700 mb-1">
+                                                Selected Address:
+                                            </p>
+                                            <p className="text-sm text-green-800">
+                                                {getFullAddressDisplay()}
+                                            </p>
+                                            {formData.street && (
+                                                <p className="text-xs text-green-600 mt-2">
+                                                    <span className="font-medium">
+                                                        Street:
+                                                    </span>{" "}
+                                                    {formData.street}
+                                                </p>
+                                            )}
+                                            {formData.addressParts.barangay && (
+                                                <p className="text-xs text-green-600 mt-1">
+                                                    <span className="font-medium">
+                                                        Barangay:
+                                                    </span>{" "}
+                                                    {
+                                                        formData.addressParts
+                                                            .barangay
+                                                    }
+                                                </p>
+                                            )}
+                                            {formData.addressParts.city && (
+                                                <p className="text-xs text-green-600 mt-1">
+                                                    <span className="font-medium">
+                                                        City:
+                                                    </span>{" "}
+                                                    {formData.addressParts.city}
+                                                </p>
+                                            )}
+                                            {formData.addressParts.province && (
+                                                <p className="text-xs text-green-600 mt-1">
+                                                    <span className="font-medium">
+                                                        Province:
+                                                    </span>{" "}
+                                                    {
+                                                        formData.addressParts
+                                                            .province
+                                                    }
+                                                </p>
+                                            )}
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setIsAddressModalOpen(true)
+                                            }
+                                            className="text-xs text-green-600 hover:text-green-700 underline"
+                                        >
+                                            Change
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="mt-3">
+                                    <p className="text-sm text-gray-800 flex items-center gap-2">
+                                        <Info className="w-4 h-4 text-gray-800" />
+                                        No address set yet. Click one of the
+                                        buttons above to add your property's
+                                        address.
+                                    </p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Number of CR */}
@@ -585,93 +930,94 @@ const NewBoarding = () => {
                             />
                         </div>
 
-{/* Boarding House Type - Updated */}
-<div className="mb-6">
-    <label className="block text-sm font-medium text-gray-700 mb-2">
-        Boarding House Type
-    </label>
-    <div className="grid grid-cols-3 gap-3">
-        {getBoardingHouseSexOptions().map(option => {
-            const isSelected =
-                formData.boardingHouseSex ===
-                option.value;
+                        {/* Boarding House Type - Updated */}
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Boarding House Type
+                            </label>
+                            <div className="grid grid-cols-3 gap-3">
+                                {getBoardingHouseSexOptions().map(option => {
+                                    const isSelected =
+                                        formData.boardingHouseSex ===
+                                        option.value;
 
-            return (
-                <button
-                    key={option.value}
-                    type="button"
-                    onClick={() =>
-                        handleBoardingHouseSexChange(
-                            option.value
-                        )
-                    }
-                    className={`
-                        relative flex items-center justify-center gap-2 p-4 
-                        rounded-lg transition-all duration-200 border-2
-                        whitespace-nowrap
-                        ${getCardStyle(option.value, isSelected)}
-                    `}
-                    style={{
-                        background:
-                            option.value === "mixed" &&
-                            isSelected
-                                ? "linear-gradient(to bottom right, #eff6ff, #fce7f7)"
-                                : undefined
-                    }}
-                >
-                    {/* Mixed gradient border overlay - top and left blue, right and bottom pink */}
-                    {option.value === "mixed" &&
-                        isSelected && (
-                            <>
-                                <div className="absolute inset-0 rounded-lg -z-10" 
-                                     style={{
-                                         background: "linear-gradient(135deg, #3b82f6 0%, #3b82f6 50%, #ec4899 50%, #ec4899 100%)",
-                                         padding: "2px",
-                                         mask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
-                                         WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
-                                         WebkitMaskComposite: "xor",
-                                         maskComposite: "exclude"
-                                     }}
-                                />
-                                {/* Individual border approach for better browser support */}
-                                <div className="absolute inset-0 rounded-lg pointer-events-none"
-                                     style={{
-                                         borderTop: "2px solid #3b82f6",
-                                         borderLeft: "2px solid #3b82f6",
-                                         borderRight: "2px solid #ec4899",
-                                         borderBottom: "2px solid #ec4899",
-                                         borderRadius: "0.5rem"
-                                     }}
-                                />
-                            </>
-                        )}
+                                    return (
+                                        <button
+                                            key={option.value}
+                                            type="button"
+                                            onClick={() =>
+                                                handleBoardingHouseSexChange(
+                                                    option.value
+                                                )
+                                            }
+                                            className={`
+                                        relative flex items-center justify-center gap-2 p-4 
+                                        rounded-lg transition-all duration-200 border-2
+                                        whitespace-nowrap
+                                        ${getCardStyle(option.value, isSelected)}
+                                    `}
+                                            style={{
+                                                background:
+                                                    option.value === "mixed" &&
+                                                    isSelected
+                                                        ? "linear-gradient(to bottom right, #eff6ff, #fce7f7)"
+                                                        : undefined
+                                            }}
+                                        >
+                                            {/* Mixed gradient border overlay - top and left blue, right and bottom pink */}
+                                            {option.value === "mixed" &&
+                                                isSelected && (
+                                                    <>
+                                                        <div className="absolute inset-0 rounded-lg -z-10" 
+                                                             style={{
+                                                                 background: "linear-gradient(135deg, #3b82f6 0%, #3b82f6 50%, #ec4899 50%, #ec4899 100%)",
+                                                                 padding: "2px",
+                                                                 mask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+                                                                 WebkitMask: "linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)",
+                                                                 WebkitMaskComposite: "xor",
+                                                                 maskComposite: "exclude"
+                                                             }}
+                                                        />
+                                                        {/* Individual border approach for better browser support */}
+                                                        <div className="absolute inset-0 rounded-lg pointer-events-none"
+                                                             style={{
+                                                                 borderTop: "2px solid #3b82f6",
+                                                                 borderLeft: "2px solid #3b82f6",
+                                                                 borderRight: "2px solid #ec4899",
+                                                                 borderBottom: "2px solid #ec4899",
+                                                                 borderRadius: "0.5rem"
+                                                             }}
+                                                        />
+                                                    </>
+                                                )}
 
-                    <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center">
-                        {option.icon}
-                    </div>
-                    <span
-                        className={`text-sm font-medium flex-shrink-0 ${
-                            isSelected
-                                ? option.value ===
-                                  "male"
-                                    ? "text-blue-700"
-                                    : option.value ===
-                                        "female"
-                                      ? "text-pink-700"
-                                      : "text-gray-800"
-                                : "text-gray-700"
-                        }`}
-                    >
-                        {option.label}
-                    </span>
-                </button>
-            );
-        })}
-    </div>
-    <p className="text-xs text-gray-400 mt-2">
-        Select your boarding house type
-    </p>
-</div>
+                                            <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center">
+                                                {option.icon}
+                                            </div>
+                                            <span
+                                                className={`text-sm font-medium flex-shrink-0 ${
+                                                    isSelected
+                                                        ? option.value ===
+                                                          "male"
+                                                            ? "text-blue-700"
+                                                            : option.value ===
+                                                                "female"
+                                                              ? "text-pink-700"
+                                                              : "text-gray-800"
+                                                        : "text-gray-700"
+                                                }`}
+                                            >
+                                                {option.label}
+                                            </span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            <p className="text-xs text-gray-400 mt-2">
+                                Select your boarding house type
+                            </p>
+                        </div>
+
                         {/* Bedrooms Section */}
                         <div className="mb-6">
                             <div className="flex items-center justify-between mb-3">
@@ -942,7 +1288,7 @@ const NewBoarding = () => {
                             <Button
                                 type="submit"
                                 variant="primary"
-                                disabled={isSubmitting}
+                                disabled={isSubmitting || !hasAddressSet}
                                 icon={Plus}
                                 className="w-full sm:flex-1"
                             >
