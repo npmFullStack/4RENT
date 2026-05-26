@@ -1,13 +1,12 @@
 // src/shared/components/StatCard.jsx
-import React from 'react';
+import React from "react";
 
-const StatCard = ({ 
-    title, 
-    value, 
-    message, 
-    icon: Icon,
-    messageColor = "green", // green, yellow, red, blue
-    iconColor = "text-gray-400" // Default gray color for icon
+const StatCard = ({
+    title,
+    value,
+    message,
+    image,
+    messageColor = "green" // green, yellow, red, blue
 }) => {
     const messageColorStyles = {
         green: "text-green-500",
@@ -18,22 +17,30 @@ const StatCard = ({
 
     return (
         <div className="bg-white rounded-xl shadow-sm p-4 md:p-6 border border-gray-100 relative">
-            {/* Icon at top right with custom color */}
-            {Icon && (
+            {/* Image at top right */}
+            {image && (
                 <div className="absolute top-4 right-4">
-                    <Icon className={`w-5 h-5 ${iconColor}`} />
+                    <img
+                        src={image}
+                        alt={title}
+                        className="w-12 h-16 object-cover"
+                    />
                 </div>
             )}
-            
+
             {/* Title */}
             <h3 className="text-gray-500 text-sm font-medium">{title}</h3>
-            
+
             {/* Value */}
-            <p className="text-2xl md:text-3xl font-bold text-gray-800 mt-2">{value}</p>
-            
+            <p className="text-2xl md:text-3xl font-bold text-gray-800 mt-2">
+                {value}
+            </p>
+
             {/* Message/Label */}
             {message && (
-                <span className={`text-xs font-medium ${messageColorStyles[messageColor]}`}>
+                <span
+                    className={`text-xs font-medium ${messageColorStyles[messageColor]}`}
+                >
                     {message}
                 </span>
             )}

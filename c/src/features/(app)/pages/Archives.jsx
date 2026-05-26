@@ -1,12 +1,13 @@
-// src/features/(app)/pages/PaymentLogs.jsx
+// src/features/(app)/pages/Archives.jsx
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { HelpCircle, Archive, FolderOpen } from "lucide-react";
+import { HelpCircle, ArchiveRestore, Trash2, FolderOpen } from "lucide-react";
 import HelpPageModal from "@/shared/components/HelpPageModal";
 import Table from "@/shared/components/Table";
 import Button from "@/shared/components/Button";
 import ConfirmModal from "@/shared/components/ConfirmModal";
 import Toast from "@/shared/components/Toast";
+import BreadCrumbs from "../components/BreadCrumbs";
 
 // Import property images
 import property1 from "@/assets/images/property1.png";
@@ -30,168 +31,82 @@ const generatePropertyId = (id, category) => {
     return `${prefix}-${paddedNumber}`;
 };
 
-// Mock payment logs data
-const mockPaymentLogs = [
+// Mock archived payment logs data
+const mockArchivedPayments = [
     {
-        id: 1,
+        id: 101,
         propertyId: 1,
         propertyCategory: "boarding",
-        tenantId: "TNT-0001",
-        tenantFirstName: "Maria",
-        tenantLastName: "Santos",
-        tenantSex: "female",
+        tenantId: "TNT-0011",
+        tenantFirstName: "Roberto",
+        tenantLastName: "Dela Cruz",
+        tenantSex: "male",
         propertyName: "Sunset Boarding House",
         propertyImage: property1,
         amountPaid: 4850,
-        paymentDate: "2026-05-15"
+        paymentDate: "2026-04-15",
+        archivedDate: "2026-05-01"
     },
     {
-        id: 2,
+        id: 102,
         propertyId: 2,
         propertyCategory: "apartment",
-        tenantId: "TNT-0002",
-        tenantFirstName: "John",
+        tenantId: "TNT-0012",
+        tenantFirstName: "Maria",
         tenantLastName: "Reyes",
-        tenantSex: "male",
+        tenantSex: "female",
         propertyName: "Downtown Luxury Apartment",
         propertyImage: property2,
         amountPaid: 12500,
-        paymentDate: "2026-05-10"
+        paymentDate: "2026-04-10",
+        archivedDate: "2026-05-01"
     },
     {
-        id: 3,
+        id: 103,
         propertyId: 3,
         propertyCategory: "boarding",
-        tenantId: "TNT-0003",
-        tenantFirstName: "Ana",
-        tenantLastName: "Cruz",
-        tenantSex: "female",
+        tenantId: "TNT-0013",
+        tenantFirstName: "Jose",
+        tenantLastName: "Mendoza",
+        tenantSex: "male",
         propertyName: "Garden View Boarding House",
         propertyImage: property3,
         amountPaid: 3750,
-        paymentDate: "2026-05-18"
+        paymentDate: "2026-04-18",
+        archivedDate: "2026-05-02"
     },
     {
-        id: 4,
-        propertyId: 4,
-        propertyCategory: "apartment",
-        tenantId: "TNT-0004",
-        tenantFirstName: "David",
-        tenantLastName: "Garcia",
-        tenantSex: "male",
-        propertyName: "Ocean View Apartment",
-        propertyImage: property1,
-        amountPaid: 18500,
-        paymentDate: "2026-04-28"
-    },
-    {
-        id: 5,
+        id: 104,
         propertyId: 5,
         propertyCategory: "boarding",
-        tenantId: "TNT-0005",
-        tenantFirstName: "Sofia",
-        tenantLastName: "Mendoza",
+        tenantId: "TNT-0014",
+        tenantFirstName: "Elena",
+        tenantLastName: "Gonzales",
         tenantSex: "female",
         propertyName: "Cozy Studio Boarding",
         propertyImage: property2,
         amountPaid: 4200,
-        paymentDate: "2026-05-20"
+        paymentDate: "2026-04-20",
+        archivedDate: "2026-05-03"
     },
     {
-        id: 6,
-        propertyId: 6,
-        propertyCategory: "apartment",
-        tenantId: "TNT-0006",
-        tenantFirstName: "Carlos",
-        tenantLastName: "Fernandez",
-        tenantSex: "male",
-        propertyName: "Metro Central Tower",
-        propertyImage: property3,
-        amountPaid: 22500,
-        paymentDate: "2026-05-05"
-    },
-    {
-        id: 7,
+        id: 105,
         propertyId: 7,
         propertyCategory: "boarding",
-        tenantId: "TNT-0007",
-        tenantFirstName: "Isabella",
-        tenantLastName: "Lopez",
-        tenantSex: "female",
+        tenantId: "TNT-0015",
+        tenantFirstName: "Ricardo",
+        tenantLastName: "Fernandez",
+        tenantSex: "male",
         propertyName: "Greenfield Boarding House",
         propertyImage: property1,
         amountPaid: 3500,
-        paymentDate: "2026-05-12"
-    },
-    {
-        id: 8,
-        propertyId: 8,
-        propertyCategory: "apartment",
-        tenantId: "TNT-0008",
-        tenantFirstName: "Miguel",
-        tenantLastName: "Torres",
-        tenantSex: "male",
-        propertyName: "Skyline Apartments",
-        propertyImage: property2,
-        amountPaid: 35000,
-        paymentDate: "2026-05-08"
-    },
-    {
-        id: 9,
-        propertyId: 9,
-        propertyCategory: "boarding",
-        tenantId: "TNT-0009",
-        tenantFirstName: "Carmen",
-        tenantLastName: "Villanueva",
-        tenantSex: "female",
-        propertyName: "Villa Maria Boarding House",
-        propertyImage: property3,
-        amountPaid: 4200,
-        paymentDate: "2026-04-25"
-    },
-    {
-        id: 10,
-        propertyId: 10,
-        propertyCategory: "apartment",
-        tenantId: "TNT-0010",
-        tenantFirstName: "Patricia",
-        tenantLastName: "Aquino",
-        tenantSex: "female",
-        propertyName: "Harbor View Apartment",
-        propertyImage: property1,
-        amountPaid: 15500,
-        paymentDate: "2026-05-14"
-    },
-    {
-        id: 11,
-        propertyId: 2,
-        propertyCategory: "apartment",
-        tenantId: "TNT-0002",
-        tenantFirstName: "John",
-        tenantLastName: "Reyes",
-        tenantSex: "male",
-        propertyName: "Downtown Luxury Apartment",
-        propertyImage: property2,
-        amountPaid: 5000,
-        paymentDate: "2026-05-22"
-    },
-    {
-        id: 12,
-        propertyId: 4,
-        propertyCategory: "apartment",
-        tenantId: "TNT-0004",
-        tenantFirstName: "David",
-        tenantLastName: "Garcia",
-        tenantSex: "male",
-        propertyName: "Ocean View Apartment",
-        propertyImage: property1,
-        amountPaid: 10000,
-        paymentDate: "2026-05-20"
+        paymentDate: "2026-04-12",
+        archivedDate: "2026-05-03"
     }
 ];
 
-// Add paymentId and propertyFormattedId to each mock payment
-const paymentLogsWithIds = mockPaymentLogs.map(payment => ({
+// Add paymentId and propertyFormattedId to each archived payment
+const archivedPaymentsWithIds = mockArchivedPayments.map(payment => ({
     ...payment,
     paymentId: generatePaymentId(payment.id),
     propertyFormattedId: generatePropertyId(
@@ -200,14 +115,18 @@ const paymentLogsWithIds = mockPaymentLogs.map(payment => ({
     )
 }));
 
-const PaymentLogs = () => {
+const Archives = () => {
     const navigate = useNavigate();
     const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
-    const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
-    const [paymentLogs, setPaymentLogs] = useState(paymentLogsWithIds);
+    const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [archivedPayments, setArchivedPayments] = useState(
+        archivedPaymentsWithIds
+    );
     const [selectedPayments, setSelectedPayments] = useState(new Set());
-    const [isArchiving, setIsArchiving] = useState(false);
+    const [isActionLoading, setIsActionLoading] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
+    const [actionType, setActionType] = useState(null); // 'restore' or 'delete'
 
     // Format date to readable format
     const formatDate = dateString => {
@@ -261,28 +180,42 @@ const PaymentLogs = () => {
         setSelectedPayments(new Set());
     };
 
-    // Handle archive button click - open confirmation modal
-    const handleArchiveClick = () => {
+    // Handle restore button click
+    const handleRestoreClick = () => {
         if (selectedPayments.size === 0) {
             Toast.warning(
                 "No Selection",
-                "Please select at least one payment log to archive."
+                "Please select at least one payment log to restore."
             );
             return;
         }
-        setIsArchiveModalOpen(true);
+        setActionType("restore");
+        setIsRestoreModalOpen(true);
     };
 
-    // Handle archive confirmation
-    const handleArchiveConfirm = async () => {
-        setIsArchiving(true);
+    // Handle delete button click
+    const handleDeleteClick = () => {
+        if (selectedPayments.size === 0) {
+            Toast.warning(
+                "No Selection",
+                "Please select at least one payment log to delete permanently."
+            );
+            return;
+        }
+        setActionType("delete");
+        setIsDeleteModalOpen(true);
+    };
+
+    // Handle restore confirmation
+    const handleRestoreConfirm = async () => {
+        setIsActionLoading(true);
 
         try {
             // Simulate API call
             await new Promise(resolve => setTimeout(resolve, 1000));
 
-            // Remove selected payments from the list
-            setPaymentLogs(prev =>
+            // Remove restored payments from archived list
+            setArchivedPayments(prev =>
                 prev.filter(payment => !selectedPayments.has(payment.id))
             );
 
@@ -290,31 +223,63 @@ const PaymentLogs = () => {
             setSelectedPayments(new Set());
 
             Toast.success(
-                "Archive Successful",
-                `${selectedPayments.size} payment log(s) have been archived.`
+                "Restore Successful",
+                `${selectedPayments.size} payment log(s) have been restored.`
             );
         } catch (error) {
-            console.error("Error archiving payments:", error);
+            console.error("Error restoring payments:", error);
             Toast.error(
-                "Archive Failed",
-                "There was an error archiving the selected payment logs."
+                "Restore Failed",
+                "There was an error restoring the selected payment logs."
             );
         } finally {
-            setIsArchiving(false);
-            setIsArchiveModalOpen(false);
+            setIsActionLoading(false);
+            setIsRestoreModalOpen(false);
         }
     };
 
-    // Navigate to archives page
-    const handleViewArchives = () => {
-        navigate("/archives");
+    // Handle delete confirmation (permanent deletion)
+    const handleDeleteConfirm = async () => {
+        setIsActionLoading(true);
+
+        try {
+            // Simulate API call
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // Permanently delete selected payments
+            setArchivedPayments(prev =>
+                prev.filter(payment => !selectedPayments.has(payment.id))
+            );
+
+            // Clear selections
+            setSelectedPayments(new Set());
+
+            Toast.success(
+                "Delete Successful",
+                `${selectedPayments.size} payment log(s) have been permanently deleted.`
+            );
+        } catch (error) {
+            console.error("Error deleting payments:", error);
+            Toast.error(
+                "Delete Failed",
+                "There was an error deleting the selected payment logs."
+            );
+        } finally {
+            setIsActionLoading(false);
+            setIsDeleteModalOpen(false);
+        }
+    };
+
+    // Navigate back to payment logs
+    const handleBackToPaymentLogs = () => {
+        navigate("/payment-logs");
     };
 
     // Filtered payments based on search
     const filteredPayments = useMemo(() => {
-        if (!searchTerm.trim()) return paymentLogs;
+        if (!searchTerm.trim()) return archivedPayments;
 
-        return paymentLogs.filter(payment => {
+        return archivedPayments.filter(payment => {
             const tenantName = `${payment.tenantFirstName} ${payment.tenantLastName}`;
             const paymentId = payment.paymentId;
             const propertyId = payment.propertyFormattedId;
@@ -325,7 +290,7 @@ const PaymentLogs = () => {
                 propertyId.toLowerCase().includes(searchTerm.toLowerCase())
             );
         });
-    }, [paymentLogs, searchTerm]);
+    }, [archivedPayments, searchTerm]);
 
     // Table search handler for the Table component
     const handleTableSearch = (searchTerm, data) => {
@@ -345,7 +310,7 @@ const PaymentLogs = () => {
         });
     };
 
-    // Render checkbox column with standard HTML checkbox
+    // Render checkbox column
     const renderCheckbox = row => {
         const isChecked = selectedPayments.has(row.id);
         return (
@@ -393,6 +358,13 @@ const PaymentLogs = () => {
         </span>
     );
 
+    // Render archived date
+    const renderArchivedDate = row => (
+        <span className="text-gray-500 text-xs whitespace-nowrap">
+            {formatDate(row.archivedDate)}
+        </span>
+    );
+
     // Columns configuration
     const columns = [
         {
@@ -437,14 +409,21 @@ const PaymentLogs = () => {
         },
         {
             key: "paymentDate",
-            header: "Date",
+            header: "Payment Date",
             sortable: true,
             width: "110px",
             render: renderPaymentDate
+        },
+        {
+            key: "archivedDate",
+            header: "Archived Date",
+            sortable: true,
+            width: "110px",
+            render: renderArchivedDate
         }
     ];
 
-    // Selection summary component - appears below search when items are selected
+    // Selection summary component
     const SelectionSummary = () => {
         if (selectedPayments.size === 0) return null;
 
@@ -462,7 +441,7 @@ const PaymentLogs = () => {
                         className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/20 cursor-pointer"
                     />
                     <span className="text-sm font-medium text-gray-700">
-                        {selectedPayments.size} payment log
+                        {selectedPayments.size} archived payment log
                         {selectedPayments.size !== 1 ? "s" : ""} selected
                     </span>
                 </div>
@@ -480,13 +459,22 @@ const PaymentLogs = () => {
                         Clear All
                     </button>
                     <Button
-                        variant="primary"
-                        icon={Archive}
-                        onClick={handleArchiveClick}
-                        disabled={isArchiving}
-                        className="!bg-red-500 !rounded-lg !text-sm !hover:bg-red-700 !text-white"
+                        variant="outline"
+                        icon={ArchiveRestore}
+                        onClick={handleRestoreClick}
+                        disabled={isActionLoading}
+                        className="!border-green-700 !text-green-700 !text-sm"
                     >
-                        Archive Selected
+                        Restore
+                    </Button>
+                    <Button
+                        variant="primary"
+                        icon={Trash2}
+                        onClick={handleDeleteClick}
+                        disabled={isActionLoading}
+                        className="!bg-red-500 !text-sm"
+                    >
+                        Delete
                     </Button>
                 </div>
             </div>
@@ -496,88 +484,88 @@ const PaymentLogs = () => {
     // Help modal features
     const helpFeatures = [
         {
-            title: "Payment Logs Overview",
+            title: "Archives Overview",
             description:
-                "View all recorded payments from tenants in one place. Each payment log includes Payment ID, Tenant Info, Property ID, Amount Paid, and Date."
+                "View all archived payment logs that have been moved from the main payment logs. Archived logs can be restored or permanently deleted."
         },
         {
-            title: "Selecting Payment Logs",
+            title: "Selecting Archived Logs",
             description:
-                "Use the checkboxes to select individual payment logs. Select multiple logs to archive them in bulk."
+                "Use the checkboxes to select individual archived payment logs. Select multiple logs to restore or delete them in bulk."
         },
         {
-            title: "Bulk Archive",
+            title: "Restore Archived Logs",
             description:
-                "After selecting payment logs, click the 'Archive Selected' button to remove them from the main list. Archived logs can be restored from the archive section."
+                "Select archived payment logs and click the 'Restore' button to move them back to the main payment logs."
+        },
+        {
+            title: "Permanent Deletion",
+            description:
+                "Select archived payment logs and click the 'Delete Permanently' button to remove them from the system. This action cannot be undone."
         },
         {
             title: "Search & Filter",
             description:
-                "Use the search bar to find payment logs by tenant name, Payment ID, or Property ID."
-        },
-        {
-            title: "Select All / Clear All",
-            description:
-                "When you have selected at least one payment log, a selection bar appears with options to Select All visible logs or Clear All selections."
+                "Use the search bar to find archived payment logs by tenant name, Payment ID, or Property ID."
         }
     ];
 
     return (
-        <div className="p-4 md:p-6 bg-neutral-50 min-h-screen">
-            {/* Header Section */}
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => setIsHelpModalOpen(true)}
-                        className="sm:hidden text-gray-500 bg-transparent hover:bg-gray-100 rounded-lg transition-colors p-2"
-                        aria-label="Help"
-                    >
-                        <HelpCircle size={24} />
-                    </button>
-                    <div>
-                        <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
-                            Payment Logs
-                        </h1>
-                        <p className="text-gray-600 mt-1">
-                            View and manage all tenant payment transactions.
-                        </p>
-                    </div>
-                </div>
+<div className="p-4 md:p-6 bg-neutral-50 min-h-screen">
+    {/* Breadcrumbs */}
+    <div className="mb-4">
+        <BreadCrumbs
+            items={[
+                { label: "Payment Logs", path: "/payment-logs" },
+                { label: "Archives", path: "/archives" }
+            ]}
+        />
+    </div>
 
-                <div className="flex items-center justify-end gap-3">
-                    {/* Help Button (Desktop) */}
-                    <button
-                        onClick={() => setIsHelpModalOpen(true)}
-                        className="hidden sm:flex px-3 py-2 text-gray-500 bg-transparent hover:bg-gray-100 rounded-lg transition-colors items-center gap-2"
-                    >
-                        <HelpCircle size={20} />
-                        <span className="font-medium">Help</span>
-                    </button>
-                    {/* Archives Button (Outline) */}
-                    <Button
-                        variant="outline"
-                        icon={FolderOpen}
-                        onClick={handleViewArchives}
-                        className="!rounded-md !border-gray-400 !text-gray-700"
-                    >
-                        Archives
-                    </Button>
-                </div>
+    {/* Header */}
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div className="flex items-center gap-3">
+            <button
+                onClick={() => setIsHelpModalOpen(true)}
+                className="sm:hidden text-gray-500 bg-transparent hover:bg-gray-100 rounded-lg transition-colors p-2"
+                aria-label="Help"
+            >
+                <HelpCircle size={24} />
+            </button>
+            <div>
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
+                    Archives
+                </h1>
+                <p className="text-gray-600 mt-1">
+                    View and manage archived payment logs.
+                </p>
             </div>
+        </div>
 
-            {/* Selection Summary (appears below search) */}
+        <div className="flex items-center gap-3">
+            <button
+                onClick={() => setIsHelpModalOpen(true)}
+                className="hidden sm:flex px-3 py-2 text-gray-500 bg-transparent hover:bg-gray-100 rounded-lg transition-colors items-center gap-2"
+            >
+                <HelpCircle size={20} />
+                <span className="font-medium">Help</span>
+            </button>
+        </div>
+    </div>
+
+            {/* Selection Summary */}
             <SelectionSummary />
 
             {/* Table */}
             <div className="rounded-xl overflow-hidden">
                 <Table
                     columns={columns}
-                    data={paymentLogs}
+                    data={archivedPayments}
                     keyField="id"
                     onRowClick={row => {
-                        console.log("View payment details:", row);
+                        console.log("View archived payment details:", row);
                         Toast.info(
-                            "Payment Details",
+                            "Archived Payment Details",
                             `Payment ${row.paymentId} for ${row.tenantFirstName} ${row.tenantLastName}`
                         );
                     }}
@@ -586,7 +574,7 @@ const PaymentLogs = () => {
                     onSearch={handleTableSearch}
                     itemsPerPageOptions={[5, 10, 20, -1]}
                     itemsPerPage={5}
-                    emptyMessage="No payment logs found. Record payments from the Tenants page."
+                    emptyMessage="No archived payment logs found."
                 />
             </div>
 
@@ -595,25 +583,38 @@ const PaymentLogs = () => {
                 isOpen={isHelpModalOpen}
                 onClose={() => setIsHelpModalOpen(false)}
                 icon={HelpCircle}
-                title="Payment Logs Help"
-                description="Learn how to manage and archive payment logs."
+                title="Archives Help"
+                description="Learn how to manage archived payment logs."
                 features={helpFeatures}
             />
 
-            {/* Archive Confirmation Modal */}
+            {/* Restore Confirmation Modal */}
             <ConfirmModal
-                isOpen={isArchiveModalOpen}
-                onClose={() => setIsArchiveModalOpen(false)}
-                onConfirm={handleArchiveConfirm}
-                title="Archive Payment Logs"
-                message={`Are you sure you want to archive ${selectedPayments.size} payment log${selectedPayments.size !== 1 ? "s" : ""}? This action can be undone from the Archives page.`}
-                variant="danger"
-                confirmText="Archive"
+                isOpen={isRestoreModalOpen}
+                onClose={() => setIsRestoreModalOpen(false)}
+                onConfirm={handleRestoreConfirm}
+                title="Restore Payment Logs"
+                message={`Are you sure you want to restore ${selectedPayments.size} archived payment log${selectedPayments.size !== 1 ? "s" : ""}? They will be moved back to the main payment logs.`}
+                variant="info"
+                confirmText="Restore"
                 cancelText="Cancel"
-                isLoading={isArchiving}
+                isLoading={isActionLoading}
+            />
+
+            {/* Delete Confirmation Modal */}
+            <ConfirmModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={handleDeleteConfirm}
+                title="Permanently Delete"
+                message={`Are you sure you want to permanently delete ${selectedPayments.size} archived payment log${selectedPayments.size !== 1 ? "s" : ""}? This action cannot be undone.`}
+                variant="danger"
+                confirmText="Delete"
+                cancelText="Cancel"
+                isLoading={isActionLoading}
             />
         </div>
     );
 };
 
-export default PaymentLogs;
+export default Archives;

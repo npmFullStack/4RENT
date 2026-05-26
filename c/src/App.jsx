@@ -22,6 +22,11 @@ import Tenants from "@/features/(app)/pages/Tenants";
 import NewTenant from "@/features/(app)/pages/NewTenant";
 import CalendarPage from "@/features/(app)/pages/CalendarPage";
 import PaymentLogs from "@/features/(app)/pages/PaymentLogs";
+import Archives from "@/features/(app)/pages/Archives";
+import Repairs from "@/features/(app)/pages/Repairs";
+import NewDamage from "@/features/(app)/pages/NewDamage";
+import Reports from "@/features/(app)/pages/Reports";
+import ReportResults from "@/features/(app)/pages/ReportResults";
 
 function App() {
     return (
@@ -63,9 +68,15 @@ function App() {
                     <Route path="/tenants" element={<Tenants />} />
                     <Route path="new-tenant" element={<NewTenant />} />
                     <Route path="calendar" element={<CalendarPage />} />
-                                    <Route path="payment-logs" element={<PaymentLogs />} />
-
-</Route>
+                    <Route path="payment-logs" element={<PaymentLogs />} />
+                    <Route path="archives" element={<Archives />} />
+                    <Route path="repairs" element={<Repairs />} />
+                    <Route path="new-damage" element={<NewDamage />} />
+                    
+                    {/* Reports Routes */}
+                    <Route path="reports" element={<Reports />} />
+                    <Route path="reports/results" element={<ReportResults />} />
+                </Route>
             </Routes>
         </BrowserRouter>
     );
