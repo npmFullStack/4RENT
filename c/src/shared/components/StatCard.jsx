@@ -1,49 +1,44 @@
 // src/shared/components/StatCard.jsx
 import React from "react";
+import { ArrowUp, ArrowDown } from "lucide-react";
 
 const StatCard = ({
     title,
     value,
     message,
-    image,
-    messageColor = "green" // green, yellow, red, blue
+    icon: Icon,
+    trend = "up",
 }) => {
-    const messageColorStyles = {
-        green: "text-green-500",
-        yellow: "text-yellow-500",
-        red: "text-red-500",
-        blue: "text-blue-500"
-    };
-
     return (
-        <div className="bg-white rounded-xl shadow-sm p-4 md:p-6 border border-gray-100 relative">
-            {/* Image at top right */}
-            {image && (
-                <div className="absolute top-4 right-4">
-                    <img
-                        src={image}
-                        alt={title}
-                        className="w-12 h-16 object-cover"
-                    />
-                </div>
-            )}
+        <div className="relative bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
+            {/* Large Gray Icon at Top Right */}
+            <div className="absolute -top-2 -right-2 opacity-20">
+                {Icon && <Icon size={80} strokeWidth={0.8} className="text-gray-400" />}
+            </div>
 
-            {/* Title */}
-            <h3 className="text-gray-500 text-sm font-medium">{title}</h3>
+            {/* Content */}
+            <div className="p-5">
+                {/* Title */}
+                <h3 className="text-gray-700 text-sm font-medium mb-3">
+                    {title}
+                </h3>
 
-            {/* Value */}
-            <p className="text-2xl md:text-3xl font-bold text-gray-800 mt-2">
-                {value}
-            </p>
+                {/* Value - font-black */}
+                <p className="text-3xl font-black text-gray-900 mb-2">
+                    {value}
+                </p>
 
-            {/* Message/Label */}
-            {message && (
-                <span
-                    className={`text-xs font-medium ${messageColorStyles[messageColor]}`}
-                >
-                    {message}
-                </span>
-            )}
+                {/* Message with trend */}
+                {message && (
+                    <div className="flex items-center gap-1.5">
+                        {trend === "up" && <ArrowUp size={12} className="text-green-500" />}
+                        {trend === "down" && <ArrowDown size={12} className="text-red-500" />}
+                        <span className={`text-xs ${trend === "up" ? "text-green-500" : trend === "down" ? "text-red-500" : "text-gray-500"}`}>
+                            {message}
+                        </span>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
