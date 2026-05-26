@@ -130,32 +130,8 @@ const Reports = () => {
                 />
             </div>
 
-            {/* Quick Stats Summary */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg p-4 text-center">
-                    <FileText className="w-5 h-5 text-primary mx-auto mb-2" />
-                    <p className="text-xs text-gray-600">Available Reports</p>
-                    <p className="text-xl font-bold text-gray-800">4</p>
-                </div>
-                <div className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 rounded-lg p-4 text-center">
-                    <TrendingUp className="w-5 h-5 text-blue-500 mx-auto mb-2" />
-                    <p className="text-xs text-gray-600">This Month</p>
-                    <p className="text-xl font-bold text-gray-800">Active</p>
-                </div>
-                <div className="bg-gradient-to-br from-green-500/10 to-green-500/5 rounded-lg p-4 text-center">
-                    <Home className="w-5 h-5 text-green-500 mx-auto mb-2" />
-                    <p className="text-xs text-gray-600">Properties</p>
-                    <p className="text-xl font-bold text-gray-800">12</p>
-                </div>
-                <div className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 rounded-lg p-4 text-center">
-                    <UserCheck className="w-5 h-5 text-purple-500 mx-auto mb-2" />
-                    <p className="text-xs text-gray-600">Active Tenants</p>
-                    <p className="text-xl font-bold text-gray-800">24</p>
-                </div>
-            </div>
-
-            {/* Report Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+            {/* Report Cards Grid - 4 columns on desktop */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {reportCards.map((card) => (
                     <ReportCard
                         key={card.id}
