@@ -6,10 +6,10 @@ import Button from "@/shared/components/Button";
 import { useNavigate } from "react-router-dom";
 
 // Import report images
-import report1 from "@/assets/images/reportCard/report1.png";
-import report2 from "@/assets/images/reportCard/report2.png";
-import report3 from "@/assets/images/reportCard/report3.png";
-import report4 from "@/assets/images/reportCard/report4.png";
+import report1 from "@/assets/images/reportCard/report1.svg";
+import report2 from "@/assets/images/reportCard/report2.svg";
+import report3 from "@/assets/images/reportCard/report3.svg";
+import report4 from "@/assets/images/reportCard/report4.svg";
 
 const ReportCard = ({
     title,
@@ -73,11 +73,11 @@ const ReportCard = ({
             </div>
 
             {/* Report Image */}
-            <div className="w-full">
+            <div className="w-full flex items-center justify-center">
                 <img
                     src={getReportImage()}
                     alt={title}
-                    className="w-full h-full object-cover"
+                    className="w-20 h-20 object-cover"
                 />
             </div>
 
